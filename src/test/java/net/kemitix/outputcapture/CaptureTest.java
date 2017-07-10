@@ -65,6 +65,21 @@ public class CaptureTest {
                                                .doesNotContain(capturedText);
     }
 
+    @Test
+    public void canClearCapturedOutput() {
+        //given
+        final String line1 = randomText();
+        final String line2 = randomText();
+        final OutputCapture capture = OutputCapture.begin();
+        //when
+        System.out.println(line1);
+        capture.clear();
+        System.out.println(line2);
+        //then
+        assertThat(capture.getStdOut()).containsExactly(line2)
+                                       .doesNotContain(line1);
+    }
+
     private String randomText() {
         return UUID.randomUUID()
                    .toString();

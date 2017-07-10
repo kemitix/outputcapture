@@ -45,4 +45,9 @@ public interface OutputCapture extends AutoCloseable {
     static OutputCapture begin() {
         return new DefaultOutputCapturor();
     }
+
+    /**
+     * Clears all output already captured.
+     */
+    void clear();
 }

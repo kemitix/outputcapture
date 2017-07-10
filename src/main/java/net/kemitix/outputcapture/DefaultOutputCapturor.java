@@ -53,6 +53,11 @@ class DefaultOutputCapturor implements OutputCapture {
     }
 
     @Override
+    public void clear() {
+        out.reset();
+    }
+
+    @Override
     public void close() throws Exception {
         System.setOut(savedOut);
     }
