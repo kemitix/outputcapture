@@ -37,19 +37,29 @@ class DefaultOutputCapturor implements OutputCapture {
 
     private final PrintStream savedOut;
 
+    private final ByteArrayOutputStream err;
+
     /**
      * Begin capturing output.
      */
     DefaultOutputCapturor() {
         savedOut = System.out;
-        this.out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(this.out));
+        out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+        err = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(err));
     }
 
     @Override
     public Stream<String> getStdOut() {
         return Arrays.stream(out.toString()
                                 .split(System.lineSeparator()));
+    }
+
+    @Override
+    public Stream<String> getStdErr() {
+        return Arrays.stream(err.toString()
+                            .split(System.lineSeparator()));
     }
 
     @Override

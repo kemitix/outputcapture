@@ -48,6 +48,19 @@ public class CaptureTest {
     }
 
     @Test
+    public void canCaptureSystemErr() {
+        //given
+        final String line1 = randomText();
+        final String line2 = randomText();
+        final OutputCapture capture = OutputCapture.begin();
+        //when
+        System.err.println(line1);
+        System.err.println(line2);
+        //then
+        assertThat(capture.getStdErr()).containsExactly(line1, line2);
+    }
+
+    @Test
     public void canRestoreNormalSystemOut() throws Exception {
         //given
         final String capturedText = randomText();

@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 public interface OutputCapture extends AutoCloseable {
 
     /**
-     * Get a stream of the captured output so far.
+     * Get a stream of the captured standard output so far.
      *
      * @return a Stream of Strings, one line per String using the system's line separator
      */
@@ -50,4 +50,13 @@ public interface OutputCapture extends AutoCloseable {
      * Clears all output already captured.
      */
     void clear();
+
+
+    /**
+     * Get a stream of the captured standard error so far.
+     *
+     * @return a Stream of Strings, one line per String using the system's line separator
+     */
+    Stream<String> getStdErr();
+
 }
