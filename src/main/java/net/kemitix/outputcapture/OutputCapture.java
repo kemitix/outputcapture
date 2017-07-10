@@ -30,8 +30,18 @@ import java.util.stream.Stream;
  */
 public interface OutputCapture extends AutoCloseable {
 
+    /**
+     * Get a stream of the captured output so far.
+     *
+     * @return a Stream of Strings, one line per String using the system's line separator
+     */
     Stream<String> getStdOut();
 
+    /**
+     * Create a new OutputCapture and begin capturing the output.
+     *
+     * @return an OutputCapture instance
+     */
     static OutputCapture begin() {
         return new DefaultOutputCapturor();
     }
