@@ -21,6 +21,7 @@
 
 package net.kemitix.outputcapture;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.UUID;
@@ -34,11 +35,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class CaptureTest {
 
+    private String line1;
+
+    private String line2;
+
+    @Before
+    public void setUp() throws Exception {
+        line1 = randomText();
+        line2 = randomText();
+    }
+
     @Test
     public void canCaptureSystemOut() {
         //given
-        final String line1 = randomText();
-        final String line2 = randomText();
         final OutputCapture capture = OutputCapture.begin();
         //when
         System.out.println(line1);
@@ -50,8 +59,6 @@ public class CaptureTest {
     @Test
     public void canCaptureSystemErr() {
         //given
-        final String line1 = randomText();
-        final String line2 = randomText();
         final OutputCapture capture = OutputCapture.begin();
         //when
         System.err.println(line1);
@@ -63,44 +70,38 @@ public class CaptureTest {
     @Test
     public void canRestoreNormalSystemOut() throws Exception {
         //given
-        final String capturedText = randomText();
-        final String nonCapturedText = randomText();
         final OutputCapture originalCapture = OutputCapture.begin();
         final OutputCapture capture = OutputCapture.begin();
-        System.out.println(capturedText);
+        System.out.println(line1);
         //when
         capture.close();
-        System.out.println(nonCapturedText);
+        System.out.println(line2);
         //then
-        assertThat(capture.getStdOut()).containsExactly(capturedText)
-                                       .doesNotContain(nonCapturedText);
-        assertThat(originalCapture.getStdOut()).containsExactly(nonCapturedText)
-                                               .doesNotContain(capturedText);
+        assertThat(capture.getStdOut()).containsExactly(line1)
+                                       .doesNotContain(line2);
+        assertThat(originalCapture.getStdOut()).containsExactly(line2)
+                                               .doesNotContain(line1);
     }
 
     @Test
     public void canRestoreNormalSystemErr() throws Exception {
         //given
-        final String capturedText = randomText();
-        final String nonCapturedText = randomText();
         final OutputCapture originalCapture = OutputCapture.begin();
         final OutputCapture capture = OutputCapture.begin();
-        System.err.println(capturedText);
+        System.err.println(line1);
         //when
         capture.close();
-        System.err.println(nonCapturedText);
+        System.err.println(line2);
         //then
-        assertThat(capture.getStdErr()).containsExactly(capturedText)
-                                       .doesNotContain(nonCapturedText);
-        assertThat(originalCapture.getStdErr()).containsExactly(nonCapturedText)
-                                               .doesNotContain(capturedText);
+        assertThat(capture.getStdErr()).containsExactly(line1)
+                                       .doesNotContain(line2);
+        assertThat(originalCapture.getStdErr()).containsExactly(line2)
+                                               .doesNotContain(line1);
     }
 
     @Test
     public void canClearCapturedOutput() {
         //given
-        final String line1 = randomText();
-        final String line2 = randomText();
         final OutputCapture capture = OutputCapture.begin();
         //when
         System.out.println(line1);
@@ -114,8 +115,6 @@ public class CaptureTest {
     @Test
     public void canClearCapturedError() {
         //given
-        final String line1 = randomText();
-        final String line2 = randomText();
         final OutputCapture capture = OutputCapture.begin();
         //when
         System.err.println(line1);
