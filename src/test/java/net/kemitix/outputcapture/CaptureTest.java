@@ -111,6 +111,21 @@ public class CaptureTest {
                                        .doesNotContain(line1);
     }
 
+    @Test
+    public void canClearCapturedError() {
+        //given
+        final String line1 = randomText();
+        final String line2 = randomText();
+        final OutputCapture capture = OutputCapture.begin();
+        //when
+        System.err.println(line1);
+        capture.clear();
+        System.err.println(line2);
+        //then
+        assertThat(capture.getStdErr()).containsExactly(line2)
+                                       .doesNotContain(line1);
+    }
+
     private String randomText() {
         return UUID.randomUUID()
                    .toString();

@@ -68,6 +68,7 @@ class DefaultOutputCapturor implements OutputCapture {
     @Override
     public void clear() {
         out.reset();
+        err.reset();
     }
 
     @Override
