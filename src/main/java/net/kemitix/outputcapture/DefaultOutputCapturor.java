@@ -39,6 +39,8 @@ class DefaultOutputCapturor implements OutputCapture {
 
     private final ByteArrayOutputStream err;
 
+    private final PrintStream savedErr;
+
     /**
      * Begin capturing output.
      */
@@ -46,6 +48,7 @@ class DefaultOutputCapturor implements OutputCapture {
         savedOut = System.out;
         out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
+        savedErr = System.err;
         err = new ByteArrayOutputStream();
         System.setErr(new PrintStream(err));
     }
@@ -70,5 +73,6 @@ class DefaultOutputCapturor implements OutputCapture {
     @Override
     public void close() throws Exception {
         System.setOut(savedOut);
+        System.setErr(savedErr);
     }
 }

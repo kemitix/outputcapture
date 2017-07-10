@@ -79,6 +79,24 @@ public class CaptureTest {
     }
 
     @Test
+    public void canRestoreNormalSystemErr() throws Exception {
+        //given
+        final String capturedText = randomText();
+        final String nonCapturedText = randomText();
+        final OutputCapture originalCapture = OutputCapture.begin();
+        final OutputCapture capture = OutputCapture.begin();
+        System.err.println(capturedText);
+        //when
+        capture.close();
+        System.err.println(nonCapturedText);
+        //then
+        assertThat(capture.getStdErr()).containsExactly(capturedText)
+                                       .doesNotContain(nonCapturedText);
+        assertThat(originalCapture.getStdErr()).containsExactly(nonCapturedText)
+                                               .doesNotContain(capturedText);
+    }
+
+    @Test
     public void canClearCapturedOutput() {
         //given
         final String line1 = randomText();
