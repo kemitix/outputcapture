@@ -47,6 +47,24 @@ public class CaptureTest {
         assertThat(capture.getStdOut()).containsExactly(line1, line2);
     }
 
+    @Test
+    public void canRestoreNormalSystemOut() throws Exception {
+        //given
+        final String capturedText = randomText();
+        final String nonCapturedText = randomText();
+        final OutputCapture originalCapture = OutputCapture.begin();
+        final OutputCapture capture = OutputCapture.begin();
+        System.out.println(capturedText);
+        //when
+        capture.close();
+        System.out.println(nonCapturedText);
+        //then
+        assertThat(capture.getStdOut()).containsExactly(capturedText)
+                                       .doesNotContain(nonCapturedText);
+        assertThat(originalCapture.getStdOut()).containsExactly(nonCapturedText)
+                                               .doesNotContain(capturedText);
+    }
+
     private String randomText() {
         return UUID.randomUUID()
                    .toString();

@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public interface OutputCapture {
+public interface OutputCapture extends AutoCloseable {
 
     Stream<String> getStdOut();
 
