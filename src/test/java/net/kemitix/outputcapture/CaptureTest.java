@@ -21,12 +21,15 @@
 
 package net.kemitix.outputcapture;
 
+import org.assertj.core.api.ThrowableAssert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for capturing output.
@@ -123,6 +126,29 @@ public class CaptureTest {
         //then
         assertThat(capture.getStdErr()).containsExactly(line2)
                                        .doesNotContain(line1);
+    }
+
+    @Test
+    public void canUseTryWithResourcesSyntax() throws Exception {
+        try (OutputCapture capture = OutputCapture.begin()) {
+            System.out.println(line1);
+            assertThat(capture.getStdOut()).containsExactly(line1);
+        }
+    }
+
+    @Test
+    public void throwsIOExceptionWhenCaptureIsNotActive() throws IOException {
+        //when
+        final ThrowableAssert.ThrowingCallable action = () -> {
+            try (OutputCapture outer = OutputCapture.begin()) {
+                try (OutputCapture inner = OutputCapture.begin()) {
+                    outer.close();
+                }
+            }
+        };
+        //then
+        assertThatThrownBy(action).isInstanceOf(IOException.class)
+                                  .hasMessage("Not the current capture. Close the current capture first");
     }
 
     private String randomText() {

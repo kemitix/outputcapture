@@ -22,6 +22,7 @@
 package net.kemitix.outputcapture;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -41,13 +42,16 @@ class DefaultOutputCapturor implements OutputCapture {
 
     private final PrintStream savedErr;
 
+    private final PrintStream outWrapper;
+
     /**
      * Begin capturing output.
      */
     DefaultOutputCapturor() {
         savedOut = System.out;
         out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(out));
+        outWrapper = new PrintStream(out);
+        System.setOut(outWrapper);
         savedErr = System.err;
         err = new ByteArrayOutputStream();
         System.setErr(new PrintStream(err));
@@ -62,7 +66,7 @@ class DefaultOutputCapturor implements OutputCapture {
     @Override
     public Stream<String> getStdErr() {
         return Arrays.stream(err.toString()
-                            .split(System.lineSeparator()));
+                                .split(System.lineSeparator()));
     }
 
     @Override
@@ -72,8 +76,12 @@ class DefaultOutputCapturor implements OutputCapture {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
+        if (!System.out.equals(outWrapper)) {
+            throw new IOException("Not the current capture. Close the current capture first");
+        }
         System.setOut(savedOut);
         System.setErr(savedErr);
     }
+
 }
