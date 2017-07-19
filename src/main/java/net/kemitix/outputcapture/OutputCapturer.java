@@ -21,48 +21,19 @@
 
 package net.kemitix.outputcapture;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.stream.Stream;
-
 /**
- * Factory for creating {@link CapturedOutput} instances.
+ * Captures the output written to standard out and standard error.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public final class CaptureOutput implements OutputCapturer {
+public interface OutputCapturer {
 
-    @Override
-    public CapturedOutput of(final Runnable runnable) {
-        final PrintStream savedOut = System.out;
-        final PrintStream savedErr = System.err;
-
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        final ByteArrayOutputStream err = new ByteArrayOutputStream();
-
-        System.setOut(new PrintStream(out));
-        System.setErr(new PrintStream(err));
-
-        runnable.run();
-
-        System.setOut(savedOut);
-        System.setErr(savedErr);
-
-        return new CapturedOutput() {
-
-            @Override
-            public Stream<String> getStdOut() {
-                return Arrays.stream(out.toString()
-                                        .split(System.lineSeparator()));
-            }
-
-            @Override
-            public Stream<String> getStdErr() {
-                return Arrays.stream(err.toString()
-                                        .split(System.lineSeparator()));
-            }
-        };
-    }
-
+    /**
+     * Capture the output of the runnable.
+     *
+     * @param runnable the runnable to capture the output of
+     *
+     * @return the instance CapturedOutput
+     */
+    CapturedOutput of(Runnable runnable);
 }
