@@ -21,17 +21,12 @@
 
 package net.kemitix.outputcapture;
 
-import org.assertj.core.api.ThrowableAssert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.UUID;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for capturing output.
