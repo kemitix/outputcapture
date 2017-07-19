@@ -22,66 +22,53 @@
 package net.kemitix.outputcapture;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * Default implementation of {@link OutputCapture}.
+ * Factory for creating {@link CapturedOutput} instances.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-class DefaultOutputCapturor implements OutputCapture {
-
-    private final ByteArrayOutputStream out;
-
-    private final PrintStream savedOut;
-
-    private final ByteArrayOutputStream err;
-
-    private final PrintStream savedErr;
-
-    private final PrintStream outWrapper;
+public final class CaptureOutput {
 
     /**
-     * Begin capturing output.
+     * Capture the output of the runnable.
+     *
+     * @param runnable the runnable to capture the output of
+     *
+     * @return the instance CapturedOutput
      */
-    DefaultOutputCapturor() {
-        savedOut = System.out;
-        out = new ByteArrayOutputStream();
-        outWrapper = new PrintStream(out);
-        System.setOut(outWrapper);
-        savedErr = System.err;
-        err = new ByteArrayOutputStream();
+    public CapturedOutput of(final Runnable runnable) {
+        final PrintStream savedOut = System.out;
+        final PrintStream savedErr = System.err;
+
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        System.setOut(new PrintStream(out));
         System.setErr(new PrintStream(err));
-    }
 
-    @Override
-    public Stream<String> getStdOut() {
-        return Arrays.stream(out.toString()
-                                .split(System.lineSeparator()));
-    }
+        runnable.run();
 
-    @Override
-    public Stream<String> getStdErr() {
-        return Arrays.stream(err.toString()
-                                .split(System.lineSeparator()));
-    }
-
-    @Override
-    public void clear() {
-        out.reset();
-        err.reset();
-    }
-
-    @Override
-    public void close() throws IOException {
-        if (!System.out.equals(outWrapper)) {
-            throw new IOException("Not the current capture. Close the current capture first");
-        }
         System.setOut(savedOut);
         System.setErr(savedErr);
+
+        return new CapturedOutput() {
+
+            @Override
+            public Stream<String> getStdOut() {
+                return Arrays.stream(out.toString()
+                                        .split(System.lineSeparator()));
+            }
+
+            @Override
+            public Stream<String> getStdErr() {
+                return Arrays.stream(err.toString()
+                                        .split(System.lineSeparator()));
+            }
+        };
     }
 
 }

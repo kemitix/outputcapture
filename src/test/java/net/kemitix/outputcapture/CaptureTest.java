@@ -27,6 +27,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,104 +53,65 @@ public class CaptureTest {
     @Test
     public void canCaptureSystemOut() {
         //given
-        final OutputCapture capture = OutputCapture.begin();
+        final CaptureOutput captureOutput = new CaptureOutput();
         //when
-        System.out.println(line1);
-        System.out.println(line2);
+        final CapturedOutput captured = captureOutput.of(() -> {
+            System.out.println(line1);
+            System.out.println(line2);
+        });
         //then
-        assertThat(capture.getStdOut()).containsExactly(line1, line2);
+        assertThat(captured.getStdOut()).containsExactly(line1, line2);
     }
 
     @Test
     public void canCaptureSystemErr() {
         //given
-        final OutputCapture capture = OutputCapture.begin();
+        final CaptureOutput captureOutput = new CaptureOutput();
         //when
-        System.err.println(line1);
-        System.err.println(line2);
+        final CapturedOutput captured = captureOutput.of(() -> {
+            System.err.println(line1);
+            System.err.println(line2);
+        });
         //then
-        assertThat(capture.getStdErr()).containsExactly(line1, line2);
+        assertThat(captured.getStdErr()).containsExactly(line1, line2);
     }
 
     @Test
     public void canRestoreNormalSystemOut() throws Exception {
         //given
-        final OutputCapture originalCapture = OutputCapture.begin();
-        final OutputCapture capture = OutputCapture.begin();
-        System.out.println(line1);
+        final CaptureOutput outer = new CaptureOutput();
+        final CaptureOutput inner = new CaptureOutput();
         //when
-        capture.close();
-        System.out.println(line2);
+        final CapturedOutput outerCaptured = outer.of(() -> {
+            final CapturedOutput innerCaptured = inner.of(() -> {
+                System.out.println(line1);
+            });
+            System.out.println(line2);
+            assertThat(innerCaptured.getStdOut()).containsExactly(line1)
+                                                 .doesNotContain(line2);
+        });
         //then
-        assertThat(capture.getStdOut()).containsExactly(line1)
-                                       .doesNotContain(line2);
-        assertThat(originalCapture.getStdOut()).containsExactly(line2)
-                                               .doesNotContain(line1);
+        assertThat(outerCaptured.getStdOut()).containsExactly(line2)
+                                             .doesNotContain(line1);
     }
 
     @Test
     public void canRestoreNormalSystemErr() throws Exception {
         //given
-        final OutputCapture originalCapture = OutputCapture.begin();
-        final OutputCapture capture = OutputCapture.begin();
-        System.err.println(line1);
+        final CaptureOutput outer = new CaptureOutput();
+        final CaptureOutput inner = new CaptureOutput();
         //when
-        capture.close();
-        System.err.println(line2);
+        final CapturedOutput outerCaptured = outer.of(() -> {
+            final CapturedOutput innerCaptured = inner.of(() -> {
+                System.err.println(line1);
+            });
+            System.err.println(line2);
+            assertThat(innerCaptured.getStdErr()).containsExactly(line1)
+                                                 .doesNotContain(line2);
+        });
         //then
-        assertThat(capture.getStdErr()).containsExactly(line1)
-                                       .doesNotContain(line2);
-        assertThat(originalCapture.getStdErr()).containsExactly(line2)
-                                               .doesNotContain(line1);
-    }
-
-    @Test
-    public void canClearCapturedOutput() {
-        //given
-        final OutputCapture capture = OutputCapture.begin();
-        //when
-        System.out.println(line1);
-        capture.clear();
-        System.out.println(line2);
-        //then
-        assertThat(capture.getStdOut()).containsExactly(line2)
-                                       .doesNotContain(line1);
-    }
-
-    @Test
-    public void canClearCapturedError() {
-        //given
-        final OutputCapture capture = OutputCapture.begin();
-        //when
-        System.err.println(line1);
-        capture.clear();
-        System.err.println(line2);
-        //then
-        assertThat(capture.getStdErr()).containsExactly(line2)
-                                       .doesNotContain(line1);
-    }
-
-    @Test
-    public void canUseTryWithResourcesSyntax() throws Exception {
-        try (OutputCapture capture = OutputCapture.begin()) {
-            System.out.println(line1);
-            assertThat(capture.getStdOut()).containsExactly(line1);
-        }
-    }
-
-    @Test
-    public void throwsIOExceptionWhenCaptureIsNotActive() throws IOException {
-        //when
-        final ThrowableAssert.ThrowingCallable action = () -> {
-            try (OutputCapture outer = OutputCapture.begin()) {
-                try (OutputCapture inner = OutputCapture.begin()) {
-                    outer.close();
-                }
-            }
-        };
-        //then
-        assertThatThrownBy(action).isInstanceOf(IOException.class)
-                                  .hasMessage("Not the current capture. Close the current capture first");
+        assertThat(outerCaptured.getStdErr()).containsExactly(line2)
+                                             .doesNotContain(line1);
     }
 
     private String randomText() {

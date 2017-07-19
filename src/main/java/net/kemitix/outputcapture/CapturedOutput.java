@@ -21,7 +21,6 @@
 
 package net.kemitix.outputcapture;
 
-import java.io.IOException;
 import java.util.stream.Stream;
 
 /**
@@ -29,7 +28,7 @@ import java.util.stream.Stream;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public interface OutputCapture extends AutoCloseable {
+public interface CapturedOutput {
 
     /**
      * Get a stream of the captured standard output so far.
@@ -39,37 +38,10 @@ public interface OutputCapture extends AutoCloseable {
     Stream<String> getStdOut();
 
     /**
-     * Create a new OutputCapture and begin capturing the output.
-     *
-     * @return an OutputCapture instance
-     */
-    static OutputCapture begin() {
-        return new DefaultOutputCapturor();
-    }
-
-    /**
-     * Clears all output already captured.
-     */
-    void clear();
-
-    /**
      * Get a stream of the captured standard error so far.
      *
      * @return a Stream of Strings, one line per String using the system's line separator
      */
     Stream<String> getStdErr();
-
-    /**
-     * Closes capture and restores the original output destinations for standard output and error.
-     *
-     * <p>If the capture is already closed then invoking this method has no effect.</p>
-     *
-     * <p>As noted in {@link AutoCloseable#close()}, cases where the close may fail require careful attention. It is
-     * strongly advised to relinquish the underlying resources and to internally <em>mark</em> the {@code Closeable} as
-     * closed, prior to throwing the {@code IOException}.</p>
-     *
-     * @throws IOException if there was an error restoring the original output streams
-     */
-    void close() throws IOException;
 
 }
