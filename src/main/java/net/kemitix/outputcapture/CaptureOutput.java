@@ -21,42 +21,48 @@
 
 package net.kemitix.outputcapture;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * Captures the {@code System.out} and {@code System.err}.
+ * Factory for creating {@link CapturedOutput} instances.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public interface OutputCapture extends AutoCloseable {
+public final class CaptureOutput implements OutputCapturer {
 
-    /**
-     * Get a stream of the captured standard output so far.
-     *
-     * @return a Stream of Strings, one line per String using the system's line separator
-     */
-    Stream<String> getStdOut();
+    @Override
+    public CapturedOutput of(final Runnable runnable) {
+        final PrintStream savedOut = System.out;
+        final PrintStream savedErr = System.err;
 
-    /**
-     * Create a new OutputCapture and begin capturing the output.
-     *
-     * @return an OutputCapture instance
-     */
-    static OutputCapture begin() {
-        return new DefaultOutputCapturor();
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        System.setOut(new PrintStream(out));
+        System.setErr(new PrintStream(err));
+
+        runnable.run();
+
+        System.setOut(savedOut);
+        System.setErr(savedErr);
+
+        return new CapturedOutput() {
+
+            @Override
+            public Stream<String> getStdOut() {
+                return Arrays.stream(out.toString()
+                                        .split(System.lineSeparator()));
+            }
+
+            @Override
+            public Stream<String> getStdErr() {
+                return Arrays.stream(err.toString()
+                                        .split(System.lineSeparator()));
+            }
+        };
     }
-
-    /**
-     * Clears all output already captured.
-     */
-    void clear();
-
-
-    /**
-     * Get a stream of the captured standard error so far.
-     *
-     * @return a Stream of Strings, one line per String using the system's line separator
-     */
-    Stream<String> getStdErr();
 
 }

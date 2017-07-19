@@ -21,59 +21,27 @@
 
 package net.kemitix.outputcapture;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * Default implementation of {@link OutputCapture}.
+ * Captures the {@code System.out} and {@code System.err}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-class DefaultOutputCapturor implements OutputCapture {
-
-    private final ByteArrayOutputStream out;
-
-    private final PrintStream savedOut;
-
-    private final ByteArrayOutputStream err;
-
-    private final PrintStream savedErr;
+public interface CapturedOutput {
 
     /**
-     * Begin capturing output.
+     * Get a stream of the captured standard output so far.
+     *
+     * @return a Stream of Strings, one line per String using the system's line separator
      */
-    DefaultOutputCapturor() {
-        savedOut = System.out;
-        out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(out));
-        savedErr = System.err;
-        err = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(err));
-    }
+    Stream<String> getStdOut();
 
-    @Override
-    public Stream<String> getStdOut() {
-        return Arrays.stream(out.toString()
-                                .split(System.lineSeparator()));
-    }
+    /**
+     * Get a stream of the captured standard error so far.
+     *
+     * @return a Stream of Strings, one line per String using the system's line separator
+     */
+    Stream<String> getStdErr();
 
-    @Override
-    public Stream<String> getStdErr() {
-        return Arrays.stream(err.toString()
-                            .split(System.lineSeparator()));
-    }
-
-    @Override
-    public void clear() {
-        out.reset();
-        err.reset();
-    }
-
-    @Override
-    public void close() throws Exception {
-        System.setOut(savedOut);
-        System.setErr(savedErr);
-    }
 }
