@@ -89,23 +89,44 @@ public final class CaptureOutput implements OutputCapturer {
                                      .split(System.lineSeparator()));
     }
 
+    /**
+     * Routes output between the capturing stream and the original stream.
+     *
+     * @see {@link RedirectRouter}
+     * @see {@link CopyRouter}
+     */
     private interface Router {
 
+        /**
+         * Create an output stream that routes the output to the appropriate stream(s).
+         *
+         * @param capturingStream the stream capturing the output
+         * @param originalStream  the stream where output would normally have gone
+         *
+         * @return a PrintStream to be used to write to
+         */
         PrintStream handle(PrintStream capturingStream, PrintStream originalStream);
 
     }
+
+    /**
+     * Router that redirects output away from the original output stream to the capturing stream.
+     */
     private class RedirectRouter implements Router {
 
         @Override
-        public PrintStream handle(PrintStream capturingStream, PrintStream originalStream) {
+        public PrintStream handle(final PrintStream capturingStream, final PrintStream originalStream) {
             return capturingStream;
         }
     }
 
+    /**
+     * Router the copies the output to both the original output stream and the capturing stream.
+     */
     private class CopyRouter implements Router {
 
         @Override
-        public PrintStream handle(final PrintStream capturingStream, PrintStream originalStream) {
+        public PrintStream handle(final PrintStream capturingStream, final PrintStream originalStream) {
             return new TeeOutputStream(capturingStream, originalStream);
         }
     }
