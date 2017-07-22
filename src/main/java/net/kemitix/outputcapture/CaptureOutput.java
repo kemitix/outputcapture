@@ -65,4 +65,36 @@ public final class CaptureOutput implements OutputCapturer {
         };
     }
 
+    @Override
+    public CapturedOutput echoOf(final Runnable runnable) {
+        final PrintStream savedOut = System.out;
+        final PrintStream savedErr = System.err;
+
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        System.setOut(new TeeOutputStream(new PrintStream(out), savedOut));
+        System.setErr(new TeeOutputStream(new PrintStream(err), savedErr));
+
+        runnable.run();
+
+        System.setOut(savedOut);
+        System.setErr(savedErr);
+
+        return new CapturedOutput() {
+
+            @Override
+            public Stream<String> getStdOut() {
+                return Arrays.stream(out.toString()
+                                        .split(System.lineSeparator()));
+            }
+
+            @Override
+            public Stream<String> getStdErr() {
+                return Arrays.stream(err.toString()
+                                        .split(System.lineSeparator()));
+            }
+        };
+    }
+
 }
