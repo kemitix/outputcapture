@@ -21,28 +21,51 @@
 
 package net.kemitix.outputcapture;
 
+import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.List;
+
 /**
- * Captures the output written to standard out and standard error.
+ * Copies output to all streams.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public interface OutputCapturer {
+class TeeOutputStream extends PrintStream {
+
+    private final List<PrintStream> outputStreams;
 
     /**
-     * Capture the output of the runnable.
+     * Constructor.
      *
-     * @param runnable the runnable to capture the output of
-     *
-     * @return the instance CapturedOutput
+     * @param outputStream       the first output stream, mandatory
+     * @param extraOutputStreams the extra output streams
      */
-    CapturedOutput of(Runnable runnable);
+    TeeOutputStream(final PrintStream outputStream, final PrintStream... extraOutputStreams) {
+        super(outputStream);
+        this.outputStreams = Arrays.asList(extraOutputStreams);
+    }
 
     /**
-     * Capture the output of the runnable and echo to normal output.
+     * Writes the specified byte to all streams.
      *
-     * @param runnable the runnable to capture the output of
-     *
-     * @return the instance CapturedOutput
+     * @param b The byte to be written
      */
-    CapturedOutput echoOf(Runnable runnable);
+    @Override
+    public void write(final int b) {
+        super.write(b);
+        outputStreams.forEach(os -> os.write(b));
+    }
+
+    /**
+     * Writes <code>len</code> bytes from the specified byte array starting at offset <code>off</code> to all streams.
+     *
+     * @param buf A byte array
+     * @param off Offset from which to start taking bytes
+     * @param len Number of bytes to write
+     */
+    @Override
+    public void write(final byte[] buf, final int off, final int len) {
+        super.write(buf, off, len);
+        outputStreams.forEach(os -> os.write(buf, off, len));
+    }
 }
