@@ -24,10 +24,11 @@ package net.kemitix.outputcapture;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 /**
- * Factory for creating {@link CapturedOutput} instances.
+ * Captures output written to {@code System::out} and {@code System::err} as a {@link CapturedOutput}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
@@ -35,46 +36,29 @@ public final class CaptureOutput implements OutputCapturer {
 
     @Override
     public CapturedOutput of(final Runnable runnable) {
-        final PrintStream savedOut = System.out;
-        final PrintStream savedErr = System.err;
-
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        final ByteArrayOutputStream err = new ByteArrayOutputStream();
-
-        System.setOut(new PrintStream(out));
-        System.setErr(new PrintStream(err));
-
-        runnable.run();
-
-        System.setOut(savedOut);
-        System.setErr(savedErr);
-
-        return new CapturedOutput() {
-
-            @Override
-            public Stream<String> getStdOut() {
-                return Arrays.stream(out.toString()
-                                        .split(System.lineSeparator()));
-            }
-
-            @Override
-            public Stream<String> getStdErr() {
-                return Arrays.stream(err.toString()
-                                        .split(System.lineSeparator()));
-            }
-        };
+        return capture(runnable, selectCaptureStream());
     }
 
     @Override
     public CapturedOutput echoOf(final Runnable runnable) {
+        return capture(runnable, TeeOutputStream::new);
+    }
+
+    private BiFunction<PrintStream, PrintStream, PrintStream> selectCaptureStream() {
+        return (captureStream, originalStream) -> captureStream;
+    }
+
+    private CapturedOutput capture(
+            final Runnable runnable, final BiFunction<PrintStream, PrintStream, PrintStream> streamGenerator
+                                  ) {
         final PrintStream savedOut = System.out;
         final PrintStream savedErr = System.err;
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        System.setOut(new TeeOutputStream(new PrintStream(out), savedOut));
-        System.setErr(new TeeOutputStream(new PrintStream(err), savedErr));
+        System.setOut(streamGenerator.apply(new PrintStream(out), savedOut));
+        System.setErr(streamGenerator.apply(new PrintStream(err), savedErr));
 
         runnable.run();
 
