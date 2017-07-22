@@ -7,7 +7,7 @@ cache:
 install: true
 script: "./mvnw clean install"
 after_success:
-- ".travis-support/coveralls.sh"
+- sh .travis-support/coveralls.sh
 - bash <(curl -s https://codecov.io/bash)
 deploy:
   provider: script
