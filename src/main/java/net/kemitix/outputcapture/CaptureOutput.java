@@ -63,12 +63,12 @@ public final class CaptureOutput implements OutputCapturer {
         return new CapturedOutput() {
 
             @Override
-            public java.util.stream.Stream<String> getStdOut() {
+            public Stream<String> getStdOut() {
                 return asStream(capturedOut);
             }
 
             @Override
-            public java.util.stream.Stream<String> getStdErr() {
+            public Stream<String> getStdErr() {
                 return asStream(capturedErr);
             }
         };
