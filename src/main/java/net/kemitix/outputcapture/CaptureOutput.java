@@ -24,7 +24,6 @@ package net.kemitix.outputcapture;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -37,25 +36,21 @@ public final class CaptureOutput implements OutputCapturer {
 
     @Override
     public CapturedOutput of(final Runnable runnable) {
-        return capture(runnable, selectCaptureStream());
+        return capture(runnable, new RedirectRouter());
     }
 
     @Override
     public CapturedOutput echoOf(final Runnable runnable) {
-        return capture(runnable, TeeOutputStream::new);
-    }
-
-    private BiFunction<PrintStream, PrintStream, PrintStream> selectCaptureStream() {
-        return (captureStream, originalStream) -> captureStream;
+        return capture(runnable, new CopyRouter());
     }
 
     private CapturedOutput capture(
-            final Runnable runnable, final BiFunction<PrintStream, PrintStream, PrintStream> streamWrapper
+            final Runnable runnable, final Router router
                                   ) {
         final ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
         final ByteArrayOutputStream capturedErr = new ByteArrayOutputStream();
-        final PrintStream originalOut = capturePrintStream(System.out, capturedOut, streamWrapper, System::setOut);
-        final PrintStream originalErr = capturePrintStream(System.err, capturedErr, streamWrapper, System::setErr);
+        final PrintStream originalOut = capturePrintStream(System.out, capturedOut, router, System::setOut);
+        final PrintStream originalErr = capturePrintStream(System.err, capturedErr, router, System::setErr);
         runnable.run();
         System.setOut(originalOut);
         System.setErr(originalErr);
@@ -68,23 +63,25 @@ public final class CaptureOutput implements OutputCapturer {
         return new CapturedOutput() {
 
             @Override
-            public Stream<String> getStdOut() {
+            public java.util.stream.Stream<String> getStdOut() {
                 return asStream(capturedOut);
             }
 
             @Override
-            public Stream<String> getStdErr() {
+            public java.util.stream.Stream<String> getStdErr() {
                 return asStream(capturedErr);
             }
         };
     }
 
     private PrintStream capturePrintStream(
-            final PrintStream original, final ByteArrayOutputStream captureTo,
-            final BiFunction<PrintStream, PrintStream, PrintStream> streamWrapper, final Consumer<PrintStream> setStream
+            final PrintStream originalStream, final ByteArrayOutputStream captureTo, final Router router,
+            final Consumer<PrintStream> setStream
                                           ) {
-        setStream.accept(streamWrapper.apply(new PrintStream(captureTo), original));
-        return original;
+        final PrintStream capturingStream = new PrintStream(captureTo);
+        final PrintStream routedStream = router.handle(capturingStream, originalStream);
+        setStream.accept(routedStream);
+        return originalStream;
     }
 
     private Stream<String> asStream(final ByteArrayOutputStream captured) {
@@ -92,4 +89,24 @@ public final class CaptureOutput implements OutputCapturer {
                                      .split(System.lineSeparator()));
     }
 
+    private interface Router {
+
+        PrintStream handle(PrintStream capturingStream, PrintStream originalStream);
+
+    }
+    private class RedirectRouter implements Router {
+
+        @Override
+        public PrintStream handle(PrintStream capturingStream, PrintStream originalStream) {
+            return capturingStream;
+        }
+    }
+
+    private class CopyRouter implements Router {
+
+        @Override
+        public PrintStream handle(final PrintStream capturingStream, PrintStream originalStream) {
+            return new TeeOutputStream(capturingStream, originalStream);
+        }
+    }
 }
