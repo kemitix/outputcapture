@@ -4,18 +4,17 @@ Capture output written to `System.out` and `System.err`.
 
 ## Usage
 
-### Recommended
-
-Using try-with-resources:
 ```java
-    try (OutputCapture capture = OutputCapture.begin()) {
-        System.out.println(line1);
-        System.out.println(line2);
-        assertThat(capture.getStdOut()).containsExactly(line1, line2);
-    }
+    CaptureOutput captureOutput = new CaptureOutput();
+    Runnable runnable = () -> {
+                                System.out.println(line1);
+                                System.out.println(line2);
+                                System.err.println(line3);
+                            };
+    CapturedOutput capturedOutput = captureOutput.of(runnable);
+    assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
+    assertThat(capturedOutput.getStdErr()).containsExactly(line3);
 ```
-
-Always use try-with-resources, or use a `try-finally` with `capture.close()` in the finally block. If you don't then output will not be released and may result in an out-of-memory condition.
 
 ## Important
 
