@@ -109,14 +109,14 @@ public class CaptureTest {
     }
 
     @Test
-    public void canCaptureOutputAndEchoItToNormalOutputs() {
+    public void canCaptureOutputAndCopyItToNormalOutputs() {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final CaptureOutput captureEcho = new CaptureOutput();
+        final CaptureOutput captureCopy = new CaptureOutput();
         final AtomicReference<CapturedOutput> inner = new AtomicReference<>();
         //when
-        final CapturedOutput capturedEcho = captureEcho.of(() -> {
-            inner.set(captureOutput.echoOf(() -> {
+        final CapturedOutput capturedEcho = captureCopy.of(() -> {
+            inner.set(captureOutput.copyOf(() -> {
                 System.out.println(line1);
                 System.err.println(line2);
                 System.out.write("a".getBytes()[0]);
@@ -124,8 +124,8 @@ public class CaptureTest {
         });
         //then
         assertThat(capturedEcho.getStdOut()).containsExactly(line1, "a");
-        assertThat(inner.get().getStdOut()).containsExactly(line1, "a");
         assertThat(capturedEcho.getStdErr()).containsExactly(line2);
+        assertThat(inner.get().getStdOut()).containsExactly(line1, "a");
         assertThat(inner.get().getStdErr()).containsExactly(line2);
     }
 
