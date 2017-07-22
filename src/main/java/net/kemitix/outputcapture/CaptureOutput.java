@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -49,36 +50,46 @@ public final class CaptureOutput implements OutputCapturer {
     }
 
     private CapturedOutput capture(
-            final Runnable runnable, final BiFunction<PrintStream, PrintStream, PrintStream> streamGenerator
+            final Runnable runnable, final BiFunction<PrintStream, PrintStream, PrintStream> streamWrapper
                                   ) {
-        final PrintStream savedOut = System.out;
-        final PrintStream savedErr = System.err;
-
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        final ByteArrayOutputStream err = new ByteArrayOutputStream();
-
-        System.setOut(streamGenerator.apply(new PrintStream(out), savedOut));
-        System.setErr(streamGenerator.apply(new PrintStream(err), savedErr));
-
+        final ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
+        final ByteArrayOutputStream capturedErr = new ByteArrayOutputStream();
+        final PrintStream originalOut = capturePrintStream(System.out, capturedOut, streamWrapper, System::setOut);
+        final PrintStream originalErr = capturePrintStream(System.err, capturedErr, streamWrapper, System::setErr);
         runnable.run();
+        System.setOut(originalOut);
+        System.setErr(originalErr);
+        return asCapturedOutput(capturedOut, capturedErr);
+    }
 
-        System.setOut(savedOut);
-        System.setErr(savedErr);
-
+    private CapturedOutput asCapturedOutput(
+            final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr
+                                           ) {
         return new CapturedOutput() {
 
             @Override
             public Stream<String> getStdOut() {
-                return Arrays.stream(out.toString()
-                                        .split(System.lineSeparator()));
+                return asStream(capturedOut);
             }
 
             @Override
             public Stream<String> getStdErr() {
-                return Arrays.stream(err.toString()
-                                        .split(System.lineSeparator()));
+                return asStream(capturedErr);
             }
         };
+    }
+
+    private PrintStream capturePrintStream(
+            final PrintStream original, final ByteArrayOutputStream captureTo,
+            final BiFunction<PrintStream, PrintStream, PrintStream> streamWrapper, final Consumer<PrintStream> setStream
+                                          ) {
+        setStream.accept(streamWrapper.apply(new PrintStream(captureTo), original));
+        return original;
+    }
+
+    private Stream<String> asStream(final ByteArrayOutputStream captured) {
+        return Arrays.stream(captured.toString()
+                                     .split(System.lineSeparator()));
     }
 
 }
