@@ -10,10 +10,10 @@
     <parent>
         <groupId>net.kemitix</groupId>
         <artifactId>kemitix-parent</artifactId>
-        <version>3.0.0</version>
+        <version>3.2.4</version>
     </parent>
     <artifactId>output-capture</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
     <name>Output Capture</name>
     <description>Capture output written to System.out and System.err</description>
     <dependencies>
@@ -30,4 +30,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
 </project>
