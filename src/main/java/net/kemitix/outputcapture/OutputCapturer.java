@@ -38,11 +38,12 @@ public interface OutputCapturer {
     CapturedOutput of(Runnable runnable);
 
     /**
-     * Capture the output of the runnable and echo to normal output.
+     * Capture the output of the runnable and copies to normal output.
      *
      * @param runnable the runnable to capture the output of
      *
      * @return the instance CapturedOutput
      */
-    CapturedOutput echoOf(Runnable runnable);
+    CapturedOutput copyOf(Runnable runnable);
+
 }

@@ -40,7 +40,7 @@ public final class CaptureOutput implements OutputCapturer {
     }
 
     @Override
-    public CapturedOutput echoOf(final Runnable runnable) {
+    public CapturedOutput copyOf(final Runnable runnable) {
         return capture(runnable, new CopyRouter());
     }
 
