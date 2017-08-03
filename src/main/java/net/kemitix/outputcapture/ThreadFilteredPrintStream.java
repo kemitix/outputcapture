@@ -29,7 +29,7 @@ import java.io.PrintStream;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public class ThreadFilteredPrintStream extends PrintStream {
+class ThreadFilteredPrintStream extends PrintStream {
 
     private final Thread filteredThread;
 
@@ -39,7 +39,7 @@ public class ThreadFilteredPrintStream extends PrintStream {
      * @param out            The output stream
      * @param filteredThread The thread to filter on
      */
-    public ThreadFilteredPrintStream(final OutputStream out, final Thread filteredThread) {
+    ThreadFilteredPrintStream(final OutputStream out, final Thread filteredThread) {
         super(out);
         this.filteredThread = filteredThread;
     }
