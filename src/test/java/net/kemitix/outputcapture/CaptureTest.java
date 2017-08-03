@@ -125,8 +125,77 @@ public class CaptureTest {
         //then
         assertThat(capturedEcho.getStdOut()).containsExactly(line1, "a");
         assertThat(capturedEcho.getStdErr()).containsExactly(line2);
-        assertThat(inner.get().getStdOut()).containsExactly(line1, "a");
-        assertThat(inner.get().getStdErr()).containsExactly(line2);
+        assertThat(inner.get()
+                        .getStdOut()).containsExactly(line1, "a");
+        assertThat(inner.get()
+                        .getStdErr()).containsExactly(line2);
+    }
+
+    @Test
+    public void onlyCapturesOutputFromTargetRunnable() {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final Runnable runnable = () -> {
+            System.out.println("started");
+            try {
+                Thread.sleep(100L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("finished");
+        };
+        new Thread(() -> {
+            try {
+                Thread.sleep(50L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("ignore me");
+        }).start();
+        //when
+        final CapturedOutput capturedOutput = captureOutput.of(runnable);
+        //then
+        assertThat(capturedOutput.getStdOut()).containsExactly("started", "finished");
+    }
+
+    @Test
+    public void capturesOutputOnRequiredThread() {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final AtomicReference<CapturedOutput> capturedOutput = new AtomicReference<>();
+        //when
+        runOnThreadAndWait(() -> {
+            capturedOutput.set(captureOutput.of(() -> {
+                System.out.println("message");
+            }));
+        });
+        //then
+        assertThat(capturedOutput.get()
+                                 .getStdOut()).containsExactly("message");
+    }
+
+    @Test
+    public void ignoresOutputFromOtherThreads() {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        //when
+        final CapturedOutput capturedOutput = captureOutput.of(() -> {
+            runOnThreadAndWait(() -> {
+                System.out.println("message");
+            });
+        });
+        //then
+        assertThat(capturedOutput.getStdOut()).containsExactly("");
+    }
+
+    private void runOnThreadAndWait(final Runnable runnable) {
+        final Thread thread = new Thread(runnable);
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String randomText() {

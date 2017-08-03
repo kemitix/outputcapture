@@ -79,7 +79,8 @@ public final class CaptureOutput implements OutputCapturer {
             final Consumer<PrintStream> setStream
                                           ) {
         final PrintStream capturingStream = new PrintStream(captureTo);
-        final PrintStream routedStream = router.handle(capturingStream, originalStream);
+        final PrintStream filteredStream = new ThreadFilteredPrintStream(capturingStream, Thread.currentThread());
+        final PrintStream routedStream = router.handle(filteredStream, originalStream);
         setStream.accept(routedStream);
         return originalStream;
     }
