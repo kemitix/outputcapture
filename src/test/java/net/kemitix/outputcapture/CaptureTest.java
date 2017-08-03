@@ -167,11 +167,12 @@ public class CaptureTest {
         runOnThreadAndWait(() -> {
             capturedOutput.set(captureOutput.of(() -> {
                 System.out.println("message");
+                System.out.write('x');
             }));
         });
         //then
         assertThat(capturedOutput.get()
-                                 .getStdOut()).containsExactly("message");
+                                 .getStdOut()).containsExactly("message", "x");
     }
 
     @Test
@@ -182,6 +183,7 @@ public class CaptureTest {
         final CapturedOutput capturedOutput = captureOutput.of(() -> {
             runOnThreadAndWait(() -> {
                 System.out.println("message");
+                System.out.write('x');
             });
         });
         //then
