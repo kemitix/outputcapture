@@ -1,3 +1,4 @@
+
 /**
  * The MIT License (MIT)
  *
@@ -19,6 +20,7 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.SneakyThrows;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.Before;
 import org.junit.Test;
@@ -216,14 +218,11 @@ public class CaptureTest {
         }
     }
 
+    @SneakyThrows
     private void runOnThreadAndWait(final Runnable runnable) {
         final Thread thread = new Thread(runnable);
         thread.start();
-        try {
-            thread.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        thread.join();
     }
 
     private String randomText() {
