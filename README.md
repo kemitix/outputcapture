@@ -19,6 +19,8 @@ Capture output written to `System.out` and `System.err`.
 ## Important
 
 Because the `System.out` and `System.err` are implemented as
-singleton's within the JVM, the capturing is not thread-safe. Another
-thread may have it's output captured. This may, or may not, be your
-intended purpose.
+singleton's within the JVM, the capturing is not thread-safe. If two
+instances of `CaptureOutput` are in effect at the same time and are
+not strictly nested (i.e. A starts, B starts, B finishes, A finishes)
+then `System.out` and `System.err` will not be restored properly once
+capturing is finished.

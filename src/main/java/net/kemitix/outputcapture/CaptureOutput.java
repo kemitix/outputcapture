@@ -47,14 +47,15 @@ public final class CaptureOutput implements OutputCapturer {
     private CapturedOutput capture(
             final Runnable runnable, final Router router
                                   ) {
-        final ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
-        final ByteArrayOutputStream capturedErr = new ByteArrayOutputStream();
-        final PrintStream originalOut = capturePrintStream(System.out, capturedOut, router, System::setOut);
-        final PrintStream originalErr = capturePrintStream(System.err, capturedErr, router, System::setErr);
+        final CapturedPrintStream capturedOut = capturePrintStream(System.out, router, System::setOut);
+        final CapturedPrintStream capturedErr = capturePrintStream(System.err, router, System::setErr);
         runnable.run();
-        System.setOut(originalOut);
-        System.setErr(originalErr);
-        return asCapturedOutput(capturedOut, capturedErr);
+        if (System.out != capturedOut.getReplacementStream()) {
+            throw new OutputCaptureException("System.out has been replaced");
+        }
+        System.setOut(capturedOut.getOriginalStream());
+        System.setErr(capturedErr.getOriginalStream());
+        return asCapturedOutput(capturedOut.getCapturedTo(), capturedErr.getCapturedTo());
     }
 
     private CapturedOutput asCapturedOutput(
@@ -74,14 +75,12 @@ public final class CaptureOutput implements OutputCapturer {
         };
     }
 
-    private PrintStream capturePrintStream(
-            final PrintStream originalStream, final ByteArrayOutputStream captureTo, final Router router,
-            final Consumer<PrintStream> setStream
-                                          ) {
-        final PrintStream capturingStream = new PrintStream(captureTo);
-        final PrintStream routedStream = router.handle(capturingStream, originalStream);
-        setStream.accept(routedStream);
-        return originalStream;
+    private CapturedPrintStream capturePrintStream(
+            final PrintStream originalStream, final Router router, final Consumer<PrintStream> setStream
+                                                  ) {
+        final CapturedPrintStream capturedPrintStream = new CapturedPrintStream(originalStream, router);
+        setStream.accept(capturedPrintStream.getReplacementStream());
+        return capturedPrintStream;
     }
 
     private Stream<String> asStream(final ByteArrayOutputStream captured) {
@@ -89,45 +88,4 @@ public final class CaptureOutput implements OutputCapturer {
                                      .split(System.lineSeparator()));
     }
 
-    /**
-     * Routes output between the capturing stream and the original stream.
-     *
-     * @see {@link RedirectRouter}
-     * @see {@link CopyRouter}
-     */
-    private interface Router {
-
-        /**
-         * Create an output stream that routes the output to the appropriate stream(s).
-         *
-         * @param capturingStream the stream capturing the output
-         * @param originalStream  the stream where output would normally have gone
-         *
-         * @return a PrintStream to be used to write to
-         */
-        PrintStream handle(PrintStream capturingStream, PrintStream originalStream);
-
-    }
-
-    /**
-     * Router that redirects output away from the original output stream to the capturing stream.
-     */
-    private class RedirectRouter implements Router {
-
-        @Override
-        public PrintStream handle(final PrintStream capturingStream, final PrintStream originalStream) {
-            return capturingStream;
-        }
-    }
-
-    /**
-     * Router the copies the output to both the original output stream and the capturing stream.
-     */
-    private class CopyRouter implements Router {
-
-        @Override
-        public PrintStream handle(final PrintStream capturingStream, final PrintStream originalStream) {
-            return new TeeOutputStream(capturingStream, originalStream);
-        }
-    }
 }

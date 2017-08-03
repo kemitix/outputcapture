@@ -1,3 +1,4 @@
+
 /**
  * The MIT License (MIT)
  *
@@ -19,6 +20,8 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.SneakyThrows;
+import org.assertj.core.api.ThrowableAssert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,6 +29,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Tests for capturing output.
@@ -125,8 +130,99 @@ public class CaptureTest {
         //then
         assertThat(capturedEcho.getStdOut()).containsExactly(line1, "a");
         assertThat(capturedEcho.getStdErr()).containsExactly(line2);
-        assertThat(inner.get().getStdOut()).containsExactly(line1, "a");
-        assertThat(inner.get().getStdErr()).containsExactly(line2);
+        assertThat(inner.get()
+                        .getStdOut()).containsExactly(line1, "a");
+        assertThat(inner.get()
+                        .getStdErr()).containsExactly(line2);
+    }
+
+    @Test
+    public void onlyCapturesOutputFromTargetRunnable() {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final Runnable runnable = () -> {
+            System.out.println("started");
+            sleep(100L);
+            System.out.println("finished");
+        };
+        new Thread(() -> {
+            sleep(50L);
+            System.out.println("ignore me");
+        }).start();
+        //when
+        final CapturedOutput capturedOutput = captureOutput.of(runnable);
+        //then
+        assertThat(capturedOutput.getStdOut()).containsExactly("started", "finished");
+    }
+
+    @Test
+    public void capturesOutputOnRequiredThread() {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final AtomicReference<CapturedOutput> capturedOutput = new AtomicReference<>();
+        //when
+        runOnThreadAndWait(() -> {
+            capturedOutput.set(captureOutput.of(() -> {
+                System.out.println("message");
+                System.out.write('x');
+            }));
+        });
+        //then
+        assertThat(capturedOutput.get()
+                                 .getStdOut()).containsExactly("message", "x");
+    }
+
+    @Test
+    public void ignoresOutputFromOtherThreads() {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        //when
+        final CapturedOutput capturedOutput = captureOutput.of(() -> {
+            runOnThreadAndWait(() -> {
+                System.out.println("message");
+                System.out.write('x');
+            });
+        });
+        //then
+        assertThat(capturedOutput.getStdOut()).containsExactly("");
+    }
+
+    @Test(timeout = 250L)
+    public void exceptionIsThrownWhenMultipleOutputCapturesOverlap() throws InterruptedException {
+        //given
+        final Runnable runnable = () -> {
+            sleep(100L);
+            new CaptureOutput().of(() -> {
+                sleep(100L);
+            });
+        };
+        final Thread thread = new Thread(runnable);
+        thread.start();
+        //when
+        final ThrowableAssert.ThrowingCallable action = () -> {
+            new CaptureOutput().of(() -> {
+                sleep(150L);
+            });
+        };
+        //then
+        assertThatThrownBy(action).hasNoCause()
+                                  .isInstanceOf(OutputCaptureException.class);
+        thread.join();
+    }
+
+    private void sleep(final long timeout) {
+        try {
+            Thread.sleep(timeout);
+        } catch (InterruptedException e) {
+            fail("sleep() interrupted");
+        }
+    }
+
+    @SneakyThrows
+    private void runOnThreadAndWait(final Runnable runnable) {
+        final Thread thread = new Thread(runnable);
+        thread.start();
+        thread.join();
     }
 
     private String randomText() {
