@@ -19,6 +19,7 @@
 
 package net.kemitix.outputcapture;
 
+import org.assertj.core.api.ThrowableAssert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,6 +27,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Tests for capturing output.
@@ -137,19 +140,11 @@ public class CaptureTest {
         final CaptureOutput captureOutput = new CaptureOutput();
         final Runnable runnable = () -> {
             System.out.println("started");
-            try {
-                Thread.sleep(100L);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            sleep(100L);
             System.out.println("finished");
         };
         new Thread(() -> {
-            try {
-                Thread.sleep(50L);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            sleep(50L);
             System.out.println("ignore me");
         }).start();
         //when
@@ -188,6 +183,37 @@ public class CaptureTest {
         });
         //then
         assertThat(capturedOutput.getStdOut()).containsExactly("");
+    }
+
+    @Test(timeout = 250L)
+    public void exceptionIsThrownWhenMultipleOutputCapturesOverlap() throws InterruptedException {
+        //given
+        final Runnable runnable = () -> {
+            sleep(100L);
+            new CaptureOutput().of(() -> {
+                sleep(100L);
+            });
+        };
+        final Thread thread = new Thread(runnable);
+        thread.start();
+        //when
+        final ThrowableAssert.ThrowingCallable action = () -> {
+            new CaptureOutput().of(() -> {
+                sleep(150L);
+            });
+        };
+        //then
+        assertThatThrownBy(action).hasNoCause()
+                                  .isInstanceOf(OutputCaptureException.class);
+        thread.join();
+    }
+
+    private void sleep(final long timeout) {
+        try {
+            Thread.sleep(timeout);
+        } catch (InterruptedException e) {
+            fail("sleep() interrupted");
+        }
     }
 
     private void runOnThreadAndWait(final Runnable runnable) {
