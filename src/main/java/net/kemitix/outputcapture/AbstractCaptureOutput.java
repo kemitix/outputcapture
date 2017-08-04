@@ -72,7 +72,7 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
         }
         return new DefaultOngoingCapturedOutput(out.get()
                                                    .getCapturedTo(), err.get()
-                                                                        .getCapturedTo());
+                                                                        .getCapturedTo(), executor);
     }
 
     /**

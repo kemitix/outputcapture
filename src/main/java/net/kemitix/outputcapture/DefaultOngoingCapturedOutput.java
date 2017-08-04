@@ -23,6 +23,8 @@ package net.kemitix.outputcapture;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,14 +35,21 @@ import java.util.stream.Stream;
  */
 class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements OngoingCapturedOutput {
 
+    private final ExecutorService executorService;
+
     /**
      * Constructor.
      *
-     * @param capturedOut The captured output written to System.out
-     * @param capturedErr The captured output written to System.err
+     * @param capturedOut     The captured output written to System.out
+     * @param capturedErr     The captured output written to System.err
+     * @param executorService The Executor Service running the captured thread
      */
-    DefaultOngoingCapturedOutput(final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr) {
+    DefaultOngoingCapturedOutput(
+            final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr,
+            final ExecutorService executorService
+                                ) {
         super(capturedOut, capturedErr);
+        this.executorService = executorService;
     }
 
     @Override
@@ -65,5 +74,24 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     public void flush() {
         getCapturedOut().reset();
         getCapturedErr().reset();
+    }
+
+    @Override
+    public boolean isRunning() {
+        return !isShutdown();
+    }
+
+    @Override
+    public boolean isShutdown() {
+        return executorService.isShutdown();
+    }
+
+    @Override
+    public void await(final long timeout, final TimeUnit unit) {
+        try {
+            executorService.awaitTermination(timeout, unit);
+        } catch (InterruptedException e) {
+            throw new OutputCaptureException("Error awaiting termination", e);
+        }
     }
 }

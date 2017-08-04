@@ -25,6 +25,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -292,6 +294,35 @@ public class CaptureTest {
         assertThat(initialCapturedOutput.getStdErr()).containsExactly("starting err");
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
+        assertThat(Thread.activeCount()).as("remove thread")
+                                        .isEqualTo(activeCount);
+    }
+
+    @Test
+    public void canWaitForThreadToComplete() {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final int activeCount = Thread.activeCount();
+        final CountDownLatch finishRunner = new CountDownLatch(1);
+        //when
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+            try {
+                finishRunner.await();
+            } catch (InterruptedException e) {
+                fail("error waiting");
+            }
+        });
+        //then
+        assertThat(ongoingCapturedOutput.isRunning()).as("isRunning = true")
+                                                     .isTrue();
+        assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = false")
+                                                      .isFalse();
+        finishRunner.countDown();
+        ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
+        assertThat(ongoingCapturedOutput.isRunning()).as("isRunning = false")
+                                                     .isFalse();
+        assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = true")
+                                                      .isTrue();
         assertThat(Thread.activeCount()).as("remove thread")
                                         .isEqualTo(activeCount);
     }

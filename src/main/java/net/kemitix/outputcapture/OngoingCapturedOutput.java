@@ -21,8 +21,10 @@
 
 package net.kemitix.outputcapture;
 
+import java.util.concurrent.TimeUnit;
+
 /**
- * The output that is been written to {@code System.out} and {@code System.err}.
+ * The output that is being written to {@code System.out} and {@code System.err}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
@@ -42,4 +44,26 @@ public interface OngoingCapturedOutput extends CapturedOutput {
      * Discard all captured output so far and continue capturing from this point.
      */
     void flush();
+
+    /**
+     * Returns true is the thread being captured is still running.
+     *
+     * @return true if the thread is running, otherwise false
+     */
+    boolean isRunning();
+
+    /**
+     * Returns true if the thread being captured has finished.
+     *
+     * @return true if the thread is not running, otherwise false
+     */
+    boolean isShutdown();
+
+    /**
+     * Block until the thread is finished, and System.out and System.err are restored.
+     *
+     * @param timeout The maximum time to wait
+     * @param unit    The time unit of the timeout argument
+     */
+    void await(final long timeout, final TimeUnit unit);
 }
