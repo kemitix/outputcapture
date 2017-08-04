@@ -38,6 +38,10 @@ import static org.assertj.core.api.Assertions.fail;
  */
 public class CaptureTest {
 
+    private static final long A_PERIOD = 100L;
+
+    private static final long A_SHORT_PERIOD = 50L;
+
     private String line1;
 
     private String line2;
@@ -141,11 +145,11 @@ public class CaptureTest {
         final CaptureOutput captureOutput = new CaptureOutput();
         final Runnable runnable = () -> {
             System.out.println("started");
-            sleep(100L);
+            sleep(A_PERIOD);
             System.out.println("finished");
         };
         new Thread(() -> {
-            sleep(50L);
+            sleep(A_SHORT_PERIOD);
             System.out.println("ignore me");
         }).start();
         //when
@@ -186,13 +190,13 @@ public class CaptureTest {
         assertThat(capturedOutput.getStdOut()).containsExactly("");
     }
 
-    @Test(timeout = 250L)
+    @Test
     public void exceptionIsThrownWhenMultipleOutputCapturesOverlap() throws InterruptedException {
         //given
         final Runnable runnable = () -> {
-            sleep(100L);
+            sleep(A_PERIOD);
             new CaptureOutput().of(() -> {
-                sleep(100L);
+                sleep(A_PERIOD);
             });
         };
         final Thread thread = new Thread(runnable);
@@ -200,7 +204,7 @@ public class CaptureTest {
         //when
         final ThrowableAssert.ThrowingCallable action = () -> {
             new CaptureOutput().of(() -> {
-                sleep(150L);
+                sleep(A_PERIOD + A_SHORT_PERIOD);
             });
         };
         //then
@@ -236,7 +240,7 @@ public class CaptureTest {
         final Runnable runnable = () -> {
             System.out.println("starting");
             System.err.println("starting err");
-            sleep(100L);
+            sleep(A_PERIOD);
             System.out.println("finished");
             System.err.println("finished err");
         };
@@ -244,10 +248,10 @@ public class CaptureTest {
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
         //then
-        sleep(50L);
+        sleep(A_SHORT_PERIOD);
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err");
-        sleep(100L);
+        sleep(A_PERIOD);
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting", "finished");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err", "finished err");
         assertThat(Thread.activeCount()).as("remove thread").isEqualTo(activeCount);
@@ -260,16 +264,16 @@ public class CaptureTest {
         final Runnable runnable = ()->{
             System.out.println("starting out");
             System.err.println("starting err");
-            sleep(100L);
+            sleep(A_PERIOD);
             System.out.println("finished out");
             System.err.println("finished err");
         };
         final int activeCount = Thread.activeCount();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
-        sleep(50L);
+        sleep(A_SHORT_PERIOD);
         ongoingCapturedOutput.flush();
-        sleep(100L);
+        sleep(A_PERIOD);
         //then
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
@@ -283,16 +287,16 @@ public class CaptureTest {
         final Runnable runnable = ()->{
             System.out.println("starting out");
             System.err.println("starting err");
-            sleep(100L);
+            sleep(A_PERIOD);
             System.out.println("finished out");
             System.err.println("finished err");
         };
         final int activeCount = Thread.activeCount();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
-        sleep(50L);
+        sleep(A_SHORT_PERIOD);
         final CapturedOutput initialCapturedOutput = ongoingCapturedOutput.getCapturedOutputAndFlush();
-        sleep(100L);
+        sleep(A_PERIOD);
         //then
         assertThat(initialCapturedOutput.getStdOut()).containsExactly("starting out");
         assertThat(initialCapturedOutput.getStdErr()).containsExactly("starting err");
