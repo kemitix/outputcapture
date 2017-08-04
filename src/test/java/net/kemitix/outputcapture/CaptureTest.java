@@ -46,10 +46,19 @@ public class CaptureTest {
 
     private String line2;
 
+    private Runnable asyncRunnable;
+
     @Before
     public void setUp() throws Exception {
         line1 = randomText();
         line2 = randomText();
+        asyncRunnable = () -> {
+            System.out.println("starting out");
+            System.err.println("starting err");
+            sleep(A_PERIOD);
+            System.out.println("finished out");
+            System.err.println("finished err");
+        };
     }
 
     @Test
@@ -237,22 +246,15 @@ public class CaptureTest {
     public void canCaptureOutputAsynchronously() throws InterruptedException {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final Runnable runnable = () -> {
-            System.out.println("starting");
-            System.err.println("starting err");
-            sleep(A_PERIOD);
-            System.out.println("finished");
-            System.err.println("finished err");
-        };
         final int activeCount = Thread.activeCount();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(asyncRunnable);
         //then
         sleep(A_SHORT_PERIOD);
-        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting");
+        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err");
         sleep(A_PERIOD);
-        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting", "finished");
+        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting out", "finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err", "finished err");
         assertThat(Thread.activeCount()).as("remove thread").isEqualTo(activeCount);
     }
@@ -261,16 +263,9 @@ public class CaptureTest {
     public void canFlushCapturedOutputWhenCapturingAsynchronously() throws InterruptedException {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final Runnable runnable = ()->{
-            System.out.println("starting out");
-            System.err.println("starting err");
-            sleep(A_PERIOD);
-            System.out.println("finished out");
-            System.err.println("finished err");
-        };
         final int activeCount = Thread.activeCount();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(asyncRunnable);
         sleep(A_SHORT_PERIOD);
         ongoingCapturedOutput.flush();
         sleep(A_PERIOD);
@@ -284,16 +279,9 @@ public class CaptureTest {
     public void canCapturedOutputAndFlushWhenCapturingAsynchronously() throws InterruptedException {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final Runnable runnable = ()->{
-            System.out.println("starting out");
-            System.err.println("starting err");
-            sleep(A_PERIOD);
-            System.out.println("finished out");
-            System.err.println("finished err");
-        };
         final int activeCount = Thread.activeCount();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(asyncRunnable);
         sleep(A_SHORT_PERIOD);
         final CapturedOutput initialCapturedOutput = ongoingCapturedOutput.getCapturedOutputAndFlush();
         sleep(A_PERIOD);
@@ -305,4 +293,3 @@ public class CaptureTest {
         assertThat(Thread.activeCount()).as("remove thread").isEqualTo(activeCount);
     }
 }
-
