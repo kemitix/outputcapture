@@ -240,6 +240,7 @@ public class CaptureTest {
             System.out.println("finished");
             System.err.println("finished err");
         };
+        final int activeCount = Thread.activeCount();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
         //then
@@ -249,6 +250,7 @@ public class CaptureTest {
         sleep(100L);
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting", "finished");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err", "finished err");
+        assertThat(Thread.activeCount()).as("remove thread").isEqualTo(activeCount);
     }
 
     @Test
@@ -262,6 +264,7 @@ public class CaptureTest {
             System.out.println("finished out");
             System.err.println("finished err");
         };
+        final int activeCount = Thread.activeCount();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
         sleep(50L);
@@ -270,6 +273,7 @@ public class CaptureTest {
         //then
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
+        assertThat(Thread.activeCount()).as("remove thread").isEqualTo(activeCount);
     }
 
     @Test
@@ -283,6 +287,7 @@ public class CaptureTest {
             System.out.println("finished out");
             System.err.println("finished err");
         };
+        final int activeCount = Thread.activeCount();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
         sleep(50L);
@@ -293,6 +298,7 @@ public class CaptureTest {
         assertThat(initialCapturedOutput.getStdErr()).containsExactly("starting err");
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
+        assertThat(Thread.activeCount()).as("remove thread").isEqualTo(activeCount);
     }
 }
 

@@ -64,6 +64,7 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
                              .getReplacementStream());
             System.setErr(err.get()
                              .getReplacementStream());
+            executor.shutdown();
         });
         outputCapturedDone.await();
         return new DefaultOngoingCapturedOutput(out.get()
