@@ -38,9 +38,9 @@ import static org.assertj.core.api.Assertions.fail;
  */
 public class CaptureTest {
 
-    private static final long A_PERIOD = 100L;
+    private static final long A_PERIOD = 200L;
 
-    private static final long A_SHORT_PERIOD = 50L;
+    private static final long A_SHORT_PERIOD = 100L;
 
     private String line1;
 
