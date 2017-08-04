@@ -39,7 +39,7 @@ public final class CaptureOutput extends AbstractCaptureOutput {
     }
 
     @Override
-    public OngoingCapturedOutput ofThread(final Runnable runnable) throws InterruptedException {
+    public OngoingCapturedOutput ofThread(final Runnable runnable) {
         return captureAsync(runnable, new RedirectRouter());
     }
 

@@ -47,8 +47,7 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
      *
      * @throws InterruptedException if there is an error while waiting for the outputs to be redirected
      */
-    protected OngoingCapturedOutput captureAsync(final Runnable runnable, final Router router)
-            throws InterruptedException {
+    protected OngoingCapturedOutput captureAsync(final Runnable runnable, final Router router) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         final AtomicReference<CapturedPrintStream> out = new AtomicReference<>();
         final AtomicReference<CapturedPrintStream> err = new AtomicReference<>();
@@ -66,7 +65,11 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
                              .getReplacementStream());
             executor.shutdown();
         });
-        outputCapturedDone.await();
+        try {
+            outputCapturedDone.await();
+        } catch (InterruptedException e) {
+            throw new OutputCaptureException("Error initiating capture", e);
+        }
         return new DefaultOngoingCapturedOutput(out.get()
                                                    .getCapturedTo(), err.get()
                                                                         .getCapturedTo());
