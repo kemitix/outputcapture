@@ -256,7 +256,8 @@ public class CaptureTest {
         sleep(A_PERIOD);
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting out", "finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err", "finished err");
-        assertThat(Thread.activeCount()).as("remove thread").isEqualTo(activeCount);
+        assertThat(Thread.activeCount()).as("remove thread")
+                                        .isEqualTo(activeCount);
     }
 
     @Test
@@ -272,7 +273,8 @@ public class CaptureTest {
         //then
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
-        assertThat(Thread.activeCount()).as("remove thread").isEqualTo(activeCount);
+        assertThat(Thread.activeCount()).as("remove thread")
+                                        .isEqualTo(activeCount);
     }
 
     @Test
@@ -290,6 +292,7 @@ public class CaptureTest {
         assertThat(initialCapturedOutput.getStdErr()).containsExactly("starting err");
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
-        assertThat(Thread.activeCount()).as("remove thread").isEqualTo(activeCount);
+        assertThat(Thread.activeCount()).as("remove thread")
+                                        .isEqualTo(activeCount);
     }
 }
