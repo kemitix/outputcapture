@@ -23,15 +23,24 @@ import lombok.SneakyThrows;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * Tests for capturing output.
@@ -48,10 +57,31 @@ public class CaptureTest {
 
     private String line2;
 
-    private Runnable asyncRunnable;
+    private ThrowingCallable asyncRunnable;
+
+    @Mock
+    private Function<Integer, CountDownLatch> latchFactory;
+
+    @Mock
+    private CountDownLatch latch;
+
+    @Mock
+    private Router router;
+
+    @Mock
+    private ByteArrayOutputStream capturedOut;
+
+    @Mock
+    private ByteArrayOutputStream capturedErr;
+
+    @Mock
+    private ExecutorService executorService;
+
+    private AtomicReference<Throwable> thrownException = new AtomicReference<>();
 
     @Before
     public void setUp() throws Exception {
+        initMocks(this);
         line1 = randomText();
         line2 = randomText();
         asyncRunnable = () -> {
@@ -151,10 +181,26 @@ public class CaptureTest {
     }
 
     @Test
+    public void exceptionThrownInCallableAreWrappedInOutputCaptureException() {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
+        //when
+        final ThrowableAssert.ThrowingCallable action = () -> {
+            captureOutput.of(() -> {
+                throw cause;
+            });
+        };
+        //then
+        assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
+                                  .hasCause(cause);
+    }
+
+    @Test
     public void onlyCapturesOutputFromTargetRunnable() {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final Runnable runnable = () -> {
+        final ThrowingCallable runnable = () -> {
             System.out.println("started");
             sleep(A_PERIOD);
             System.out.println("finished");
@@ -247,8 +293,9 @@ public class CaptureTest {
     @Test
     public void canCaptureOutputAsynchronously() throws InterruptedException {
         //given
+        final PrintStream originalOut = System.out;
+        final PrintStream originalErr = System.err;
         final CaptureOutput captureOutput = new CaptureOutput();
-        final int activeCount = Thread.activeCount();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(asyncRunnable);
         //then
@@ -258,15 +305,17 @@ public class CaptureTest {
         sleep(A_PERIOD);
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting out", "finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err", "finished err");
-        assertThat(Thread.activeCount()).as("remove thread")
-                                        .isEqualTo(activeCount);
+        ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
+        assertThat(System.out).as("restore original out")
+                              .isSameAs(originalOut);
+        assertThat(System.err).as("restore original err")
+                              .isSameAs(originalErr);
     }
 
     @Test
     public void canFlushCapturedOutputWhenCapturingAsynchronously() throws InterruptedException {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final int activeCount = Thread.activeCount();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(asyncRunnable);
         sleep(A_SHORT_PERIOD);
@@ -275,43 +324,31 @@ public class CaptureTest {
         //then
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
-        assertThat(Thread.activeCount()).as("remove thread")
-                                        .isEqualTo(activeCount);
     }
 
     @Test
     public void canCapturedOutputAndFlushWhenCapturingAsynchronously() throws InterruptedException {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final int activeCount = Thread.activeCount();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(asyncRunnable);
         sleep(A_SHORT_PERIOD);
         final CapturedOutput initialCapturedOutput = ongoingCapturedOutput.getCapturedOutputAndFlush();
-        sleep(A_PERIOD);
         //then
+        ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
         assertThat(initialCapturedOutput.getStdOut()).containsExactly("starting out");
         assertThat(initialCapturedOutput.getStdErr()).containsExactly("starting err");
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
-        assertThat(Thread.activeCount()).as("remove thread")
-                                        .isEqualTo(activeCount);
     }
 
     @Test
     public void canWaitForThreadToComplete() {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final int activeCount = Thread.activeCount();
         final CountDownLatch finishRunner = new CountDownLatch(1);
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
-            try {
-                finishRunner.await();
-            } catch (InterruptedException e) {
-                fail("error waiting");
-            }
-        });
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(finishRunner::await);
         //then
         assertThat(ongoingCapturedOutput.isRunning()).as("isRunning = true")
                                                      .isTrue();
@@ -323,7 +360,67 @@ public class CaptureTest {
                                                      .isFalse();
         assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = true")
                                                       .isTrue();
-        assertThat(Thread.activeCount()).as("remove thread")
-                                        .isEqualTo(activeCount);
+    }
+
+    @Test
+    public void interruptionDuringAsyncThreadSetupIsWrappedInOutputCaptureException() throws InterruptedException {
+        //given
+        final OutputCapturer captureOutput = new AbstractCaptureOutput() {
+
+            @Override
+            public CapturedOutput of(final ThrowingCallable callable) {
+                return null;
+            }
+
+            @Override
+            public CapturedOutput copyOf(final ThrowingCallable callable) {
+                return null;
+            }
+
+            @Override
+            public OngoingCapturedOutput ofThread(final ThrowingCallable callable) {
+                return captureAsync(callable, router, latchFactory);
+            }
+        };
+        given(latchFactory.apply(1)).willReturn(latch);
+        doThrow(InterruptedException.class).when(latch)
+                                           .await();
+        //when
+        final ThrowableAssert.ThrowingCallable action = () -> {
+            captureOutput.ofThread(asyncRunnable);
+        };
+        //then
+        assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
+                                  .hasCauseInstanceOf(InterruptedException.class);
+    }
+
+    @Test
+    public void interruptionDuringOngoingAwaitIsWrappedInOutputCaptureException() throws InterruptedException {
+        //given
+        final OngoingCapturedOutput ongoingCapturedOutput =
+                new DefaultOngoingCapturedOutput(capturedOut, capturedErr, executorService, thrownException);
+        doThrow(InterruptedException.class).when(executorService)
+                                           .awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
+        //when
+        final ThrowableAssert.ThrowingCallable action = () -> {
+            ongoingCapturedOutput.await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
+        };
+        //then
+        assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
+                                  .hasCauseInstanceOf(InterruptedException.class);
+    }
+
+    @Test
+    public void exceptionThrownInThreadIsAvailableToOngoingCapturedOutput() {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final OutputCaptureException outputCaptureException = new OutputCaptureException("");
+        //when
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+            throw outputCaptureException;
+        });
+        //then
+        ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
+        assertThat(ongoingCapturedOutput.thrownException()).contains(outputCaptureException);
     }
 }

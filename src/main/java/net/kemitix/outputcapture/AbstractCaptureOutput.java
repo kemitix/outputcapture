@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Base for capturing output written to {@code System::out} and {@code System::err} as a {@link CapturedOutput}.
@@ -36,64 +37,82 @@ import java.util.function.Consumer;
 abstract class AbstractCaptureOutput implements OutputCapturer {
 
     /**
-     * Captures the output of the runnable asynchronously.
+     * Captures the output of the callable asynchronously.
      *
-     * <p>This implementation launches the runnable in a background thread then returns immediately.</p>
+     * <p>This implementation launches the callable in a background thread then returns immediately.</p>
      *
-     * @param runnable The Runnable to capture the output of
-     * @param router   The Router to direct where written output is sent
+     * @param callable     The Runnable to capture the output of
+     * @param router       The Router to direct where written output is sent
+     * @param latchFactory The Factory for creating CountDownLatch objects
      *
      * @return an instance of OngoingCapturedOutput
-     *
-     * @throws InterruptedException if there is an error while waiting for the outputs to be redirected
      */
-    protected OngoingCapturedOutput captureAsync(final Runnable runnable, final Router router) {
+    //FIXME: reduce complexity
+    @SuppressWarnings({"npathcomplexity", "illegalcatch"})
+    protected OngoingCapturedOutput captureAsync(final ThrowingCallable callable, final Router router, final
+                                                 Function<Integer, CountDownLatch> latchFactory
+                                                 ) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         final AtomicReference<CapturedPrintStream> out = new AtomicReference<>();
         final AtomicReference<CapturedPrintStream> err = new AtomicReference<>();
-        final CountDownLatch outputCapturedDone = new CountDownLatch(1);
+        final CountDownLatch outputCapturedLatch = latchFactory.apply(1);
         executor.submit(() -> {
             out.set(capturePrintStream(System.out, router, System::setOut));
             err.set(capturePrintStream(System.err, router, System::setErr));
-            outputCapturedDone.countDown();
+            outputCapturedLatch.countDown();
         });
-        executor.submit(runnable);
+        final AtomicReference<Throwable> thrownException = new AtomicReference<>();
+        executor.submit(() -> {
+            try {
+                callable.call();
+            } catch (Exception e) {
+                thrownException.set(e);
+            }
+        });
         executor.submit(() -> {
             System.setOut(out.get()
-                             .getReplacementStream());
+                             .getOriginalStream());
             System.setErr(err.get()
-                             .getReplacementStream());
+                             .getOriginalStream());
             executor.shutdown();
         });
         try {
-            outputCapturedDone.await();
+            outputCapturedLatch.await();
         } catch (InterruptedException e) {
             throw new OutputCaptureException("Error initiating capture", e);
         }
         return new DefaultOngoingCapturedOutput(out.get()
                                                    .getCapturedTo(), err.get()
-                                                                        .getCapturedTo(), executor);
+                                                                        .getCapturedTo(), executor, thrownException);
     }
 
     /**
-     * Captures the output of the runnable then returns.
+     * Captures the output of the callable then returns.
      *
-     * @param runnable The Runnable to capture the output of
+     * @param callable The callable to capture the output of
      * @param router   The Router to direct where written output is sent
      *
      * @return an instance of CapturedOutput
      */
+    @SuppressWarnings("illegalcatch")
     protected CapturedOutput capture(
-            final Runnable runnable, final Router router
+            final ThrowingCallable callable, final Router router
                                     ) {
         final CapturedPrintStream capturedOut = capturePrintStream(System.out, router, System::setOut);
         final CapturedPrintStream capturedErr = capturePrintStream(System.err, router, System::setErr);
-        runnable.run();
-        if (System.out != capturedOut.getReplacementStream()) {
-            throw new OutputCaptureException("System.out has been replaced");
+        try {
+            callable.call();
+            if (System.out != capturedOut.getReplacementStream()) {
+                throw new OutputCaptureException("System.out has been replaced");
+            }
+        } catch (OutputCaptureException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new OutputCaptureException(e);
+        } finally {
+            System.setOut(capturedOut.getOriginalStream());
+            System.setErr(capturedErr.getOriginalStream());
         }
-        System.setOut(capturedOut.getOriginalStream());
-        System.setErr(capturedErr.getOriginalStream());
         return new DefaultCapturedOutput(capturedOut.getCapturedTo(), capturedErr.getCapturedTo());
     }
 

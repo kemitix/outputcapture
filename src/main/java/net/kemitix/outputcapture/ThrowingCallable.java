@@ -21,28 +21,23 @@
 
 package net.kemitix.outputcapture;
 
-import java.util.concurrent.CountDownLatch;
-
 /**
- * Captures output written to {@code System::out} and {@code System::err} as a {@link CapturedOutput}.
+ * A task that does not return any result and may throw an exception.
+ *
+ * <p>Implementors define a single method with no arguments called call. The ThrowingCallable interface
+ * is similar to Runnable and Callable, in that all are designed for classes whose instances are
+ * potentially executed by another thread. A Runnable, however, cannot throw a checked exception, while
+ * a Callable must return a value.</p>
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public final class CaptureOutput extends AbstractCaptureOutput {
+@FunctionalInterface
+public interface ThrowingCallable {
 
-    @Override
-    public CapturedOutput of(final ThrowingCallable callable) {
-        return capture(callable, new RedirectRouter());
-    }
-
-    @Override
-    public CapturedOutput copyOf(final ThrowingCallable callable) {
-        return capture(callable, new CopyRouter());
-    }
-
-    @Override
-    public OngoingCapturedOutput ofThread(final ThrowingCallable callable) {
-        return captureAsync(callable, new RedirectRouter(), CountDownLatch::new);
-    }
-
+    /**
+     * Invokes the task the implementation provides.
+     *
+     * @throws Exception is the implementation throws one
+     */
+    void call() throws Exception;
 }

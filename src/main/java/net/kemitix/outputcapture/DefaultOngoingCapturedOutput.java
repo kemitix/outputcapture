@@ -23,8 +23,10 @@ package net.kemitix.outputcapture;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,19 +39,23 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
 
     private final ExecutorService executorService;
 
+    private final AtomicReference<Throwable> thrownException;
+
     /**
      * Constructor.
      *
      * @param capturedOut     The captured output written to System.out
      * @param capturedErr     The captured output written to System.err
      * @param executorService The Executor Service running the captured thread
+     * @param thrownException The reference to any exception thrown
      */
     DefaultOngoingCapturedOutput(
             final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr,
-            final ExecutorService executorService
+            final ExecutorService executorService, final AtomicReference<Throwable> thrownException
                                 ) {
         super(capturedOut, capturedErr);
         this.executorService = executorService;
+        this.thrownException = thrownException;
     }
 
     @Override
@@ -93,5 +99,10 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
         } catch (InterruptedException e) {
             throw new OutputCaptureException("Error awaiting termination", e);
         }
+    }
+
+    @Override
+    public Optional<Throwable> thrownException() {
+        return Optional.ofNullable(thrownException.get());
     }
 }

@@ -21,6 +21,7 @@
 
 package net.kemitix.outputcapture;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -65,5 +66,12 @@ public interface OngoingCapturedOutput extends CapturedOutput {
      * @param timeout The maximum time to wait
      * @param unit    The time unit of the timeout argument
      */
-    void await(final long timeout, final TimeUnit unit);
+    void await(long timeout, TimeUnit unit);
+
+    /**
+     * Returns an optional containing any exception that was thrown by the captured task.
+     *
+     * @return an Optional containing an exception, or empty if none was thrown
+     */
+    Optional<Throwable> thrownException();
 }
