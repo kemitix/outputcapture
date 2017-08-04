@@ -24,7 +24,7 @@ package net.kemitix.outputcapture;
 import java.util.stream.Stream;
 
 /**
- * Captures the {@code System.out} and {@code System.err}.
+ * The output that was written to {@code System.out} and {@code System.err}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */

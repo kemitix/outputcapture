@@ -21,41 +21,43 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+
+import java.io.ByteArrayOutputStream;
+import java.util.stream.Stream;
+
 /**
- * Captures the output written to standard out and standard error.
+ * The captured output written to System.out and System.err.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public interface OutputCapturer {
+class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOutput {
+
+    @Getter(AccessLevel.PROTECTED)
+    private final ByteArrayOutputStream capturedOut;
+
+    @Getter(AccessLevel.PROTECTED)
+    private final ByteArrayOutputStream capturedErr;
 
     /**
-     * Capture the output of the runnable.
+     * Constructor.
      *
-     * @param runnable the runnable to capture the output of
-     *
-     * @return the instance CapturedOutput
+     * @param capturedOut The captured output written to System.out
+     * @param capturedErr The captured output written to System.err
      */
-    CapturedOutput of(Runnable runnable);
+    DefaultCapturedOutput(final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr) {
+        this.capturedOut = capturedOut;
+        this.capturedErr = capturedErr;
+    }
 
-    /**
-     * Capture the output of the runnable and copies to normal output.
-     *
-     * @param runnable the runnable to capture the output of
-     *
-     * @return the instance CapturedOutput
-     */
-    CapturedOutput copyOf(Runnable runnable);
+    @Override
+    public Stream<String> getStdOut() {
+        return asStream(capturedOut);
+    }
 
-    /**
-     * Capture the output of a running thread asynchronously.
-     *
-     * <p>The Runnable is started in a new thread.</p>
-     *
-     * @param runnable the runnable to capture the output of
-     *
-     * @return an instance of OngoingCapturedOutput
-     *
-     * @throws InterruptedException if the thread does not complete properly
-     */
-    OngoingCapturedOutput ofThread(Runnable runnable) throws InterruptedException;
+    @Override
+    public Stream<String> getStdErr() {
+        return asStream(capturedErr);
+    }
 }

@@ -1,4 +1,3 @@
-
 /**
  * The MIT License (MIT)
  *
@@ -230,5 +229,70 @@ public class CaptureTest {
                    .toString();
     }
 
+    @Test
+    public void canCaptureOutputAsynchronously() throws InterruptedException {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final Runnable runnable = () -> {
+            System.out.println("starting");
+            System.err.println("starting err");
+            sleep(100L);
+            System.out.println("finished");
+            System.err.println("finished err");
+        };
+        //when
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
+        //then
+        sleep(50L);
+        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting");
+        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err");
+        sleep(100L);
+        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting", "finished");
+        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err", "finished err");
+    }
+
+    @Test
+    public void canFlushCapturedOutputWhenCapturingAsynchronously() throws InterruptedException {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final Runnable runnable = ()->{
+            System.out.println("starting out");
+            System.err.println("starting err");
+            sleep(100L);
+            System.out.println("finished out");
+            System.err.println("finished err");
+        };
+        //when
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
+        sleep(50L);
+        ongoingCapturedOutput.flush();
+        sleep(100L);
+        //then
+        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
+        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
+    }
+
+    @Test
+    public void canCapturedOutputAndFlushWhenCapturingAsynchronously() throws InterruptedException {
+        //given
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final Runnable runnable = ()->{
+            System.out.println("starting out");
+            System.err.println("starting err");
+            sleep(100L);
+            System.out.println("finished out");
+            System.err.println("finished err");
+        };
+        //when
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
+        sleep(50L);
+        final CapturedOutput initialCapturedOutput = ongoingCapturedOutput.getCapturedOutputAndFlush();
+        sleep(100L);
+        //then
+        assertThat(initialCapturedOutput.getStdOut()).containsExactly("starting out");
+        assertThat(initialCapturedOutput.getStdErr()).containsExactly("starting err");
+        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
+        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
+    }
 }
 

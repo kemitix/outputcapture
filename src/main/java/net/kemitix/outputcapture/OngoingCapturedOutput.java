@@ -22,40 +22,24 @@
 package net.kemitix.outputcapture;
 
 /**
- * Captures the output written to standard out and standard error.
+ * The output that is been written to {@code System.out} and {@code System.err}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public interface OutputCapturer {
+public interface OngoingCapturedOutput extends CapturedOutput {
 
     /**
-     * Capture the output of the runnable.
+     * Get the captured output to System.out and System.err collected so far and start again.
      *
-     * @param runnable the runnable to capture the output of
+     * <p>Subsequent calls to {@link #getStdOut()}, {@link #getStdErr()} or {@code getCapturedOutputAndFlush()} will
+     * only return output captured since this call.</p>
      *
-     * @return the instance CapturedOutput
+     * @return a Stream of Strings, one line per String using the system's line separator
      */
-    CapturedOutput of(Runnable runnable);
+    CapturedOutput getCapturedOutputAndFlush();
 
     /**
-     * Capture the output of the runnable and copies to normal output.
-     *
-     * @param runnable the runnable to capture the output of
-     *
-     * @return the instance CapturedOutput
+     * Discard all captured output so far and continue capturing from this point.
      */
-    CapturedOutput copyOf(Runnable runnable);
-
-    /**
-     * Capture the output of a running thread asynchronously.
-     *
-     * <p>The Runnable is started in a new thread.</p>
-     *
-     * @param runnable the runnable to capture the output of
-     *
-     * @return an instance of OngoingCapturedOutput
-     *
-     * @throws InterruptedException if the thread does not complete properly
-     */
-    OngoingCapturedOutput ofThread(Runnable runnable) throws InterruptedException;
+    void flush();
 }

@@ -21,18 +21,12 @@
 
 package net.kemitix.outputcapture;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-
 /**
  * Captures output written to {@code System::out} and {@code System::err} as a {@link CapturedOutput}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public final class CaptureOutput implements OutputCapturer {
+public final class CaptureOutput extends AbstractCaptureOutput {
 
     @Override
     public CapturedOutput of(final Runnable runnable) {
@@ -44,48 +38,9 @@ public final class CaptureOutput implements OutputCapturer {
         return capture(runnable, new CopyRouter());
     }
 
-    private CapturedOutput capture(
-            final Runnable runnable, final Router router
-                                  ) {
-        final CapturedPrintStream capturedOut = capturePrintStream(System.out, router, System::setOut);
-        final CapturedPrintStream capturedErr = capturePrintStream(System.err, router, System::setErr);
-        runnable.run();
-        if (System.out != capturedOut.getReplacementStream()) {
-            throw new OutputCaptureException("System.out has been replaced");
-        }
-        System.setOut(capturedOut.getOriginalStream());
-        System.setErr(capturedErr.getOriginalStream());
-        return asCapturedOutput(capturedOut.getCapturedTo(), capturedErr.getCapturedTo());
-    }
-
-    private CapturedOutput asCapturedOutput(
-            final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr
-                                           ) {
-        return new CapturedOutput() {
-
-            @Override
-            public Stream<String> getStdOut() {
-                return asStream(capturedOut);
-            }
-
-            @Override
-            public Stream<String> getStdErr() {
-                return asStream(capturedErr);
-            }
-        };
-    }
-
-    private CapturedPrintStream capturePrintStream(
-            final PrintStream originalStream, final Router router, final Consumer<PrintStream> setStream
-                                                  ) {
-        final CapturedPrintStream capturedPrintStream = new CapturedPrintStream(originalStream, router);
-        setStream.accept(capturedPrintStream.getReplacementStream());
-        return capturedPrintStream;
-    }
-
-    private Stream<String> asStream(final ByteArrayOutputStream captured) {
-        return Arrays.stream(captured.toString()
-                                     .split(System.lineSeparator()));
+    @Override
+    public OngoingCapturedOutput ofThread(final Runnable runnable) throws InterruptedException {
+        return captureAsync(runnable, new RedirectRouter());
     }
 
 }

@@ -21,41 +21,27 @@
 
 package net.kemitix.outputcapture;
 
+import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.stream.Stream;
+
 /**
- * Captures the output written to standard out and standard error.
+ * Base for holding captured output.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public interface OutputCapturer {
+abstract class AbstractCapturedOutput {
 
     /**
-     * Capture the output of the runnable.
+     * Converts the output stream into a stream of strings split by the system line separator.
      *
-     * @param runnable the runnable to capture the output of
+     * @param outputStream The output stream
      *
-     * @return the instance CapturedOutput
+     * @return a Stream of Strings
      */
-    CapturedOutput of(Runnable runnable);
+    protected Stream<String> asStream(final ByteArrayOutputStream outputStream) {
+        return Arrays.stream(outputStream.toString()
+                                         .split(System.lineSeparator()));
+    }
 
-    /**
-     * Capture the output of the runnable and copies to normal output.
-     *
-     * @param runnable the runnable to capture the output of
-     *
-     * @return the instance CapturedOutput
-     */
-    CapturedOutput copyOf(Runnable runnable);
-
-    /**
-     * Capture the output of a running thread asynchronously.
-     *
-     * <p>The Runnable is started in a new thread.</p>
-     *
-     * @param runnable the runnable to capture the output of
-     *
-     * @return an instance of OngoingCapturedOutput
-     *
-     * @throws InterruptedException if the thread does not complete properly
-     */
-    OngoingCapturedOutput ofThread(Runnable runnable) throws InterruptedException;
 }
