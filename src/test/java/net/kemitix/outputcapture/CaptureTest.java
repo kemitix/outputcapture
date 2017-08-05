@@ -342,13 +342,25 @@ public class CaptureTest {
         final PrintStream originalOut = System.out;
         final PrintStream originalErr = System.err;
         final CaptureOutput captureOutput = new CaptureOutput();
+        final CountDownLatch latch1 = createLatch();
+        final CountDownLatch latch2 = createLatch();
+        final CountDownLatch latch3 = createLatch();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(asyncRunnable);
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+            System.out.println("starting out");
+            System.err.println("starting err");
+            releaseLatch(latch1);
+            awaitLatch(latch2);
+            System.out.println("finished out");
+            System.err.println("finished err");
+            releaseLatch(latch3);
+        });
         //then
-        sleep(A_SHORT_PERIOD);
+        awaitLatch(latch1);
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err");
-        sleep(A_PERIOD);
+        releaseLatch(latch2);
+        awaitLatch(latch3);
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting out", "finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err", "finished err");
         ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
@@ -402,11 +414,23 @@ public class CaptureTest {
     public void canFlushCapturedOutputWhenCapturingAsynchronously() throws InterruptedException {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
+        final CountDownLatch latch1 = createLatch();
+        final CountDownLatch latch2 = createLatch();
+        final CountDownLatch latch3 = createLatch();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(asyncRunnable);
-        sleep(A_SHORT_PERIOD);
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+            System.out.println("starting out");
+            System.err.println("starting err");
+            releaseLatch(latch1);
+            awaitLatch(latch2);
+            System.out.println("finished out");
+            System.err.println("finished err");
+            releaseLatch(latch3);
+        });
+        awaitLatch(latch1);
         ongoingCapturedOutput.flush();
-        sleep(A_PERIOD);
+        releaseLatch(latch2);
+        awaitLatch(latch3);
         //then
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
@@ -416,14 +440,26 @@ public class CaptureTest {
     public void canCapturedOutputAndFlushWhenCapturingAsynchronously() throws InterruptedException {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
+        final CountDownLatch latch1 = createLatch();
+        final CountDownLatch latch2 = createLatch();
+        final CountDownLatch latch3 = createLatch();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(asyncRunnable);
-        sleep(A_SHORT_PERIOD);
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+            System.out.println("starting out");
+            System.err.println("starting err");
+            releaseLatch(latch1);
+            awaitLatch(latch2);
+            System.out.println("finished out");
+            System.err.println("finished err");
+            releaseLatch(latch3);
+        });
+        awaitLatch(latch1);
         final CapturedOutput initialCapturedOutput = ongoingCapturedOutput.getCapturedOutputAndFlush();
+        releaseLatch(latch2);
         //then
-        ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
         assertThat(initialCapturedOutput.getStdOut()).containsExactly("starting out");
         assertThat(initialCapturedOutput.getStdErr()).containsExactly("starting err");
+        awaitLatch(latch3);
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
     }
@@ -432,16 +468,18 @@ public class CaptureTest {
     public void canWaitForThreadToComplete() {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final CountDownLatch finishRunner = createLatch();
+        final CountDownLatch latch = createLatch();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(finishRunner::await);
+        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+            awaitLatch(latch);
+        });
         //then
         assertThat(ongoingCapturedOutput.isRunning()).as("isRunning = true")
                                                      .isTrue();
         assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = false")
                                                       .isFalse();
-        releaseLatch(finishRunner);
-        ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
+        releaseLatch(latch);
+        ongoingCapturedOutput.await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         assertThat(ongoingCapturedOutput.isRunning()).as("isRunning = false")
                                                      .isFalse();
         assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = true")
@@ -515,7 +553,7 @@ public class CaptureTest {
         assertThat(ongoingCapturedOutput.thrownException()).contains(outputCaptureException);
     }
 
-    @Test(timeout = A_LONG_PERIOD)
+    @Test
     public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
         //given
         final CaptureOutput outer = new CaptureOutput();
