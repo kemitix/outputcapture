@@ -55,7 +55,6 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      *
      * @return an instance of CapturedOutput
      */
-    @SuppressWarnings("illegalcatch")
     protected CapturedOutput capture(final ThrowingCallable callable) {
         final ThreadFactory threadFactory = r -> new Thread(createThreadGroup(), r);
         final ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
