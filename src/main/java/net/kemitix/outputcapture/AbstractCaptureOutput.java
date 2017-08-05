@@ -63,7 +63,7 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
         executor.submit(initiateCapture(router, out, err));
         executor.submit(outputCapturedLatch::countDown);
         executor.submit(invokeCallable(callable, thrownException));
-        executor.submit(shutdownAsyncCapture(executor, out, err, completedLatch));
+        executor.submit(shutdownAsyncCapture(out, err, completedLatch));
         executor.submit(executor::shutdown);
         awaitLatch(outputCapturedLatch);
         return new DefaultOngoingCapturedOutput(capturedTo(out), capturedTo(err), completedLatch, thrownException);
@@ -75,8 +75,8 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
     }
 
     private Runnable shutdownAsyncCapture(
-            final ExecutorService executor, final AtomicReference<CapturedPrintStream> out,
-            final AtomicReference<CapturedPrintStream> err, final CountDownLatch completedLatch
+            final AtomicReference<CapturedPrintStream> out, final AtomicReference<CapturedPrintStream> err,
+            final CountDownLatch completedLatch
                                          ) {
         return () -> {
             System.setOut(originalStream(out));
