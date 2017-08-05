@@ -202,25 +202,37 @@ public class CaptureTest {
         final ExecutorService catchMe = Executors.newSingleThreadExecutor();
         final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
         final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
+        final CountDownLatch releaseLatch = new CountDownLatch(1);
+        final CountDownLatch doneLatch = new CountDownLatch(1);
         //when
         ignoreMe.submit(() -> {
-            sleep(A_SHORT_PERIOD);
+            awaitLatch(releaseLatch);
             System.out.println("ignore me");
+            doneLatch.countDown();
         });
         ignoreMe.submit(ignoreMe::shutdown);
         catchMe.submit(() -> {
             reference.set(captureOutput.of(() -> {
                 System.out.println("started");
-                sleep(A_PERIOD);
+                releaseLatch.countDown();
+                awaitLatch(doneLatch);
                 System.out.println("finished");
             }));
         });
         catchMe.submit(catchMe::shutdown);
-        ignoreMe.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
-        catchMe.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
+        ignoreMe.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
+        catchMe.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         //then
         assertThat(reference.get()
                             .getStdOut()).containsExactly("started", "finished");
+    }
+
+    private void awaitLatch(final CountDownLatch latch) {
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
