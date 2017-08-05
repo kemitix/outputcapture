@@ -41,6 +41,42 @@ import java.util.function.Function;
 abstract class AbstractCaptureOutput implements OutputCapturer {
 
     /**
+     * Captures the output of the callable then returns.
+     *
+     * @param callable The callable to capture the output of
+     * @param router   The Router to direct where written output is sent
+     *
+     * @return an instance of CapturedOutput
+     */
+    @SuppressWarnings("illegalcatch")
+    protected CapturedOutput capture(
+            final ThrowingCallable callable, final Router router
+                                    ) {
+        final ThreadFactory threadFactory = r -> new Thread(new ThreadGroup("CaptureOutput1"), r);
+        final ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
+        final AtomicReference<Exception> thrownException = new AtomicReference<>();
+        final CountDownLatch finishedLatch = new CountDownLatch(1);
+        final AtomicReference<CapturedPrintStream> capturedOut = new AtomicReference<>();
+        final AtomicReference<CapturedPrintStream> capturedErr = new AtomicReference<>();
+        executor.submit(initiateCapture(router, capturedOut, capturedErr));
+        executor.submit(invokeCallable(callable, thrownException));
+        executor.submit(finishedLatch::countDown);
+        executor.submit(executor::shutdown);
+        awaitLatch(finishedLatch);
+        if (System.out != capturedOut.get()
+                                     .getReplacementStream()) {
+            throw new OutputCaptureException("System.out has been replaced");
+        }
+        System.setOut(originalStream(capturedOut));
+        System.setErr(originalStream(capturedErr));
+        if (Optional.ofNullable(thrownException.get())
+                    .isPresent()) {
+            throw new OutputCaptureException(thrownException.get());
+        }
+        return new DefaultCapturedOutput(capturedTo(capturedOut), capturedTo(capturedErr));
+    }
+
+    /**
      * Captures the output of the callable asynchronously.
      *
      * <p>This implementation launches the callable in a background thread then returns immediately.</p>
@@ -117,42 +153,6 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
         } catch (InterruptedException e) {
             throw new OutputCaptureException("Error awaiting latch", e);
         }
-    }
-
-    /**
-     * Captures the output of the callable then returns.
-     *
-     * @param callable The callable to capture the output of
-     * @param router   The Router to direct where written output is sent
-     *
-     * @return an instance of CapturedOutput
-     */
-    @SuppressWarnings("illegalcatch")
-    protected CapturedOutput capture(
-            final ThrowingCallable callable, final Router router
-                                    ) {
-        final ThreadFactory threadFactory = r -> new Thread(new ThreadGroup("CaptureOutput1"), r);
-        final ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
-        final AtomicReference<Exception> thrownException = new AtomicReference<>();
-        final CountDownLatch finishedLatch = new CountDownLatch(1);
-        final AtomicReference<CapturedPrintStream> capturedOut = new AtomicReference<>();
-        final AtomicReference<CapturedPrintStream> capturedErr = new AtomicReference<>();
-        executor.submit(initiateCapture(router, capturedOut, capturedErr));
-        executor.submit(invokeCallable(callable, thrownException));
-        executor.submit(finishedLatch::countDown);
-        executor.submit(executor::shutdown);
-        awaitLatch(finishedLatch);
-        if (System.out != capturedOut.get()
-                                     .getReplacementStream()) {
-            throw new OutputCaptureException("System.out has been replaced");
-        }
-        System.setOut(originalStream(capturedOut));
-        System.setErr(originalStream(capturedErr));
-        if (Optional.ofNullable(thrownException.get())
-                    .isPresent()) {
-            throw new OutputCaptureException(thrownException.get());
-        }
-        return new DefaultCapturedOutput(capturedTo(capturedOut), capturedTo(capturedErr));
     }
 
     private CapturedPrintStream capturePrintStream(
