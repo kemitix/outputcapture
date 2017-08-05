@@ -53,6 +53,6 @@ class CapturedPrintStream {
         this.capturedTo = new ByteArrayOutputStream();
         final PrintStream capturingStream = new PrintStream(this.capturedTo);
         final PrintStream filteredStream = new ThreadFilteredPrintStream(capturingStream, Thread.currentThread());
-        this.replacementStream = router.handle(filteredStream, originalStream);
+        this.replacementStream = router.handle(filteredStream, this.originalStream);
     }
 }

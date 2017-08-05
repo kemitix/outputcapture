@@ -30,6 +30,7 @@ assertThat(capturedOutput.getStdErr()).containsExactly(line3);
 ### Asynchronous
 
 * `OngoingCapturedOutput ofThread(ThrowingCallable)`
+* `OngoingCapturedOutput copyOfThread(ThrowingCallable)`
 
 With this usage, the `runnable` is started and the `ongoingCapturedOutput` is
 returned immediately.

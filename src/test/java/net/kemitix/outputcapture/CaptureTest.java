@@ -30,6 +30,7 @@ import java.io.PrintStream;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -37,7 +38,6 @@ import java.util.function.Function;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -52,6 +52,8 @@ public class CaptureTest {
     private static final long A_PERIOD = 200L;
 
     private static final long A_SHORT_PERIOD = 100L;
+
+    private static final long A_LONG_PERIOD = 1000L;
 
     private String line1;
 
@@ -74,13 +76,13 @@ public class CaptureTest {
     @Mock
     private ByteArrayOutputStream capturedErr;
 
-    private AtomicReference<Throwable> thrownException = new AtomicReference<>();
+    private AtomicReference<Exception> thrownException = new AtomicReference<>();
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        line1 = randomText();
-        line2 = randomText();
+        line1 = "1:" + randomText();
+        line2 = "2:" + randomText();
         asyncRunnable = () -> {
             System.out.println("starting out");
             System.err.println("starting err");
@@ -194,22 +196,29 @@ public class CaptureTest {
     }
 
     @Test
-    public void onlyCapturesOutputFromTargetRunnable() {
+    public void onlyCapturesOutputFromTargetRunnable() throws InterruptedException {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final ThrowingCallable runnable = () -> {
-            System.out.println("started");
-            sleep(A_PERIOD);
-            System.out.println("finished");
-        };
-        new Thread(() -> {
+        final ExecutorService catchMe = Executors.newSingleThreadExecutor();
+        final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
+        final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
+        //when
+        ignoreMe.submit(() -> {
             sleep(A_SHORT_PERIOD);
             System.out.println("ignore me");
-        }).start();
-        //when
-        final CapturedOutput capturedOutput = captureOutput.of(runnable);
+        });
+        catchMe.submit(() -> {
+            reference.set(captureOutput.of(() -> {
+                System.out.println("started");
+                sleep(A_PERIOD);
+                System.out.println("finished");
+            }));
+        });
+        ignoreMe.awaitTermination(A_LONG_PERIOD, TimeUnit.MILLISECONDS);
+        catchMe.awaitTermination(A_LONG_PERIOD, TimeUnit.MILLISECONDS);
         //then
-        assertThat(capturedOutput.getStdOut()).containsExactly("started", "finished");
+        assertThat(reference.get()
+                            .getStdOut()).containsExactly("started", "finished");
     }
 
     @Test
@@ -230,18 +239,26 @@ public class CaptureTest {
     }
 
     @Test
-    public void ignoresOutputFromOtherThreads() {
+    public void ignoresOutputFromOtherThreads() throws InterruptedException {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
+        final ExecutorService monitor = Executors.newSingleThreadExecutor();
+        final ExecutorService subject = Executors.newSingleThreadExecutor();
+        final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
         //when
-        final CapturedOutput capturedOutput = captureOutput.of(() -> {
-            runOnThreadAndWait(() -> {
-                System.out.println("message");
-                System.out.write('x');
-            });
+        monitor.submit(() -> {
+            reference.set(captureOutput.of(() -> {
+                subject.submit(() -> {
+                    System.out.println("message");
+                    System.out.write('x');
+                });
+            }));
         });
+        subject.awaitTermination(A_LONG_PERIOD, TimeUnit.MILLISECONDS);
+        monitor.awaitTermination(A_LONG_PERIOD, TimeUnit.MILLISECONDS);
         //then
-        assertThat(capturedOutput.getStdOut()).containsExactly("");
+        assertThat(reference.get()
+                            .getStdOut()).containsExactly("");
     }
 
     @Test
@@ -307,6 +324,46 @@ public class CaptureTest {
                               .isSameAs(originalOut);
         assertThat(System.err).as("restore original err")
                               .isSameAs(originalErr);
+    }
+
+    @Test
+    public void canRestoreNormalSystemOutWhenCapturingAsynchronously() throws Exception {
+        //given
+        final CaptureOutput outer = new CaptureOutput();
+        final CaptureOutput inner = new CaptureOutput();
+        //when
+        final CapturedOutput outerCaptured = outer.of(() -> {
+            final OngoingCapturedOutput innerCaptured = inner.ofThread(() -> {
+                System.out.println(line1);
+            });
+            innerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
+            System.out.println(line2);
+            assertThat(innerCaptured.getStdOut()).containsExactly(line1)
+                                                 .doesNotContain(line2);
+        });
+        //then
+        assertThat(outerCaptured.getStdOut()).containsExactly(line2)
+                                             .doesNotContain(line1);
+    }
+
+    @Test
+    public void canRestoreNormalSystemErrWhenCapturingAsynchronously() throws Exception {
+        //given
+        final CaptureOutput outer = new CaptureOutput();
+        final CaptureOutput inner = new CaptureOutput();
+        //when
+        final CapturedOutput outerCaptured = outer.of(() -> {
+            final OngoingCapturedOutput innerCaptured = inner.ofThread(() -> {
+                System.err.println(line1);
+            });
+            innerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
+            System.err.println(line2);
+            assertThat(innerCaptured.getStdErr()).containsExactly(line1)
+                                                 .doesNotContain(line2);
+        });
+        //then
+        assertThat(outerCaptured.getStdErr()).containsExactly(line2)
+                                             .doesNotContain(line1);
     }
 
     @Test
@@ -378,6 +435,11 @@ public class CaptureTest {
             public OngoingCapturedOutput ofThread(final ThrowingCallable callable) {
                 return captureAsync(callable, router, latchFactory);
             }
+
+            @Override
+            public OngoingCapturedOutput copyOfThread(final ThrowingCallable callable) {
+                return null;
+            }
         };
         given(latchFactory.apply(1)).willReturn(latch);
         doThrow(InterruptedException.class).when(latch)
@@ -419,5 +481,24 @@ public class CaptureTest {
         //then
         ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
         assertThat(ongoingCapturedOutput.thrownException()).contains(outputCaptureException);
+    }
+
+    @Test(timeout = 100_000L)
+    public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
+        //given
+        final CaptureOutput outer = new CaptureOutput();
+        final CaptureOutput inner = new CaptureOutput();
+        //when
+        final CapturedOutput outerCaptured = outer.of(() -> {
+            final OngoingCapturedOutput innerCaptured = inner.copyOfThread(() -> {
+                System.out.println(line1);
+            });
+            innerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
+            System.out.println(line2);
+            assertThat(innerCaptured.getStdOut()).containsExactly(line1)
+                                                 .doesNotContain(line2);
+        });
+        //then
+        assertThat(outerCaptured.getStdOut()).containsExactly(line1, line2);
     }
 }

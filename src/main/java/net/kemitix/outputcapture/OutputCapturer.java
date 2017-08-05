@@ -49,11 +49,22 @@ public interface OutputCapturer {
     /**
      * Capture the output of a running thread asynchronously.
      *
-     * <p>The Runnable is started in a new thread.</p>
+     * <p>{@code callable} is started in a new thread.</p>
      *
      * @param callable the callable to capture the output of
      *
      * @return an instance of OngoingCapturedOutput
      */
     OngoingCapturedOutput ofThread(ThrowingCallable callable);
+
+    /**
+     * Capture the output of the callable running asynchronously and copies to the normal output.
+     *
+     * <p>{@code callable} is started in a new thread.</p>
+     *
+     * @param callable the callable to capture the output of
+     *
+     * @return an instance of OngoingCapturedOutput
+     */
+    OngoingCapturedOutput copyOfThread(ThrowingCallable callable);
 }

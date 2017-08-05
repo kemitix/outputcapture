@@ -39,7 +39,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
 
     private final CountDownLatch completedLatch;
 
-    private final AtomicReference<Throwable> thrownException;
+    private final AtomicReference<Exception> thrownException;
 
     /**
      * Constructor.
@@ -51,7 +51,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      */
     DefaultOngoingCapturedOutput(
             final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr,
-            final CountDownLatch completedLatch, final AtomicReference<Throwable> thrownException
+            final CountDownLatch completedLatch, final AtomicReference<Exception> thrownException
                                 ) {
         super(capturedOut, capturedErr);
         this.completedLatch = completedLatch;

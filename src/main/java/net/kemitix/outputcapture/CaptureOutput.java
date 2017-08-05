@@ -45,4 +45,8 @@ public final class CaptureOutput extends AbstractCaptureOutput {
         return captureAsync(callable, new RedirectRouter(), CountDownLatch::new);
     }
 
+    @Override
+    public OngoingCapturedOutput copyOfThread(final ThrowingCallable callable) {
+        return captureAsync(callable, new CopyRouter(), CountDownLatch::new);
+    }
 }

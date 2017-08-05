@@ -21,10 +21,13 @@
 
 package net.kemitix.outputcapture;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -34,6 +37,7 @@ import java.util.function.Function;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
+@SuppressWarnings("classdataabstractioncoupling")
 abstract class AbstractCaptureOutput implements OutputCapturer {
 
     /**
@@ -47,8 +51,6 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
      *
      * @return an instance of OngoingCapturedOutput
      */
-    //FIXME: reduce complexity
-    @SuppressWarnings({"npathcomplexity", "illegalcatch"})
     protected OngoingCapturedOutput captureAsync(
             final ThrowingCallable callable, final Router router, final Function<Integer, CountDownLatch> latchFactory
                                                 ) {
@@ -57,37 +59,64 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
         final AtomicReference<CapturedPrintStream> err = new AtomicReference<>();
         final CountDownLatch outputCapturedLatch = latchFactory.apply(1);
         final CountDownLatch completedLatch = latchFactory.apply(1);
-        executor.submit(() -> {
-            out.set(capturePrintStream(System.out, router, System::setOut));
-            err.set(capturePrintStream(System.err, router, System::setErr));
-            outputCapturedLatch.countDown();
-        });
-        final AtomicReference<Throwable> thrownException = new AtomicReference<>();
-        executor.submit(() -> {
+        final AtomicReference<Exception> thrownException = new AtomicReference<>();
+        executor.submit(initiateCapture(router, out, err));
+        executor.submit(outputCapturedLatch::countDown);
+        executor.submit(invokeCallable(callable, thrownException));
+        executor.submit(shutdownAsyncCapture(executor, out, err, completedLatch));
+        executor.submit(executor::shutdown);
+        awaitLatch(outputCapturedLatch);
+        return new DefaultOngoingCapturedOutput(capturedTo(out), capturedTo(err), completedLatch, thrownException);
+    }
+
+    private ByteArrayOutputStream capturedTo(final AtomicReference<CapturedPrintStream> reference) {
+        final CapturedPrintStream capturedPrintStream = reference.get();
+        return capturedPrintStream.getCapturedTo();
+    }
+
+    private Runnable shutdownAsyncCapture(
+            final ExecutorService executor, final AtomicReference<CapturedPrintStream> out,
+            final AtomicReference<CapturedPrintStream> err, final CountDownLatch completedLatch
+                                         ) {
+        return () -> {
+            System.setOut(originalStream(out));
+            System.setErr(originalStream(err));
+            completedLatch.countDown();
+        };
+    }
+
+    private PrintStream originalStream(final AtomicReference<CapturedPrintStream> out) {
+        final CapturedPrintStream capturedPrintStream = out.get();
+        return capturedPrintStream.getOriginalStream();
+    }
+
+    @SuppressWarnings("illegalcatch")
+    private Runnable invokeCallable(final ThrowingCallable callable, final AtomicReference<Exception> thrownException) {
+        return () -> {
             try {
                 callable.call();
             } catch (Exception e) {
                 thrownException.set(e);
             }
-        });
-        executor.submit(() -> {
-            System.setOut(out.get()
-                             .getOriginalStream());
-            System.setErr(err.get()
-                             .getOriginalStream());
-            executor.shutdown();
-            completedLatch.countDown();
-        });
+        };
+    }
+
+    private Runnable initiateCapture(
+            final Router router, final AtomicReference<CapturedPrintStream> out,
+            final AtomicReference<CapturedPrintStream> err
+                                    ) {
+        return () -> {
+            out.set(capturePrintStream(System.out, router, System::setOut));
+            err.set(capturePrintStream(System.err, router, System::setErr));
+        };
+    }
+
+    private void awaitLatch(final CountDownLatch outputCapturedLatch) {
         try {
             outputCapturedLatch.await();
         } catch (InterruptedException e) {
-            throw new OutputCaptureException("Error initiating capture", e);
+            throw new OutputCaptureException("Error awaiting latch", e);
         }
-        return new DefaultOngoingCapturedOutput(out.get()
-                                                   .getCapturedTo(), err.get()
-                                                                        .getCapturedTo(), completedLatch,
-                                                thrownException
-        );
     }
 
     /**
@@ -102,22 +131,28 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
     protected CapturedOutput capture(
             final ThrowingCallable callable, final Router router
                                     ) {
-        final CapturedPrintStream capturedOut = capturePrintStream(System.out, router, System::setOut);
-        final CapturedPrintStream capturedErr = capturePrintStream(System.err, router, System::setErr);
-        try {
-            callable.call();
-            if (System.out != capturedOut.getReplacementStream()) {
-                throw new OutputCaptureException("System.out has been replaced");
-            }
-        } catch (OutputCaptureException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new OutputCaptureException(e);
-        } finally {
-            System.setOut(capturedOut.getOriginalStream());
-            System.setErr(capturedErr.getOriginalStream());
+        final ThreadFactory threadFactory = r -> new Thread(new ThreadGroup("CaptureOutput1"), r);
+        final ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
+        final AtomicReference<Exception> thrownException = new AtomicReference<>();
+        final CountDownLatch finishedLatch = new CountDownLatch(1);
+        final AtomicReference<CapturedPrintStream> capturedOut = new AtomicReference<>();
+        final AtomicReference<CapturedPrintStream> capturedErr = new AtomicReference<>();
+        executor.submit(initiateCapture(router, capturedOut, capturedErr));
+        executor.submit(invokeCallable(callable, thrownException));
+        executor.submit(finishedLatch::countDown);
+        executor.submit(executor::shutdown);
+        awaitLatch(finishedLatch);
+        if (System.out != capturedOut.get()
+                                     .getReplacementStream()) {
+            throw new OutputCaptureException("System.out has been replaced");
         }
-        return new DefaultCapturedOutput(capturedOut.getCapturedTo(), capturedErr.getCapturedTo());
+        System.setOut(originalStream(capturedOut));
+        System.setErr(originalStream(capturedErr));
+        if (Optional.ofNullable(thrownException.get())
+                    .isPresent()) {
+            throw new OutputCaptureException(thrownException.get());
+        }
+        return new DefaultCapturedOutput(capturedTo(capturedOut), capturedTo(capturedErr));
     }
 
     private CapturedPrintStream capturePrintStream(

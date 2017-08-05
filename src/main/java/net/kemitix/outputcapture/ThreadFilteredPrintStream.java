@@ -71,7 +71,8 @@ class ThreadFilteredPrintStream extends PrintStream {
     }
 
     private boolean onFilteredThread() {
-        return Thread.currentThread()
-                     .equals(filteredThread);
+        return filteredThread.getThreadGroup()
+                             .parentOf(Thread.currentThread()
+                                             .getThreadGroup());
     }
 }
