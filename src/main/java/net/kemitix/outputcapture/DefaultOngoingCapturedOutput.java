@@ -24,7 +24,7 @@ package net.kemitix.outputcapture;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -37,7 +37,7 @@ import java.util.stream.Stream;
  */
 class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements OngoingCapturedOutput {
 
-    private final ExecutorService executorService;
+    private final CountDownLatch completedLatch;
 
     private final AtomicReference<Throwable> thrownException;
 
@@ -46,15 +46,15 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      *
      * @param capturedOut     The captured output written to System.out
      * @param capturedErr     The captured output written to System.err
-     * @param executorService The Executor Service running the captured thread
+     * @param completedLatch  The Latch indicating the thread is still running
      * @param thrownException The reference to any exception thrown
      */
     DefaultOngoingCapturedOutput(
             final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr,
-            final ExecutorService executorService, final AtomicReference<Throwable> thrownException
+            final CountDownLatch completedLatch, final AtomicReference<Throwable> thrownException
                                 ) {
         super(capturedOut, capturedErr);
-        this.executorService = executorService;
+        this.completedLatch = completedLatch;
         this.thrownException = thrownException;
     }
 
@@ -89,13 +89,13 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
 
     @Override
     public boolean isShutdown() {
-        return executorService.isShutdown();
+        return completedLatch.getCount() == 0;
     }
 
     @Override
     public void await(final long timeout, final TimeUnit unit) {
         try {
-            executorService.awaitTermination(timeout, unit);
+            completedLatch.await(timeout, unit);
         } catch (InterruptedException e) {
             throw new OutputCaptureException("Error awaiting termination", e);
         }

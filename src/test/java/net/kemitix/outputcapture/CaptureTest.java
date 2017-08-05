@@ -74,9 +74,6 @@ public class CaptureTest {
     @Mock
     private ByteArrayOutputStream capturedErr;
 
-    @Mock
-    private ExecutorService executorService;
-
     private AtomicReference<Throwable> thrownException = new AtomicReference<>();
 
     @Before
@@ -398,9 +395,9 @@ public class CaptureTest {
     public void interruptionDuringOngoingAwaitIsWrappedInOutputCaptureException() throws InterruptedException {
         //given
         final OngoingCapturedOutput ongoingCapturedOutput =
-                new DefaultOngoingCapturedOutput(capturedOut, capturedErr, executorService, thrownException);
-        doThrow(InterruptedException.class).when(executorService)
-                                           .awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
+                new DefaultOngoingCapturedOutput(capturedOut, capturedErr, latch, thrownException);
+        doThrow(InterruptedException.class).when(latch)
+                                           .await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         //when
         final ThrowableAssert.ThrowingCallable action = () -> {
             ongoingCapturedOutput.await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);

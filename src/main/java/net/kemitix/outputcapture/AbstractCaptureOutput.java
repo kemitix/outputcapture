@@ -49,13 +49,14 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
      */
     //FIXME: reduce complexity
     @SuppressWarnings({"npathcomplexity", "illegalcatch"})
-    protected OngoingCapturedOutput captureAsync(final ThrowingCallable callable, final Router router, final
-                                                 Function<Integer, CountDownLatch> latchFactory
-                                                 ) {
+    protected OngoingCapturedOutput captureAsync(
+            final ThrowingCallable callable, final Router router, final Function<Integer, CountDownLatch> latchFactory
+                                                ) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         final AtomicReference<CapturedPrintStream> out = new AtomicReference<>();
         final AtomicReference<CapturedPrintStream> err = new AtomicReference<>();
         final CountDownLatch outputCapturedLatch = latchFactory.apply(1);
+        final CountDownLatch completedLatch = latchFactory.apply(1);
         executor.submit(() -> {
             out.set(capturePrintStream(System.out, router, System::setOut));
             err.set(capturePrintStream(System.err, router, System::setErr));
@@ -75,6 +76,7 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
             System.setErr(err.get()
                              .getOriginalStream());
             executor.shutdown();
+            completedLatch.countDown();
         });
         try {
             outputCapturedLatch.await();
@@ -83,7 +85,9 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
         }
         return new DefaultOngoingCapturedOutput(out.get()
                                                    .getCapturedTo(), err.get()
-                                                                        .getCapturedTo(), executor, thrownException);
+                                                                        .getCapturedTo(), completedLatch,
+                                                thrownException
+        );
     }
 
     /**
