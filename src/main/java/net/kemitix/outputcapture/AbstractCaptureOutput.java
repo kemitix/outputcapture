@@ -28,6 +28,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -37,8 +38,10 @@ import java.util.function.Function;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-@SuppressWarnings("classdataabstractioncoupling")
+@SuppressWarnings({"classdataabstractioncoupling", "classfanoutcomplexity"})
 abstract class AbstractCaptureOutput implements OutputCapturer {
+
+    private static final AtomicInteger THREAD_GROUP_COUNTER = new AtomicInteger();
 
     /**
      * Captures the output of the callable then returns.
@@ -52,7 +55,7 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
     protected CapturedOutput capture(
             final ThrowingCallable callable, final Router router
                                     ) {
-        final ThreadFactory threadFactory = r -> new Thread(new ThreadGroup("CaptureOutput1"), r);
+        final ThreadFactory threadFactory = r -> new Thread(createThreadGroup(), r);
         final ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
         final AtomicReference<Exception> thrownException = new AtomicReference<>();
         final CountDownLatch finishedLatch = new CountDownLatch(1);
@@ -74,6 +77,10 @@ abstract class AbstractCaptureOutput implements OutputCapturer {
             throw new OutputCaptureException(thrownException.get());
         }
         return new DefaultCapturedOutput(capturedTo(capturedOut), capturedTo(capturedErr));
+    }
+
+    private static ThreadGroup createThreadGroup() {
+        return new ThreadGroup("CaptureOutput" + THREAD_GROUP_COUNTER.incrementAndGet());
     }
 
     /**
