@@ -489,34 +489,13 @@ public class CaptureTest {
     @Test
     public void interruptionDuringAsyncThreadSetupIsWrappedInOutputCaptureException() throws InterruptedException {
         //given
-        final OutputCapturer captureOutput = new AbstractCaptureOutput() {
-
-            @Override
-            public CapturedOutput of(final ThrowingCallable callable) {
-                return null;
-            }
-
-            @Override
-            public CapturedOutput copyOf(final ThrowingCallable callable) {
-                return null;
-            }
-
-            @Override
-            public OngoingCapturedOutput ofThread(final ThrowingCallable callable) {
-                return captureAsync(callable, router, latchFactory);
-            }
-
-            @Override
-            public OngoingCapturedOutput copyOfThread(final ThrowingCallable callable) {
-                return null;
-            }
-        };
+        final AsynchronousOutputCapturer outputCapturer = new AsynchronousOutputCapturer(router);
         given(latchFactory.apply(1)).willReturn(latch);
         doThrow(InterruptedException.class).when(latch)
                                            .await();
         //when
         final ThrowableAssert.ThrowingCallable action = () -> {
-            captureOutput.ofThread(asyncRunnable);
+            outputCapturer.capture(asyncRunnable, latchFactory);
         };
         //then
         assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)

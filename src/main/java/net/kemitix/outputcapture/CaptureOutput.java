@@ -28,25 +28,25 @@ import java.util.concurrent.CountDownLatch;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public final class CaptureOutput extends AbstractCaptureOutput {
+public final class CaptureOutput implements OutputCapturer {
 
     @Override
     public CapturedOutput of(final ThrowingCallable callable) {
-        return capture(callable, new RedirectRouter());
+        return new SynchronousOutputCapturer(new RedirectRouter()).capture(callable);
     }
 
     @Override
     public CapturedOutput copyOf(final ThrowingCallable callable) {
-        return capture(callable, new CopyRouter());
+        return new SynchronousOutputCapturer(new CopyRouter()).capture(callable);
     }
 
     @Override
     public OngoingCapturedOutput ofThread(final ThrowingCallable callable) {
-        return captureAsync(callable, new RedirectRouter(), CountDownLatch::new);
+        return new AsynchronousOutputCapturer(new RedirectRouter()).capture(callable, CountDownLatch::new);
     }
 
     @Override
     public OngoingCapturedOutput copyOfThread(final ThrowingCallable callable) {
-        return captureAsync(callable, new CopyRouter(), CountDownLatch::new);
+        return new AsynchronousOutputCapturer(new CopyRouter()).capture(callable, CountDownLatch::new);
     }
 }
