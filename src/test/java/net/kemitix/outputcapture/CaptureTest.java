@@ -202,19 +202,19 @@ public class CaptureTest {
         final ExecutorService catchMe = Executors.newSingleThreadExecutor();
         final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
         final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
-        final CountDownLatch releaseLatch = new CountDownLatch(1);
-        final CountDownLatch doneLatch = new CountDownLatch(1);
+        final CountDownLatch releaseLatch = createLatch();
+        final CountDownLatch doneLatch = createLatch();
         //when
         ignoreMe.submit(() -> {
             awaitLatch(releaseLatch);
             System.out.println("ignore me");
-            doneLatch.countDown();
+            releaseLatch(doneLatch);
         });
         ignoreMe.submit(ignoreMe::shutdown);
         catchMe.submit(() -> {
             reference.set(captureOutput.of(() -> {
                 System.out.println("started");
-                releaseLatch.countDown();
+                releaseLatch(releaseLatch);
                 awaitLatch(doneLatch);
                 System.out.println("finished");
             }));
@@ -277,27 +277,43 @@ public class CaptureTest {
                             .getStdOut()).containsExactly("");
     }
 
-    @Test
+    @Test(timeout = A_SHORT_PERIOD)
     public void exceptionIsThrownWhenMultipleOutputCapturesOverlap() throws InterruptedException {
         //given
-        final Runnable runnable = () -> {
-            sleep(A_PERIOD);
-            new CaptureOutput().of(() -> {
-                sleep(A_PERIOD);
+        final CountDownLatch latch1 = createLatch();
+        final CountDownLatch latch2 = createLatch();
+        final CountDownLatch latch3 = createLatch();
+        final CaptureOutput captureOutput = new CaptureOutput();
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> {
+            awaitLatch(latch1);
+            captureOutput.of(() -> {
+                releaseLatch(latch2);
+                awaitLatch(latch3);
             });
-        };
-        final Thread thread = new Thread(runnable);
-        thread.start();
+        });
+        executor.submit(executor::shutdown);
+
         //when
         final ThrowableAssert.ThrowingCallable action = () -> {
             new CaptureOutput().of(() -> {
-                sleep(A_PERIOD + A_SHORT_PERIOD);
+                releaseLatch(latch1);
+                awaitLatch(latch2);
             });
         };
         //then
         assertThatThrownBy(action).hasNoCause()
                                   .isInstanceOf(OutputCaptureException.class);
-        thread.join();
+        releaseLatch(latch3);
+        executor.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
+    }
+
+    private void releaseLatch(final CountDownLatch latch) {
+        latch.countDown();
+    }
+
+    private CountDownLatch createLatch() {
+        return new CountDownLatch(1);
     }
 
     private void sleep(final long timeout) {
@@ -416,7 +432,7 @@ public class CaptureTest {
     public void canWaitForThreadToComplete() {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
-        final CountDownLatch finishRunner = new CountDownLatch(1);
+        final CountDownLatch finishRunner = createLatch();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(finishRunner::await);
         //then
@@ -424,7 +440,7 @@ public class CaptureTest {
                                                      .isTrue();
         assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = false")
                                                       .isFalse();
-        finishRunner.countDown();
+        releaseLatch(finishRunner);
         ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
         assertThat(ongoingCapturedOutput.isRunning()).as("isRunning = false")
                                                      .isFalse();
