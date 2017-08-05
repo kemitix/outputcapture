@@ -207,6 +207,7 @@ public class CaptureTest {
             sleep(A_SHORT_PERIOD);
             System.out.println("ignore me");
         });
+        ignoreMe.submit(ignoreMe::shutdown);
         catchMe.submit(() -> {
             reference.set(captureOutput.of(() -> {
                 System.out.println("started");
@@ -214,8 +215,9 @@ public class CaptureTest {
                 System.out.println("finished");
             }));
         });
-        ignoreMe.awaitTermination(A_LONG_PERIOD, TimeUnit.MILLISECONDS);
-        catchMe.awaitTermination(A_LONG_PERIOD, TimeUnit.MILLISECONDS);
+        catchMe.submit(catchMe::shutdown);
+        ignoreMe.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
+        catchMe.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
         //then
         assertThat(reference.get()
                             .getStdOut()).containsExactly("started", "finished");
@@ -252,10 +254,12 @@ public class CaptureTest {
                     System.out.println("message");
                     System.out.write('x');
                 });
+                subject.submit(subject::shutdown);
             }));
         });
-        subject.awaitTermination(A_LONG_PERIOD, TimeUnit.MILLISECONDS);
-        monitor.awaitTermination(A_LONG_PERIOD, TimeUnit.MILLISECONDS);
+        monitor.submit(monitor::shutdown);
+        subject.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
+        monitor.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
         //then
         assertThat(reference.get()
                             .getStdOut()).containsExactly("");
@@ -483,7 +487,7 @@ public class CaptureTest {
         assertThat(ongoingCapturedOutput.thrownException()).contains(outputCaptureException);
     }
 
-    @Test(timeout = 100_000L)
+    @Test(timeout = A_LONG_PERIOD)
     public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
         //given
         final CaptureOutput outer = new CaptureOutput();
