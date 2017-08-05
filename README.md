@@ -6,15 +6,22 @@ Capture output written to `System.out` and `System.err`.
 
 ### Synchronous
 
-With this usage, the `runnable` is executed and completes before the `capturedOutput` is returned.
+* `CapturedOutput of(ThrowingCallable)`
+* `CapturedOutput copyOf(ThrowingCallable)`
+
+With this usage, the `runnable` is executed and completes before the
+`capturedOutput` is returned.
+
+The `of` variant prevents output withing the callable from being written
+to the original `System.out` and `System.err`, while `copyOf` does not.
 
 ```java
 CaptureOutput captureOutput = new CaptureOutput();
-Runnable runnable = () -> {
-                            System.out.println(line1);
-                            System.out.println(line2);
-                            System.err.println(line3);
-                        };
+ThrowingCallable callable = () -> {
+                                   System.out.println(line1);
+                                   System.out.println(line2);
+                                   System.err.println(line3);
+                                  };
 CapturedOutput capturedOutput = captureOutput.of(runnable);
 assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
 assertThat(capturedOutput.getStdErr()).containsExactly(line3);
@@ -22,25 +29,28 @@ assertThat(capturedOutput.getStdErr()).containsExactly(line3);
 
 ### Asynchronous
 
-With this usage, the `runnable` is started and the `ongoingCapturedOutput` is returned immediately.
+* `OngoingCapturedOutput ofThread(ThrowingCallable)`
+
+With this usage, the `runnable` is started and the `ongoingCapturedOutput` is
+returned immediately.
 
 ```java
 CaptureOutput captureOutput = new CaptureOutput();
-Runnable runnable = () -> {
-                            System.out.println(line1);
+ThrowingCallable runnable = () -> {
+                                   System.out.println(line1);
 
-                            //time passes
+                                   //time passes
 
-                            System.out.println(line2);
+                                   System.out.println(line2);
 
-                            //more time passes
+                                   //more time passes
 
-                            System.out.println(line3);
+                                   System.out.println(line3);
 
-                            //still more time passes
+                                   //still more time passes
 
-                            System.out.println(line4);
-                        };
+                                   System.out.println(line4);
+                                  };
 OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
 
 assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line1);
@@ -60,6 +70,10 @@ assertThat(capturedOutput.getStdOut()).containsExactly(line3);
 
 //still more time passes
 
+assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line4);
+assertThat(capturedOutput.getStdOut()).containsExactly(line3);
+
+ongoingCapturedOutput.await(1000L, TimeUnit.MILLISECONDS);
 assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line4);
 assertThat(capturedOutput.getStdOut()).containsExactly(line3);
 ```
