@@ -160,13 +160,16 @@ public class CaptureTest {
         final CaptureOutput captureOutput = new CaptureOutput();
         final CaptureOutput captureCopy = new CaptureOutput();
         final AtomicReference<CapturedOutput> inner = new AtomicReference<>();
+        final CountDownLatch latch = createLatch();
         //when
         final CapturedOutput capturedEcho = captureCopy.of(() -> {
             inner.set(captureOutput.copyOf(() -> {
                 System.out.println(line1);
                 System.err.println(line2);
-                System.out.write("a".getBytes()[0]);
+                System.out.write('a');
+                releaseLatch(latch);
             }));
+            awaitLatch(latch);
         });
         //then
         assertThat(capturedEcho.getStdOut()).containsExactly(line1, "a");
