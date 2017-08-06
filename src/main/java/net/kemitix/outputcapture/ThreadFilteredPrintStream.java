@@ -45,7 +45,7 @@ class ThreadFilteredPrintStream extends PrintStream {
     }
 
     /**
-     * Writes the specified byte to all streams.
+     * Writes the specified byte to the output stream if the current thread is the filtered thread.
      *
      * @param b The byte to be written
      */
@@ -57,7 +57,8 @@ class ThreadFilteredPrintStream extends PrintStream {
     }
 
     /**
-     * Writes <code>len</code> bytes from the specified byte array starting at offset <code>off</code> to all streams.
+     * Writes <code>len</code> bytes from the specified byte array starting at offset <code>off</code> to the output
+     * stream if the current thread is the filtered thread.
      *
      * @param buf A byte array
      * @param off Offset from which to start taking bytes
@@ -70,9 +71,33 @@ class ThreadFilteredPrintStream extends PrintStream {
         }
     }
 
+    /** Writes the specified byte to the output stream if the parent thread is the filtered thread.
+     *
+     * @param b            The byte to be written
+     * @param parentThread The parent thread
+     */
+    void write(final int b, final Thread parentThread) {
+        if (filteredThread.equals(parentThread)) {
+            super.write(b);
+        }
+    }
+
+    /**
+     * Writes <code>len</code> bytes from the specified byte array starting at offset <code>off</code> to the output
+     * stream if the parent thread is the filtered thread.
+     *
+     * @param buf          A byte array
+     * @param off          Offset from which to start taking bytes
+     * @param len          Number of bytes to write
+     * @param parentThread The parent thread
+     */
+    void write(final byte[] buf, final int off, final int len, final Thread parentThread) {
+        if (filteredThread.equals(parentThread)) {
+            super.write(buf, off, len);
+        }
+    }
+
     private boolean onFilteredThread() {
-        return filteredThread.getThreadGroup()
-                             .parentOf(Thread.currentThread()
-                                             .getThreadGroup());
+        return filteredThread.equals(Thread.currentThread());
     }
 }

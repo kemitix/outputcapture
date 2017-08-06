@@ -61,8 +61,9 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
                                            ) {
         final CountDownLatch outputCapturedLatch = latchFactory.apply(1);
         final CountDownLatch completedLatch = latchFactory.apply(1);
+        final Thread parentThread = Thread.currentThread();
         final ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> initiateCapture(router));
+        executor.submit(() -> initiateCapture(router, parentThread));
         executor.submit(outputCapturedLatch::countDown);
         executor.submit(() -> invokeCallable(callable));
         executor.submit(() -> shutdownAsyncCapture(getCapturedOut(), getCapturedErr(), completedLatch));

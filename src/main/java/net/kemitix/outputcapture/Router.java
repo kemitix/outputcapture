@@ -38,9 +38,10 @@ interface Router {
      *
      * @param capturingStream the stream capturing the output
      * @param originalStream  the stream where output would normally have gone
+     * @param parentThread    The thread that invoked the output capture and the owner of the originalStream
      *
      * @return a PrintStream to be used to write to
      */
-    PrintStream handle(PrintStream capturingStream, PrintStream originalStream);
+    PrintStream handle(PrintStream capturingStream, PrintStream originalStream, Thread parentThread);
 
 }

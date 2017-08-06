@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 /**
  * Capture the output of a callable, then return the captured output.
@@ -55,10 +54,10 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      * @return an instance of CapturedOutput
      */
     protected CapturedOutput capture(final ThrowingCallable callable) {
-        final ThreadFactory threadFactory = r -> new Thread(createThreadGroup(), r);
-        final ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
         final CountDownLatch finishedLatch = new CountDownLatch(1);
-        executor.submit(() -> initiateCapture(router));
+        final Thread parentThread = Thread.currentThread();
+        executor.submit(() -> initiateCapture(router, parentThread));
         executor.submit(() -> invokeCallable(callable));
         executor.submit(finishedLatch::countDown);
         executor.submit(executor::shutdown);

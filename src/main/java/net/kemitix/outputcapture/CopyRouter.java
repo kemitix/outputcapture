@@ -31,7 +31,9 @@ import java.io.PrintStream;
 class CopyRouter implements Router {
 
     @Override
-    public PrintStream handle(final PrintStream capturingStream, final PrintStream originalStream) {
-        return new TeeOutputStream(capturingStream, originalStream);
+    public PrintStream handle(
+            final PrintStream capturingStream, final PrintStream originalStream, final Thread parentThread
+                             ) {
+        return new TeeOutputStream(capturingStream, parentThread, originalStream);
     }
 }

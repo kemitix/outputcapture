@@ -27,7 +27,6 @@ import lombok.Getter;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -38,8 +37,6 @@ import java.util.function.Consumer;
  */
 abstract class AbstractCaptureOutput {
 
-    private static final AtomicInteger THREAD_GROUP_COUNTER = new AtomicInteger();
-
     @Getter(AccessLevel.PROTECTED)
     private CapturedPrintStream capturedOut;
 
@@ -48,15 +45,6 @@ abstract class AbstractCaptureOutput {
 
     @Getter(AccessLevel.PROTECTED)
     private AtomicReference<Exception> thrownException = new AtomicReference<>();
-
-    /**
-     * Create a new ThreadGroup.
-     *
-     * @return a new ThreadGroup
-     */
-    protected static ThreadGroup createThreadGroup() {
-        return new ThreadGroup("CaptureOutput" + THREAD_GROUP_COUNTER.incrementAndGet());
-    }
 
     /**
      * Get the backing byte array from the CapturedPrintStream.
@@ -77,8 +65,7 @@ abstract class AbstractCaptureOutput {
      * @param completedLatch The latch to release once the PrintStreams are restored
      */
     protected void shutdownAsyncCapture(
-            final CapturedPrintStream out, final CapturedPrintStream err,
-            final CountDownLatch completedLatch
+            final CapturedPrintStream out, final CapturedPrintStream err, final CountDownLatch completedLatch
                                        ) {
         System.setOut(originalStream(out));
         System.setErr(originalStream(err));
@@ -99,7 +86,7 @@ abstract class AbstractCaptureOutput {
     /**
      * Invokes the Callable and stores any thrown exception.
      *
-     * @param callable        The callable to invoke
+     * @param callable The callable to invoke
      */
     @SuppressWarnings("illegalcatch")
     protected void invokeCallable(final ThrowingCallable callable) {
@@ -113,13 +100,12 @@ abstract class AbstractCaptureOutput {
     /**
      * Captures the System.out and System.err PrintStreams.
      *
-     * @param router The Router
+     * @param router       The Router
+     * @param parentThread The parent thread
      */
-    protected void initiateCapture(
-            final Router router
-                                  ) {
-        capturedOut = capturePrintStream(System.out, router, System::setOut);
-        capturedErr = capturePrintStream(System.err, router, System::setErr);
+    protected void initiateCapture(final Router router, final Thread parentThread) {
+        capturedOut = capturePrintStream(System.out, router, System::setOut, parentThread);
+        capturedErr = capturePrintStream(System.err, router, System::setErr, parentThread);
     }
 
     /**
@@ -138,9 +124,10 @@ abstract class AbstractCaptureOutput {
     }
 
     private CapturedPrintStream capturePrintStream(
-            final PrintStream originalStream, final Router router, final Consumer<PrintStream> setStream
+            final PrintStream originalStream, final Router router, final Consumer<PrintStream> setStream,
+            final Thread parentThread
                                                   ) {
-        final CapturedPrintStream capturedPrintStream = new CapturedPrintStream(originalStream, router);
+        final CapturedPrintStream capturedPrintStream = new CapturedPrintStream(originalStream, router, parentThread);
         setStream.accept(capturedPrintStream.getReplacementStream());
         return capturedPrintStream;
     }
