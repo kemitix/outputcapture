@@ -22,49 +22,37 @@
 package net.kemitix.outputcapture;
 
 /**
- * Captures the output written to standard out and standard error.
+ * Thrown when there is an error capturing output or restoring system outputs.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public interface OutputCapturer {
+public class OutputCaptureException extends RuntimeException {
 
     /**
-     * Capture the output of the callable.
+     * Constructor.
      *
-     * @param callable the callable to capture the output of
-     *
-     * @return the instance CapturedOutput
+     * @param message The message
      */
-    CapturedOutput of(ThrowingCallable callable);
+    public OutputCaptureException(final String message) {
+        super(message);
+    }
 
     /**
-     * Capture the output of the callable and copies to normal output.
+     * Constructor.
      *
-     * @param callable the callable to capture the output of
-     *
-     * @return the instance CapturedOutput
+     * @param message The message
+     * @param cause   The cause
      */
-    CapturedOutput copyOf(ThrowingCallable callable);
+    public OutputCaptureException(final String message, final Exception cause) {
+        super(message, cause);
+    }
 
     /**
-     * Capture the output of a running thread asynchronously.
+     * Constructor.
      *
-     * <p>{@code callable} is started in a new thread.</p>
-     *
-     * @param callable the callable to capture the output of
-     *
-     * @return an instance of OngoingCapturedOutput
+     * @param cause   The cause
      */
-    OngoingCapturedOutput ofThread(ThrowingCallable callable);
-
-    /**
-     * Capture the output of the callable running asynchronously and copies to the normal output.
-     *
-     * <p>{@code callable} is started in a new thread.</p>
-     *
-     * @param callable the callable to capture the output of
-     *
-     * @return an instance of OngoingCapturedOutput
-     */
-    OngoingCapturedOutput copyOfThread(ThrowingCallable callable);
+    public OutputCaptureException(final Exception cause) {
+        super(cause);
+    }
 }

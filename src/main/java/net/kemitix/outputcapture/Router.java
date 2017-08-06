@@ -21,50 +21,27 @@
 
 package net.kemitix.outputcapture;
 
+import java.io.PrintStream;
+
 /**
- * Captures the output written to standard out and standard error.
+ * Routes output between the capturing stream and the original stream.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
+ *
+ * @see {@link RedirectRouter}
+ * @see {@link CopyRouter}
  */
-public interface OutputCapturer {
+interface Router {
 
     /**
-     * Capture the output of the callable.
+     * Create an output stream that routes the output to the appropriate stream(s).
      *
-     * @param callable the callable to capture the output of
+     * @param capturingStream the stream capturing the output
+     * @param originalStream  the stream where output would normally have gone
+     * @param parentThread    The thread that invoked the output capture and the owner of the originalStream
      *
-     * @return the instance CapturedOutput
+     * @return a PrintStream to be used to write to
      */
-    CapturedOutput of(ThrowingCallable callable);
+    PrintStream handle(PrintStream capturingStream, PrintStream originalStream, Thread parentThread);
 
-    /**
-     * Capture the output of the callable and copies to normal output.
-     *
-     * @param callable the callable to capture the output of
-     *
-     * @return the instance CapturedOutput
-     */
-    CapturedOutput copyOf(ThrowingCallable callable);
-
-    /**
-     * Capture the output of a running thread asynchronously.
-     *
-     * <p>{@code callable} is started in a new thread.</p>
-     *
-     * @param callable the callable to capture the output of
-     *
-     * @return an instance of OngoingCapturedOutput
-     */
-    OngoingCapturedOutput ofThread(ThrowingCallable callable);
-
-    /**
-     * Capture the output of the callable running asynchronously and copies to the normal output.
-     *
-     * <p>{@code callable} is started in a new thread.</p>
-     *
-     * @param callable the callable to capture the output of
-     *
-     * @return an instance of OngoingCapturedOutput
-     */
-    OngoingCapturedOutput copyOfThread(ThrowingCallable callable);
 }

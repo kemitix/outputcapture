@@ -21,36 +21,43 @@
 
 package net.kemitix.outputcapture;
 
-import java.util.concurrent.CountDownLatch;
+import lombok.AccessLevel;
+import lombok.Getter;
+
+import java.io.ByteArrayOutputStream;
+import java.util.stream.Stream;
 
 /**
- * Captures output written to {@code System::out} and {@code System::err} as a {@link CapturedOutput}.
+ * The captured output written to System.out and System.err.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public final class CaptureOutput implements OutputCapturer {
+class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOutput {
 
-    private static final RedirectRouter REDIRECT_ROUTER = new RedirectRouter();
+    @Getter(AccessLevel.PROTECTED)
+    private final ByteArrayOutputStream capturedOut;
 
-    private static final CopyRouter COPY_ROUTER = new CopyRouter();
+    @Getter(AccessLevel.PROTECTED)
+    private final ByteArrayOutputStream capturedErr;
 
-    @Override
-    public CapturedOutput of(final ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(REDIRECT_ROUTER).capture(callable);
+    /**
+     * Constructor.
+     *
+     * @param capturedOut The captured output written to System.out
+     * @param capturedErr The captured output written to System.err
+     */
+    DefaultCapturedOutput(final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr) {
+        this.capturedOut = capturedOut;
+        this.capturedErr = capturedErr;
     }
 
     @Override
-    public CapturedOutput copyOf(final ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(COPY_ROUTER).capture(callable);
+    public Stream<String> getStdOut() {
+        return asStream(capturedOut);
     }
 
     @Override
-    public OngoingCapturedOutput ofThread(final ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(REDIRECT_ROUTER).capture(callable, CountDownLatch::new);
-    }
-
-    @Override
-    public OngoingCapturedOutput copyOfThread(final ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(COPY_ROUTER).capture(callable, CountDownLatch::new);
+    public Stream<String> getStdErr() {
+        return asStream(capturedErr);
     }
 }

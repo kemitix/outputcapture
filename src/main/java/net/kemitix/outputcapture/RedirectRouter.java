@@ -21,36 +21,19 @@
 
 package net.kemitix.outputcapture;
 
-import java.util.concurrent.CountDownLatch;
+import java.io.PrintStream;
 
 /**
- * Captures output written to {@code System::out} and {@code System::err} as a {@link CapturedOutput}.
+ * Router that redirects output away from the original output stream to the capturing stream.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public final class CaptureOutput implements OutputCapturer {
-
-    private static final RedirectRouter REDIRECT_ROUTER = new RedirectRouter();
-
-    private static final CopyRouter COPY_ROUTER = new CopyRouter();
+class RedirectRouter implements Router {
 
     @Override
-    public CapturedOutput of(final ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(REDIRECT_ROUTER).capture(callable);
-    }
-
-    @Override
-    public CapturedOutput copyOf(final ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(COPY_ROUTER).capture(callable);
-    }
-
-    @Override
-    public OngoingCapturedOutput ofThread(final ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(REDIRECT_ROUTER).capture(callable, CountDownLatch::new);
-    }
-
-    @Override
-    public OngoingCapturedOutput copyOfThread(final ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(COPY_ROUTER).capture(callable, CountDownLatch::new);
+    public PrintStream handle(
+            final PrintStream capturingStream, final PrintStream originalStream, final Thread parentThread
+                             ) {
+        return capturingStream;
     }
 }

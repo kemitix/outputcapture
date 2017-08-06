@@ -28,9 +28,16 @@ import java.util.List;
 /**
  * Copies output to all streams.
  *
+ * <p>Where one of the {@code extraOutputStreams} is an instance of {@link ThreadFilteredPrintStream}, then the
+ * {@code parentThread} is provided to allow it to perform its filtering.</p>
+ *
  * @author Paul Campbell (pcampbell@kemitix.net)
+ *
+ * @see ThreadFilteredPrintStream
  */
 class TeeOutputStream extends PrintStream {
+
+    private final Thread parentThread;
 
     private final List<PrintStream> outputStreams;
 
@@ -38,10 +45,14 @@ class TeeOutputStream extends PrintStream {
      * Constructor.
      *
      * @param outputStream       the first output stream, mandatory
+     * @param parentThread       The thread that invoked the output capture and the owner of the extra streams
      * @param extraOutputStreams the extra output streams
      */
-    TeeOutputStream(final PrintStream outputStream, final PrintStream... extraOutputStreams) {
+    TeeOutputStream(
+            final PrintStream outputStream, final Thread parentThread, final PrintStream... extraOutputStreams
+                   ) {
         super(outputStream);
+        this.parentThread = parentThread;
         this.outputStreams = Arrays.asList(extraOutputStreams);
     }
 
@@ -53,7 +64,13 @@ class TeeOutputStream extends PrintStream {
     @Override
     public void write(final int b) {
         super.write(b);
-        outputStreams.forEach(os -> os.write(b));
+        outputStreams.forEach(os -> {
+            if (os instanceof ThreadFilteredPrintStream) {
+                ((ThreadFilteredPrintStream) os).write(b, parentThread);
+            } else {
+                os.write(b);
+            }
+        });
     }
 
     /**
@@ -66,6 +83,12 @@ class TeeOutputStream extends PrintStream {
     @Override
     public void write(final byte[] buf, final int off, final int len) {
         super.write(buf, off, len);
-        outputStreams.forEach(os -> os.write(buf, off, len));
+        outputStreams.forEach(os -> {
+            if (os instanceof ThreadFilteredPrintStream) {
+                ((ThreadFilteredPrintStream) os).write(buf, off, len, parentThread);
+            } else {
+                os.write(buf, off, len);
+            }
+        });
     }
 }
