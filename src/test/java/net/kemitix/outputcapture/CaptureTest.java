@@ -53,8 +53,6 @@ public class CaptureTest {
 
     private static final long A_SHORT_PERIOD = 100L;
 
-    private static final long A_LONG_PERIOD = 1000L;
-
     private String line1;
 
     private String line2;
