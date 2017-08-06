@@ -30,23 +30,27 @@ import java.util.concurrent.CountDownLatch;
  */
 public final class CaptureOutput implements OutputCapturer {
 
+    private static final RedirectRouter REDIRECT_ROUTER = new RedirectRouter();
+
+    private static final CopyRouter COPY_ROUTER = new CopyRouter();
+
     @Override
     public CapturedOutput of(final ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(new RedirectRouter()).capture(callable);
+        return new SynchronousOutputCapturer(REDIRECT_ROUTER).capture(callable);
     }
 
     @Override
     public CapturedOutput copyOf(final ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(new CopyRouter()).capture(callable);
+        return new SynchronousOutputCapturer(COPY_ROUTER).capture(callable);
     }
 
     @Override
     public OngoingCapturedOutput ofThread(final ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(new RedirectRouter()).capture(callable, CountDownLatch::new);
+        return new AsynchronousOutputCapturer(REDIRECT_ROUTER).capture(callable, CountDownLatch::new);
     }
 
     @Override
     public OngoingCapturedOutput copyOfThread(final ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(new CopyRouter()).capture(callable, CountDownLatch::new);
+        return new AsynchronousOutputCapturer(COPY_ROUTER).capture(callable, CountDownLatch::new);
     }
 }
