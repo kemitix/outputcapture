@@ -61,17 +61,16 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
             final ThrowingCallable callable, final Function<Integer, CountDownLatch> latchFactory
                                            ) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
-        final AtomicReference<CapturedPrintStream> out = new AtomicReference<>();
-        final AtomicReference<CapturedPrintStream> err = new AtomicReference<>();
         final CountDownLatch outputCapturedLatch = latchFactory.apply(1);
         final CountDownLatch completedLatch = latchFactory.apply(1);
         final AtomicReference<Exception> thrownException = new AtomicReference<>();
-        executor.submit(() -> initiateCapture(router, out, err));
+        executor.submit(() -> initiateCapture(router));
         executor.submit(outputCapturedLatch::countDown);
         executor.submit(() -> invokeCallable(callable, thrownException));
-        executor.submit(() -> shutdownAsyncCapture(out, err, completedLatch));
+        executor.submit(() -> shutdownAsyncCapture(getCapturedOut(), getCapturedErr(), completedLatch));
         executor.submit(executor::shutdown);
         awaitLatch(outputCapturedLatch);
-        return new DefaultOngoingCapturedOutput(capturedTo(out), capturedTo(err), completedLatch, thrownException);
+        return new DefaultOngoingCapturedOutput(
+                capturedTo(getCapturedOut()), capturedTo(getCapturedErr()), completedLatch, thrownException);
     }
 }

@@ -21,6 +21,9 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.concurrent.CountDownLatch;
@@ -37,6 +40,12 @@ abstract class AbstractCaptureOutput {
 
     private static final AtomicInteger THREAD_GROUP_COUNTER = new AtomicInteger();
 
+    @Getter(AccessLevel.PROTECTED)
+    private CapturedPrintStream capturedOut;
+
+    @Getter(AccessLevel.PROTECTED)
+    private CapturedPrintStream capturedErr;
+
     /**
      * Create a new ThreadGroup.
      *
@@ -47,26 +56,25 @@ abstract class AbstractCaptureOutput {
     }
 
     /**
-     * Get the backing byte array from the CapturedPrintStream reference.
+     * Get the backing byte array from the CapturedPrintStream.
      *
-     * @param reference The reference to the CapturedPrintStream containing the backing byte array
+     * @param capturedPrintStream The CapturedPrintStream containing the backing byte array
      *
      * @return the backing byte array
      */
-    protected ByteArrayOutputStream capturedTo(final AtomicReference<CapturedPrintStream> reference) {
-        final CapturedPrintStream capturedPrintStream = reference.get();
+    protected ByteArrayOutputStream capturedTo(final CapturedPrintStream capturedPrintStream) {
         return capturedPrintStream.getCapturedTo();
     }
 
     /**
      * Restore the original PrintStreams for System.out and System.err.
      *
-     * @param out            The reference to the CapturedPrintStream containing the original System.out
-     * @param err            The reference to the CapturedPrintStream containing the original System.err
+     * @param out            The CapturedPrintStream containing the original System.out
+     * @param err            The CapturedPrintStream containing the original System.err
      * @param completedLatch The latch to release once the PrintStreams are restored
      */
     protected void shutdownAsyncCapture(
-            final AtomicReference<CapturedPrintStream> out, final AtomicReference<CapturedPrintStream> err,
+            final CapturedPrintStream out, final CapturedPrintStream err,
             final CountDownLatch completedLatch
                                        ) {
         System.setOut(originalStream(out));
@@ -75,14 +83,13 @@ abstract class AbstractCaptureOutput {
     }
 
     /**
-     * Get the original PrintStream from the CapturedPrintStream reference.
+     * Get the original PrintStream from the CapturedPrintStream.
      *
-     * @param reference The reference to the CapturedPrintStream containing the original PrintStream
+     * @param capturedPrintStream The CapturedPrintStream containing the original PrintStream
      *
      * @return the original PrintStream
      */
-    protected PrintStream originalStream(final AtomicReference<CapturedPrintStream> reference) {
-        final CapturedPrintStream capturedPrintStream = reference.get();
+    protected PrintStream originalStream(final CapturedPrintStream capturedPrintStream) {
         return capturedPrintStream.getOriginalStream();
     }
 
@@ -107,15 +114,12 @@ abstract class AbstractCaptureOutput {
      * Captures the System.out and System.err PrintStreams.
      *
      * @param router The Router
-     * @param out    The output parameter referencing the CapturedPrintStream for System.out
-     * @param err    The output parameter referencing the CapturedPrintStream for System.err
      */
     protected void initiateCapture(
-            final Router router, final AtomicReference<CapturedPrintStream> out,
-            final AtomicReference<CapturedPrintStream> err
+            final Router router
                                   ) {
-        out.set(capturePrintStream(System.out, router, System::setOut));
-        err.set(capturePrintStream(System.err, router, System::setErr));
+        capturedOut = capturePrintStream(System.out, router, System::setOut);
+        capturedErr = capturePrintStream(System.err, router, System::setErr);
     }
 
     /**
