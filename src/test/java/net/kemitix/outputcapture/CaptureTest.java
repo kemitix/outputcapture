@@ -302,8 +302,9 @@ public class CaptureTest {
             });
         };
         //then
-        assertThatThrownBy(action).hasNoCause()
-                                  .isInstanceOf(OutputCaptureException.class);
+        assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
+                                  .hasMessage("System.out has been replaced")
+                                  .hasNoCause();
         releaseLatch(latch3);
         executor.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
     }
