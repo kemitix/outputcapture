@@ -231,7 +231,7 @@ public class CaptureTest {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new OutputCaptureException(e);
         }
     }
 
