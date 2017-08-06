@@ -24,7 +24,6 @@ package net.kemitix.outputcapture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -60,17 +59,16 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
     protected OngoingCapturedOutput capture(
             final ThrowingCallable callable, final Function<Integer, CountDownLatch> latchFactory
                                            ) {
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
         final CountDownLatch outputCapturedLatch = latchFactory.apply(1);
         final CountDownLatch completedLatch = latchFactory.apply(1);
-        final AtomicReference<Exception> thrownException = new AtomicReference<>();
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> initiateCapture(router));
         executor.submit(outputCapturedLatch::countDown);
-        executor.submit(() -> invokeCallable(callable, thrownException));
+        executor.submit(() -> invokeCallable(callable));
         executor.submit(() -> shutdownAsyncCapture(getCapturedOut(), getCapturedErr(), completedLatch));
         executor.submit(executor::shutdown);
         awaitLatch(outputCapturedLatch);
         return new DefaultOngoingCapturedOutput(
-                capturedTo(getCapturedOut()), capturedTo(getCapturedErr()), completedLatch, thrownException);
+                capturedTo(getCapturedOut()), capturedTo(getCapturedErr()), completedLatch, getThrownException());
     }
 }

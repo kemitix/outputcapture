@@ -46,6 +46,9 @@ abstract class AbstractCaptureOutput {
     @Getter(AccessLevel.PROTECTED)
     private CapturedPrintStream capturedErr;
 
+    @Getter(AccessLevel.PROTECTED)
+    private AtomicReference<Exception> thrownException = new AtomicReference<>();
+
     /**
      * Create a new ThreadGroup.
      *
@@ -97,12 +100,9 @@ abstract class AbstractCaptureOutput {
      * Invokes the Callable and stores any thrown exception.
      *
      * @param callable        The callable to invoke
-     * @param thrownException The output parameter references any exception thrown by callable
      */
     @SuppressWarnings("illegalcatch")
-    protected void invokeCallable(
-            final ThrowingCallable callable, final AtomicReference<Exception> thrownException
-                                 ) {
+    protected void invokeCallable(final ThrowingCallable callable) {
         try {
             callable.call();
         } catch (Exception e) {

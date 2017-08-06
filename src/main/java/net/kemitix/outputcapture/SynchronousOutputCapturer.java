@@ -26,7 +26,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Capture the output of a callable, then return the captured output.
@@ -58,10 +57,9 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
     protected CapturedOutput capture(final ThrowingCallable callable) {
         final ThreadFactory threadFactory = r -> new Thread(createThreadGroup(), r);
         final ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
-        final AtomicReference<Exception> thrownException = new AtomicReference<>();
         final CountDownLatch finishedLatch = new CountDownLatch(1);
         executor.submit(() -> initiateCapture(router));
-        executor.submit(() -> invokeCallable(callable, thrownException));
+        executor.submit(() -> invokeCallable(callable));
         executor.submit(finishedLatch::countDown);
         executor.submit(executor::shutdown);
         awaitLatch(finishedLatch);
@@ -70,9 +68,9 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
         }
         System.setOut(originalStream(getCapturedOut()));
         System.setErr(originalStream(getCapturedErr()));
-        if (Optional.ofNullable(thrownException.get())
+        if (Optional.ofNullable(getThrownException().get())
                     .isPresent()) {
-            throw new OutputCaptureException(thrownException.get());
+            throw new OutputCaptureException(getThrownException().get());
         }
         return new DefaultCapturedOutput(capturedTo(getCapturedOut()), capturedTo(getCapturedErr()));
     }
