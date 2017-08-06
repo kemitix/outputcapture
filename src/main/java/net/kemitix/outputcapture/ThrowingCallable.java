@@ -21,19 +21,23 @@
 
 package net.kemitix.outputcapture;
 
-import java.io.PrintStream;
-
 /**
- * Router the copies the output to both the original output stream and the capturing stream.
+ * A task that does not return any result and may throw an exception.
+ *
+ * <p>Implementors define a single method with no arguments called call. The ThrowingCallable interface
+ * is similar to Runnable and Callable, in that all are designed for classes whose instances are
+ * potentially executed by another thread. A Runnable, however, cannot throw a checked exception, while
+ * a Callable must return a value.</p>
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-class CopyRouter implements Router {
+@FunctionalInterface
+public interface ThrowingCallable {
 
-    @Override
-    public PrintStream handle(
-            final PrintStream capturingStream, final PrintStream originalStream, final Thread parentThread
-                             ) {
-        return new TeeOutputStream(capturingStream, parentThread, originalStream);
-    }
+    /**
+     * Invokes the task the implementation provides.
+     *
+     * @throws Exception is the implementation throws one
+     */
+    void call() throws Exception;
 }

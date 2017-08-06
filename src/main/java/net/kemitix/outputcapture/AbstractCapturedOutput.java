@@ -21,19 +21,27 @@
 
 package net.kemitix.outputcapture;
 
-import java.io.PrintStream;
+import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
- * Router the copies the output to both the original output stream and the capturing stream.
+ * Base for holding captured output.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-class CopyRouter implements Router {
+abstract class AbstractCapturedOutput {
 
-    @Override
-    public PrintStream handle(
-            final PrintStream capturingStream, final PrintStream originalStream, final Thread parentThread
-                             ) {
-        return new TeeOutputStream(capturingStream, parentThread, originalStream);
+    /**
+     * Converts the output stream into a stream of strings split by the system line separator.
+     *
+     * @param outputStream The output stream
+     *
+     * @return a Stream of Strings
+     */
+    protected Stream<String> asStream(final ByteArrayOutputStream outputStream) {
+        return Arrays.stream(outputStream.toString()
+                                         .split(System.lineSeparator()));
     }
+
 }

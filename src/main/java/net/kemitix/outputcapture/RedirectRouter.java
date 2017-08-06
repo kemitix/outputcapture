@@ -31,7 +31,9 @@ import java.io.PrintStream;
 class RedirectRouter implements Router {
 
     @Override
-    public PrintStream handle(final PrintStream capturingStream, final PrintStream originalStream) {
+    public PrintStream handle(
+            final PrintStream capturingStream, final PrintStream originalStream, final Thread parentThread
+                             ) {
         return capturingStream;
     }
 }

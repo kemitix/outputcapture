@@ -29,21 +29,42 @@ package net.kemitix.outputcapture;
 public interface OutputCapturer {
 
     /**
-     * Capture the output of the runnable.
+     * Capture the output of the callable.
      *
-     * @param runnable the runnable to capture the output of
+     * @param callable the callable to capture the output of
      *
      * @return the instance CapturedOutput
      */
-    CapturedOutput of(Runnable runnable);
+    CapturedOutput of(ThrowingCallable callable);
 
     /**
-     * Capture the output of the runnable and copies to normal output.
+     * Capture the output of the callable and copies to normal output.
      *
-     * @param runnable the runnable to capture the output of
+     * @param callable the callable to capture the output of
      *
      * @return the instance CapturedOutput
      */
-    CapturedOutput copyOf(Runnable runnable);
+    CapturedOutput copyOf(ThrowingCallable callable);
 
+    /**
+     * Capture the output of a running thread asynchronously.
+     *
+     * <p>{@code callable} is started in a new thread.</p>
+     *
+     * @param callable the callable to capture the output of
+     *
+     * @return an instance of OngoingCapturedOutput
+     */
+    OngoingCapturedOutput ofThread(ThrowingCallable callable);
+
+    /**
+     * Capture the output of the callable running asynchronously and copies to the normal output.
+     *
+     * <p>{@code callable} is started in a new thread.</p>
+     *
+     * @param callable the callable to capture the output of
+     *
+     * @return an instance of OngoingCapturedOutput
+     */
+    OngoingCapturedOutput copyOfThread(ThrowingCallable callable);
 }

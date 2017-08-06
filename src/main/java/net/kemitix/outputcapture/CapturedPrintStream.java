@@ -47,12 +47,13 @@ class CapturedPrintStream {
      *
      * @param originalStream The original stream
      * @param router         The output router
+     * @param parentThread   The thread that invoked the output capture and the owner of the original stream
      */
-    CapturedPrintStream(final PrintStream originalStream, final Router router) {
+    CapturedPrintStream(final PrintStream originalStream, final Router router, final Thread parentThread) {
         this.originalStream = originalStream;
         this.capturedTo = new ByteArrayOutputStream();
         final PrintStream capturingStream = new PrintStream(this.capturedTo);
         final PrintStream filteredStream = new ThreadFilteredPrintStream(capturingStream, Thread.currentThread());
-        this.replacementStream = router.handle(filteredStream, originalStream);
+        this.replacementStream = router.handle(filteredStream, this.originalStream, parentThread);
     }
 }

@@ -21,19 +21,43 @@
 
 package net.kemitix.outputcapture;
 
-import java.io.PrintStream;
+import lombok.AccessLevel;
+import lombok.Getter;
+
+import java.io.ByteArrayOutputStream;
+import java.util.stream.Stream;
 
 /**
- * Router the copies the output to both the original output stream and the capturing stream.
+ * The captured output written to System.out and System.err.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-class CopyRouter implements Router {
+class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOutput {
+
+    @Getter(AccessLevel.PROTECTED)
+    private final ByteArrayOutputStream capturedOut;
+
+    @Getter(AccessLevel.PROTECTED)
+    private final ByteArrayOutputStream capturedErr;
+
+    /**
+     * Constructor.
+     *
+     * @param capturedOut The captured output written to System.out
+     * @param capturedErr The captured output written to System.err
+     */
+    DefaultCapturedOutput(final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr) {
+        this.capturedOut = capturedOut;
+        this.capturedErr = capturedErr;
+    }
 
     @Override
-    public PrintStream handle(
-            final PrintStream capturingStream, final PrintStream originalStream, final Thread parentThread
-                             ) {
-        return new TeeOutputStream(capturingStream, parentThread, originalStream);
+    public Stream<String> getStdOut() {
+        return asStream(capturedOut);
+    }
+
+    @Override
+    public Stream<String> getStdErr() {
+        return asStream(capturedErr);
     }
 }
