@@ -87,3 +87,7 @@ instances of `CaptureOutput` are in effect at the same time and are
 not strictly nested (i.e. A starts, B starts, B finishes, A finishes)
 then `System.out` and `System.err` will not be restored properly once
 capturing is finished and a `OutputCaptureException` will be thrown.
+
+Output is only captured if it on the main thread the submitted
+`ThrowningCallable` is running on. If a new thread is created within the
+callable, then any output will not be captured from that thread.
