@@ -76,7 +76,7 @@ class ThreadFilteredPrintStream extends PrintStream {
      * @param b            The byte to be written
      * @param parentThread The parent thread
      */
-    void write(final int b, final Thread parentThread) {
+    public void write(final int b, final Thread parentThread) {
         if (filteredThread.equals(parentThread)) {
             super.write(b);
         }
@@ -91,7 +91,7 @@ class ThreadFilteredPrintStream extends PrintStream {
      * @param len          Number of bytes to write
      * @param parentThread The parent thread
      */
-    void write(final byte[] buf, final int off, final int len, final Thread parentThread) {
+    public void write(final byte[] buf, final int off, final int len, final Thread parentThread) {
         if (filteredThread.equals(parentThread)) {
             super.write(buf, off, len);
         }
