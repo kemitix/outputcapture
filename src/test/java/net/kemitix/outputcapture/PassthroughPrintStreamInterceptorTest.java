@@ -31,9 +31,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
@@ -76,18 +74,6 @@ public class PassthroughPrintStreamInterceptorTest {
     }
 
     @Test
-    public void canWriteByteArraySubsectionUnmodified() throws IOException {
-        //given
-        final PrintStream interceptor = new TestPrintStreamInterceptor(intercepted);
-        //when
-        final ThrowableAssert.ThrowingCallable code = () -> interceptor.write("test".getBytes(), 1, 2);
-        //then
-        assertThatCode(code).doesNotThrowAnyException();
-        then(intercepted).should()
-                         .write("test".getBytes(), 1, 2);
-    }
-
-    @Test
     public void writeNullByteArrayWillThrowNullPointerException() throws IOException {
         //given
         final PrintStream interceptor = new TestPrintStreamInterceptor(intercepted);
@@ -95,17 +81,6 @@ public class PassthroughPrintStreamInterceptorTest {
         final ThrowableAssert.ThrowingCallable code = () -> interceptor.write(null);
         //then
         assertThatNullPointerException().isThrownBy(code);
-    }
-
-    @Test
-    public void writeNullByteArraySubsectionWillThrowNullPointerException() {
-        //given
-        final PrintStream interceptor = new TestPrintStreamInterceptor(intercepted);
-        //when
-        final ThrowableAssert.ThrowingCallable code = () -> interceptor.write(null, 0, 0);
-        //then
-        assertThatNullPointerException().isThrownBy(code)
-                                        .withMessage("buf");
     }
 
     @Test
@@ -159,22 +134,6 @@ public class PassthroughPrintStreamInterceptorTest {
         assertThat(existing.getWritten()).isEqualTo("test");
         then(intercepted).should()
                          .write("test".getBytes(), 0, 4);
-    }
-
-    @Test
-    public void writeByteArraySubsectionToSecondInterceptorDelegatesThroughFirstToOriginal() {
-        //given
-        final TestPrintStreamInterceptor existing = new TestPrintStreamInterceptor(intercepted);
-        final TestPrintStreamInterceptor interceptor =
-                new TestPrintStreamInterceptor((PrintStreamInterceptor) existing);
-        //when
-        interceptor.asPrintStream()
-                   .write("test".getBytes(), 1, 2);
-        //then
-        assertThat(interceptor.getWritten()).isEqualTo("es");
-        assertThat(existing.getWritten()).isEqualTo("es");
-        then(intercepted).should()
-                         .write("test".getBytes(), 1, 2);
     }
 
     @Test
