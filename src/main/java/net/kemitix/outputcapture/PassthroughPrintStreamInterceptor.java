@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.NonNull;
 
 import java.io.PrintStream;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -44,11 +45,11 @@ public class PassthroughPrintStreamInterceptor extends PrintStream implements Pr
     /**
      * Constructor to intercept a PrintStream.
      *
-     * @param out the PrintStream to intercept
+     * @param original the PrintStream to intercept
      */
-    public PassthroughPrintStreamInterceptor(final PrintStream out) {
-        super(out);
-        this.printStream = out;
+    public PassthroughPrintStreamInterceptor(final PrintStream original) {
+        super(original);
+        this.printStream = original;
     }
 
     /**
@@ -57,7 +58,7 @@ public class PassthroughPrintStreamInterceptor extends PrintStream implements Pr
      * @param interceptor the interceptor to intercept
      */
     public PassthroughPrintStreamInterceptor(final PrintStreamInterceptor interceptor) {
-        super(interceptor.getPrintStream());
+        super(Objects.requireNonNull(interceptor, "interceptor").getPrintStream());
         this.printStream = interceptor.getPrintStream();
         this.wrappedInterceptor.set(interceptor);
     }

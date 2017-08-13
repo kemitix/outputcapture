@@ -21,12 +21,13 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.NonNull;
+
 import java.io.PrintStream;
-import java.util.function.Predicate;
 
 /**
- * Interceptor for {@link PrintStream} that tests Strings with a supplied {@link Predicate} before writing to the
- * intercepted PrintStream, or to another interceptor.
+ * Interceptor for {@link PrintStream} that copies all writes to the supplied PrintStream and on to the intercepted
+ * PrintStream, or to another interceptor.
  *
  * <p>If the Predicate returns {@code false} for the String, then it will not be written.</p>
  *
@@ -35,43 +36,43 @@ import java.util.function.Predicate;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public class FilteredPrintStreamInterceptor extends PassthroughPrintStreamInterceptor {
+public class CopyPrintStreamInterceptor extends PassthroughPrintStreamInterceptor {
 
-    private final Predicate<String> predicate;
+    private final PrintStream copyTo;
 
     /**
      * Constructor to intercept in existing PrintStream.
      *
-     * @param original  the PrintStream to intercept
-     * @param predicate the predicate to apply to strings
+     * @param original the PrintStream to intercept
+     * @param copyTo   the PrintStream to copy writes to
      */
-    public FilteredPrintStreamInterceptor(final PrintStream original, final Predicate<String> predicate) {
+    public CopyPrintStreamInterceptor(final PrintStream original, @NonNull final PrintStream copyTo) {
         super(original);
-        this.predicate = predicate;
+        this.copyTo = copyTo;
     }
 
     /**
      * Constructor to intercept in existing PrintStreamInterceptor.
      *
      * @param interceptor the interceptor to intercept
-     * @param predicate   the predicate to apply to strings
+     * @param copyTo      the PrintStream to copy writes to
      */
-    public FilteredPrintStreamInterceptor(final PrintStreamInterceptor interceptor, final Predicate<String> predicate) {
+    public CopyPrintStreamInterceptor(
+            final PrintStreamInterceptor interceptor, @NonNull final PrintStream copyTo
+                                     ) {
         super(interceptor);
-        this.predicate = predicate;
+        this.copyTo = copyTo;
     }
 
     @Override
-    public final void print(final String s) {
-        if (predicate.test(s)) {
-            super.print(s);
-        }
+    public final void write(final int b) {
+        super.write(b);
+        copyTo.write(b);
     }
 
     @Override
-    public final void println(final String s) {
-        if (predicate.test(s)) {
-            super.println(s);
-        }
+    public final void write(final byte[] buf, final int off, final int len) {
+        super.write(buf, off, len);
+        copyTo.write(buf, off, len);
     }
 }
