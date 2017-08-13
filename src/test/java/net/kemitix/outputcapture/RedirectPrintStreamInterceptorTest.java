@@ -10,6 +10,7 @@ import java.io.PrintStream;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
@@ -17,13 +18,13 @@ import static org.mockito.MockitoAnnotations.initMocks;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public class CopyPrintStreamInterceptorTest {
+public class RedirectPrintStreamInterceptorTest {
 
     @Mock
     private PrintStream original;
 
     @Mock
-    private PrintStream copyTo;
+    private PrintStream redirectTo;
 
     private PrintStreamInterceptor existing;
 
@@ -56,87 +57,87 @@ public class CopyPrintStreamInterceptorTest {
     }
 
     @Test
-    public void requiresCopyToOnPrintStream() {
+    public void requiresRedirectToOnPrintStream() {
         //given
-        copyTo = null;
+        redirectTo = null;
         //when
         final ThrowableAssert.ThrowingCallable code = this::interceptOriginal;
         //then
         assertThatNullPointerException().isThrownBy(code)
-                                        .withMessage("copyTo");
+                                        .withMessage("redirectTo");
     }
 
     @Test
-    public void requiresCopyToOnPrintStreamInterceptor() {
+    public void requiresRedirectToOnPrintStreamInterceptor() {
         //given
-        copyTo = null;
+        redirectTo = null;
         //when
         final ThrowableAssert.ThrowingCallable code = this::interceptExisting;
         //then
         assertThatNullPointerException().isThrownBy(code)
-                                        .withMessage("copyTo");
+                                        .withMessage("redirectTo");
     }
 
     @Test
-    public void whenWriteByteThenWriteToOriginal() {
+    public void whenWriteByteThenDoNotWriteToOriginal() {
         //given
         final PrintStream interceptor = interceptOriginal();
         //when
         assertThatCode(() -> interceptor.write('x')).doesNotThrowAnyException();
         //then
-        then(original).should()
-                    .write('x');
+        then(original).should(never())
+                      .write('x');
     }
 
     @Test
-    public void whenWriteByteThenWriteToCopyTo() {
+    public void whenWriteByteThenWriteToRedirectTo() {
         //given
         final PrintStream interceptor = interceptOriginal();
         //when
         assertThatCode(() -> interceptor.write('x')).doesNotThrowAnyException();
         //then
-        then(copyTo).should()
-                    .write('x');
+        then(redirectTo).should()
+                        .write('x');
     }
 
     @Test
-    public void whenWriteByteArrayThenWriteToOriginal() {
+    public void whenWriteByteArrayThenDoNotWriteToOriginal() {
         //given
         final PrintStream interceptor = interceptOriginal();
         //when
         assertThatCode(() -> interceptor.write("test".getBytes())).doesNotThrowAnyException();
         //then
-        then(original).should()
-                    .write("test".getBytes(), 0, 4);
+        then(original).should(never())
+                      .write("test".getBytes(), 0, 4);
     }
 
     @Test
-    public void whenWriteByteArrayThenWriteToCopyTo() {
+    public void whenWriteByteArrayThenWriteToRedirectTo() {
         //given
         final PrintStream interceptor = interceptOriginal();
         //when
         assertThatCode(() -> interceptor.write("test".getBytes())).doesNotThrowAnyException();
         //then
-        then(copyTo).should()
-                    .write("test".getBytes(), 0, 4);
+        then(redirectTo).should()
+                        .write("test".getBytes(), 0, 4);
     }
 
     @Test
-    public void whenExistingInterceptorAndWriteByteThenWriteToCopyTo() {
+    public void whenExistingInterceptorAndWriteByteThenWriteToRedirectTo() {
         //given
         final PrintStream interceptor = interceptExisting();
         //when
         assertThatCode(() -> interceptor.write('x')).doesNotThrowAnyException();
         //then
-        then(copyTo).should()
-                    .write('x');
+        then(redirectTo).should()
+                        .write('x');
     }
 
     private PrintStream interceptOriginal() {
-        return new CopyPrintStreamInterceptor(original, copyTo).asPrintStream();
+        return new RedirectPrintStreamInterceptor(original, redirectTo).asPrintStream();
     }
 
     private PrintStream interceptExisting() {
-        return new CopyPrintStreamInterceptor(existing, copyTo).asPrintStream();
+        return new RedirectPrintStreamInterceptor(existing, redirectTo).asPrintStream();
     }
 }

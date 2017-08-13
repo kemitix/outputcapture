@@ -26,48 +26,46 @@ import lombok.NonNull;
 import java.io.PrintStream;
 
 /**
- * Interceptor for {@link PrintStream} that copies all writes to the supplied PrintStream and on to the intercepted
- * PrintStream, or to another interceptor.
+ * Interceptor for {@link PrintStream} that Redirects all writes to the supplied PrintStream and ignores the intercepted
+ * PrintStream, or other interceptor.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public class CopyPrintStreamInterceptor extends PassthroughPrintStreamInterceptor {
+public class RedirectPrintStreamInterceptor extends PassthroughPrintStreamInterceptor {
 
-    private final PrintStream copyTo;
+    private final PrintStream redirectTo;
 
     /**
      * Constructor to intercept in existing PrintStream.
      *
-     * @param original the PrintStream to intercept
-     * @param copyTo   the PrintStream to copy writes to
+     * @param original   the PrintStream to intercept
+     * @param redirectTo the PrintStream to redirect writes to
      */
-    public CopyPrintStreamInterceptor(final PrintStream original, @NonNull final PrintStream copyTo) {
+    public RedirectPrintStreamInterceptor(final PrintStream original, @NonNull final PrintStream redirectTo) {
         super(original);
-        this.copyTo = copyTo;
+        this.redirectTo = redirectTo;
     }
 
     /**
      * Constructor to intercept in existing PrintStreamInterceptor.
      *
      * @param interceptor the interceptor to intercept
-     * @param copyTo      the PrintStream to copy writes to
+     * @param redirectTo  the PrintStream to redirect writes to
      */
-    public CopyPrintStreamInterceptor(
-            final PrintStreamInterceptor interceptor, @NonNull final PrintStream copyTo
-                                     ) {
+    public RedirectPrintStreamInterceptor(
+            final PrintStreamInterceptor interceptor, @NonNull final PrintStream redirectTo
+                                         ) {
         super(interceptor);
-        this.copyTo = copyTo;
+        this.redirectTo = redirectTo;
     }
 
     @Override
     public final void write(final int b) {
-        super.write(b);
-        copyTo.write(b);
+        redirectTo.write(b);
     }
 
     @Override
     public final void write(final byte[] buf, final int off, final int len) {
-        super.write(buf, off, len);
-        copyTo.write(buf, off, len);
+        redirectTo.write(buf, off, len);
     }
 }
