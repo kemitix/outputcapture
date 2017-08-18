@@ -75,7 +75,7 @@ public class TeeOutputStreamTest {
         final ByteArrayOutputStream byteArray2 = new ByteArrayOutputStream();
         final PrintStream out1 = new PrintStream(byteArray1);
         final Thread filteredThread = new Thread();
-        final PrintStream out2 = new ThreadFilteredPrintStream(new PrintStream(byteArray2), filteredThread);
+        final PrintStream out2 = new ThreadFilteredPrintStreamWrapper(new PrintStream(byteArray2), filteredThread);
         final TeeOutputStream teeOutputStream = new TeeOutputStream(out1, filteredThread, out2);
         //when
         teeOutputStream.write('x');
@@ -91,7 +91,7 @@ public class TeeOutputStreamTest {
         final ByteArrayOutputStream byteArray2 = new ByteArrayOutputStream();
         final PrintStream out1 = new PrintStream(byteArray1);
         final Thread filteredThread = new Thread();
-        final PrintStream out2 = new ThreadFilteredPrintStream(new PrintStream(byteArray2), filteredThread);
+        final PrintStream out2 = new ThreadFilteredPrintStreamWrapper(new PrintStream(byteArray2), filteredThread);
         final TeeOutputStream teeOutputStream = new TeeOutputStream(out1, filteredThread, out2);
         //when
         teeOutputStream.write("test".getBytes(), 0, 4);
@@ -109,7 +109,7 @@ public class TeeOutputStreamTest {
         final PrintStream out1 = new PrintStream(byteArray1);
         final Thread filteredThread = new Thread();
         final Thread nonFilteredThread = new Thread();
-        final PrintStream out2 = new ThreadFilteredPrintStream(new PrintStream(byteArray2), filteredThread);
+        final PrintStream out2 = new ThreadFilteredPrintStreamWrapper(new PrintStream(byteArray2), filteredThread);
         final TeeOutputStream teeOutputStream = new TeeOutputStream(out1, nonFilteredThread, out2);
         //when
         teeOutputStream.write('x');
@@ -126,7 +126,7 @@ public class TeeOutputStreamTest {
         final PrintStream out1 = new PrintStream(byteArray1);
         final Thread filteredThread = new Thread();
         final Thread nonFilteredThread = new Thread();
-        final PrintStream out2 = new ThreadFilteredPrintStream(new PrintStream(byteArray2), filteredThread);
+        final PrintStream out2 = new ThreadFilteredPrintStreamWrapper(new PrintStream(byteArray2), filteredThread);
         final TeeOutputStream teeOutputStream = new TeeOutputStream(out1, nonFilteredThread, out2);
         //when
         teeOutputStream.write("test".getBytes(), 0, 4);

@@ -28,12 +28,12 @@ import java.util.List;
 /**
  * Copies output to all streams.
  *
- * <p>Where one of the {@code extraOutputStreams} is an instance of {@link ThreadFilteredPrintStream}, then the
+ * <p>Where one of the {@code extraOutputStreams} is an instance of {@link ThreadFilteredPrintStreamWrapper}, then the
  * {@code parentThread} is provided to allow it to perform its filtering.</p>
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  *
- * @see ThreadFilteredPrintStream
+ * @see ThreadFilteredPrintStreamWrapper
  */
 class TeeOutputStream extends PrintStream {
 
@@ -65,8 +65,8 @@ class TeeOutputStream extends PrintStream {
     public void write(final int b) {
         super.write(b);
         outputStreams.forEach(os -> {
-            if (os instanceof ThreadFilteredPrintStream) {
-                ((ThreadFilteredPrintStream) os).write(b, parentThread);
+            if (os instanceof ThreadFilteredPrintStreamWrapper) {
+                ((ThreadFilteredPrintStreamWrapper) os).write(b, parentThread);
             } else {
                 os.write(b);
             }
@@ -84,8 +84,8 @@ class TeeOutputStream extends PrintStream {
     public void write(final byte[] buf, final int off, final int len) {
         super.write(buf, off, len);
         outputStreams.forEach(os -> {
-            if (os instanceof ThreadFilteredPrintStream) {
-                ((ThreadFilteredPrintStream) os).write(buf, off, len, parentThread);
+            if (os instanceof ThreadFilteredPrintStreamWrapper) {
+                ((ThreadFilteredPrintStreamWrapper) os).write(buf, off, len, parentThread);
             } else {
                 os.write(buf, off, len);
             }

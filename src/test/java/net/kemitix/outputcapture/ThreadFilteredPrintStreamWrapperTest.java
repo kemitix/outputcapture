@@ -9,11 +9,11 @@ import java.io.PrintStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link ThreadFilteredPrintStream}.
+ * Tests for {@link ThreadFilteredPrintStreamWrapper}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public class ThreadFilteredPrintStreamTest {
+public class ThreadFilteredPrintStreamWrapperTest {
 
     private ByteArrayOutputStream buffer;
 
@@ -29,7 +29,7 @@ public class ThreadFilteredPrintStreamTest {
     public void canWriteByteWhenOnFilteredThread() {
         //given
         final Thread thread = Thread.currentThread();
-        final ThreadFilteredPrintStream filtered = new ThreadFilteredPrintStream(printStream, thread);
+        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
         //when
         filtered.write('x');
         //then
@@ -40,7 +40,7 @@ public class ThreadFilteredPrintStreamTest {
     public void doesNotWriteByteWhenNotOnFilteredThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStream filtered = new ThreadFilteredPrintStream(printStream, thread);
+        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
         //when
         filtered.write('x');
         //then
@@ -51,7 +51,7 @@ public class ThreadFilteredPrintStreamTest {
     public void canWriteByteArrayWhenOnFilteredThread() {
         //given
         final Thread thread = Thread.currentThread();
-        final ThreadFilteredPrintStream filtered = new ThreadFilteredPrintStream(printStream, thread);
+        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
         //when
         filtered.write("test".getBytes(), 0, 4);
         //then
@@ -62,7 +62,7 @@ public class ThreadFilteredPrintStreamTest {
     public void doesNotWriteByteArrayWhenNotOnFilteredThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStream filtered = new ThreadFilteredPrintStream(printStream, thread);
+        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
         //when
         filtered.write("test".getBytes(), 0, 4);
         //then
@@ -73,7 +73,7 @@ public class ThreadFilteredPrintStreamTest {
     public void canWriteByteWhenOnParentThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStream filtered = new ThreadFilteredPrintStream(printStream, thread);
+        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
         //when
         filtered.write('x', thread);
         //then
@@ -84,7 +84,7 @@ public class ThreadFilteredPrintStreamTest {
     public void doesNotWriteByteWhenNotOnParentThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStream filtered = new ThreadFilteredPrintStream(printStream, thread);
+        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
         final Thread otherThread = new Thread();
         //when
         filtered.write('x', otherThread);
@@ -96,7 +96,7 @@ public class ThreadFilteredPrintStreamTest {
     public void canWriteByteArrayWhenOnParentThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStream filtered = new ThreadFilteredPrintStream(printStream, thread);
+        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
         //when
         filtered.write("test".getBytes(), 0, 4, thread);
         //then
@@ -107,7 +107,7 @@ public class ThreadFilteredPrintStreamTest {
     public void doesNotWriteByteArrayWhenNotOnParentThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStream filtered = new ThreadFilteredPrintStream(printStream, thread);
+        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
         final Thread otherThread = new Thread();
         //when
         filtered.write("test".getBytes(), 0, 4, otherThread);
