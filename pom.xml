@@ -12,7 +12,7 @@
         <pitest.mutation>100</pitest.mutation>
         <jacoco-class-line-covered-ratio>1</jacoco-class-line-covered-ratio>
         <jacoco-class-instruction-covered-ratio>1</jacoco-class-instruction-covered-ratio>
-        <print-stream-wrapper.version>0.2.0</print-stream-wrapper.version>
+        <print-stream-wrapper.version>0.3.0</print-stream-wrapper.version>
     </properties>
     <parent>
         <groupId>net.kemitix</groupId>

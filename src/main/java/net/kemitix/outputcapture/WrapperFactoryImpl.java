@@ -19,52 +19,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 package net.kemitix.outputcapture;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
 import net.kemitix.wrapper.Wrapper;
 import net.kemitix.wrapper.printstream.CopyPrintStreamWrapper;
+import net.kemitix.wrapper.printstream.RedirectPrintStreamWrapper;
 
-import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
- * Router the copies the output to both the original output stream and the capturing stream.
+ * Default implementation of the {@link WrapperFactory}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-@RequiredArgsConstructor
-class CopyRouter implements Router {
-
-    private final WrapperFactory wrapperFactory;
+class WrapperFactoryImpl implements WrapperFactory {
 
     @Override
-    public WrappingPrintStreams wrap(
-            @NonNull final OutputStream captureTo,
-            @NonNull final PrintStream originalStream,
-            final Thread targetThread
-                                    ) {
-        val copyTo = new PrintStream(captureTo);
-        val wrapped = Wrapper.asWrapper(originalStream)
-                             .map(wrapWrapper(copyTo))
-                             .orElseGet(wrapPrintStream(originalStream, copyTo));
-        return createWrappedPrintStream(wrapped, targetThread);
-    }
-
-    private Function<Wrapper<PrintStream>, Wrapper<PrintStream>> wrapWrapper(final PrintStream copyTo) {
-        return wrapper -> new CopyPrintStreamWrapper(wrapper, copyTo);
-    }
-
-    private Supplier<Wrapper<PrintStream>> wrapPrintStream(
-            final PrintStream originalStream,
+    public Wrapper<PrintStream> copyPrintStream(
+            final PrintStream original,
             final PrintStream copyTo
-                                                            ) {
-        return () -> wrapperFactory.copyPrintStream(originalStream, copyTo);
+                                               ) {
+        return new CopyPrintStreamWrapper(original, copyTo);
     }
 
+    @Override
+    public Wrapper<PrintStream> redirectPrintStream(
+            final PrintStream original,
+            final PrintStream redirectTo
+                                                   ) {
+        return new RedirectPrintStreamWrapper(original, redirectTo);
+    }
 }

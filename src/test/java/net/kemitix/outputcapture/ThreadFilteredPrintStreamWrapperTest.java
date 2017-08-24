@@ -1,5 +1,7 @@
 package net.kemitix.outputcapture;
 
+import net.kemitix.wrapper.Wrapper;
+import net.kemitix.wrapper.printstream.PassthroughPrintStreamWrapper;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,12 +19,12 @@ public class ThreadFilteredPrintStreamWrapperTest {
 
     private ByteArrayOutputStream buffer;
 
-    private PrintStream printStream;
+    private Wrapper<PrintStream> printStream;
 
     @Before
     public void setUp() throws Exception {
         buffer = new ByteArrayOutputStream();
-        printStream = new PrintStream(buffer);
+        printStream = new PassthroughPrintStreamWrapper(new PrintStream(buffer));
     }
 
     @Test

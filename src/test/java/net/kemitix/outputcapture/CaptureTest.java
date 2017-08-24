@@ -20,6 +20,7 @@
 package net.kemitix.outputcapture;
 
 import lombok.SneakyThrows;
+import lombok.val;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.Before;
 import org.junit.Test;
@@ -162,7 +163,7 @@ public class CaptureTest {
         final AtomicReference<CapturedOutput> inner = new AtomicReference<>();
         final CountDownLatch latch = createLatch();
         //when
-        final CapturedOutput capturedEcho = captureCopy.of(() -> {
+        final CapturedOutput capturedEcho = captureCopy.whileDoing(() -> {
             inner.set(captureOutput.copyOf(() -> {
                 System.out.println(line1);
                 System.err.println(line2);
@@ -172,12 +173,15 @@ public class CaptureTest {
             awaitLatch(latch);
         });
         //then
-        assertThat(capturedEcho.getStdOut()).containsExactly(line1, "a");
-        assertThat(capturedEcho.getStdErr()).containsExactly(line2);
-        assertThat(inner.get()
-                        .getStdOut()).containsExactly(line1, "a");
-        assertThat(inner.get()
-                        .getStdErr()).containsExactly(line2);
+        val capturedOutput = inner.get();
+        assertThat(capturedOutput.getStdOut()).as("inner std out written")
+                                              .containsExactly(line1, "a");
+        assertThat(capturedOutput.getStdErr()).as("inner std err written")
+                                              .containsExactly(line2);
+        assertThat(capturedEcho.getStdOut()).as("outer std out written")
+                                            .containsExactly(line1, "a");
+        assertThat(capturedEcho.getStdErr()).as("outer std err written")
+                                            .containsExactly(line2);
     }
 
     @Test
@@ -539,17 +543,23 @@ public class CaptureTest {
         //given
         final CaptureOutput outer = new CaptureOutput();
         final CaptureOutput inner = new CaptureOutput();
+        final CountDownLatch latch1 = createLatch();
+        final CountDownLatch latch2 = createLatch();
         //when
-        final CapturedOutput outerCaptured = outer.of(() -> {
+        final CapturedOutput outerCaptured = outer.copyWhileDoing(() -> {
             final OngoingCapturedOutput innerCaptured = inner.copyOfThread(() -> {
                 System.out.println(line1);
+                releaseLatch(latch1);
             });
+            awaitLatch(latch1);
             innerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
             System.out.println(line2);
             assertThat(innerCaptured.getStdOut()).containsExactly(line1)
                                                  .doesNotContain(line2);
+            releaseLatch(latch2);
         });
         //then
+        awaitLatch(latch2);
         assertThat(outerCaptured.getStdOut()).containsExactly(line1, line2);
     }
 }

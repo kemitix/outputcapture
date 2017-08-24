@@ -23,6 +23,7 @@ package net.kemitix.outputcapture;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import net.kemitix.wrapper.Wrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -67,20 +68,8 @@ abstract class AbstractCaptureOutput {
     protected void shutdownAsyncCapture(
             final CapturedPrintStream out, final CapturedPrintStream err, final CountDownLatch completedLatch
                                        ) {
-        System.setOut(originalStream(out));
-        System.setErr(originalStream(err));
+        stop(out, err);
         completedLatch.countDown();
-    }
-
-    /**
-     * Get the original PrintStream from the CapturedPrintStream.
-     *
-     * @param capturedPrintStream The CapturedPrintStream containing the original PrintStream
-     *
-     * @return the original PrintStream
-     */
-    protected PrintStream originalStream(final CapturedPrintStream capturedPrintStream) {
-        return capturedPrintStream.getOriginalStream();
     }
 
     /**
@@ -101,11 +90,11 @@ abstract class AbstractCaptureOutput {
      * Captures the System.out and System.err PrintStreams.
      *
      * @param router       The Router
-     * @param parentThread The parent thread
+     * @param targetThread The target thread to filter by
      */
-    protected void initiateCapture(final Router router, final Thread parentThread) {
-        capturedOut = capturePrintStream(System.out, router, System::setOut, parentThread);
-        capturedErr = capturePrintStream(System.err, router, System::setErr, parentThread);
+    protected void initiateCapture(final Router router, final Thread targetThread) {
+        capturedOut = capturePrintStream(System.out, router, System::setOut, targetThread);
+        capturedErr = capturePrintStream(System.err, router, System::setErr, targetThread);
     }
 
     /**
@@ -125,10 +114,36 @@ abstract class AbstractCaptureOutput {
 
     private CapturedPrintStream capturePrintStream(
             final PrintStream originalStream, final Router router, final Consumer<PrintStream> setStream,
-            final Thread parentThread
+            final Thread targetThread
                                                   ) {
-        final CapturedPrintStream capturedPrintStream = new CapturedPrintStream(originalStream, router, parentThread);
-        setStream.accept(capturedPrintStream.getReplacementStream());
+        final CapturedPrintStream capturedPrintStream = new CapturedPrintStream(originalStream, router, targetThread);
+        final Wrapper<PrintStream> replacementStream = capturedPrintStream.getReplacementStream();
+        setStream.accept(replacementStream.asCore());
         return capturedPrintStream;
+    }
+
+    /**
+     * Stop capturing the System PrintStreams {@code out} and {@code err}.
+     *
+     * @param capturedPrintStreamOut The {@code System.out} captured PrintStream
+     * @param capturedPrintStreamErr The {@code System.err} captured PrintStream
+     */
+    protected void stop(
+            final CapturedPrintStream capturedPrintStreamOut, final CapturedPrintStream capturedPrintStreamErr
+                       ) {
+        stopCapturing(System.out, System::setOut, capturedPrintStreamOut);
+        stopCapturing(System.err, System::setErr, capturedPrintStreamErr);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void stopCapturing(
+            final PrintStream current, final Consumer<PrintStream> setPrintStream, final CapturedPrintStream captured
+                              ) {
+        final AtomicReference<PrintStream> head = new AtomicReference<>(current);
+        captured.getWrappers()
+                .forEach(wrapperToRemove -> Wrapper.asWrapper(head.get())
+                                                   .ifPresent(wrapper -> head.set(
+                                                           wrapper.removeWrapper(wrapperToRemove))));
+        setPrintStream.accept(head.get());
     }
 }

@@ -23,44 +23,38 @@ package net.kemitix.outputcapture;
 
 import net.kemitix.wrapper.Wrapper;
 
-import java.io.OutputStream;
 import java.io.PrintStream;
 
 /**
- * Routes output between the capturing stream and the original stream.
+ * Factory for creating {@link Wrapper}s.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
- * @see {@link RedirectRouter}
- * @see {@link CopyRouter}
  */
-interface Router {
+interface WrapperFactory {
 
     /**
-     * Create an output stream that routes the output to the appropriate stream(s).
+     * Create a {@link Wrapper} for the original PrintStream that copies all output written to the other PrintStream.
      *
-     * @param captureTo      the output stream capturing the output
-     * @param originalStream the stream where output would normally have gone
-     * @param targetThread   the thread to filter on, if filtering is required
+     * @param original The original PrintStream
+     * @param copyTo   The PrintStream to copy all writes to
      *
-     * @return a PrintStream to be used to write to
+     * @return an instance of a {@code Wrapper<PrintStream>}
      */
-    WrappingPrintStreams wrap(OutputStream captureTo, PrintStream originalStream, Thread targetThread);
+    Wrapper<PrintStream> copyPrintStream(
+            PrintStream original,
+            PrintStream copyTo
+                                        );
 
     /**
-     * Creates a WrappingPrintStreams object.
+     * Create a {@link Wrapper} for the original PrintStream that redirects all output written to the other PrintStream.
      *
-     * <p>This default implementation creates an object containing only the wrapper provided. The targetThread is
-     * ignored.</p>
+     * @param original   The original PrintStream
+     * @param redirectTo The PrintStream to redirect all writes to
      *
-     * @param wrapped      The main PrintStream Wrapper
-     * @param targetThread The target Thread for filtering, if used
-     *
-     * @return a WrappingPrintStreams instance containing {@code wrapped}
+     * @return an instance of a {@code Wrapper<PrintStream>}
      */
-    default WrappingPrintStreams createWrappedPrintStream(
-            final Wrapper<PrintStream> wrapped,
-            final Thread targetThread
-                                                         ) {
-        return new WrappingPrintStreams(wrapped);
-    }
+    Wrapper<PrintStream> redirectPrintStream(
+            PrintStream original,
+            PrintStream redirectTo
+                            );
 }

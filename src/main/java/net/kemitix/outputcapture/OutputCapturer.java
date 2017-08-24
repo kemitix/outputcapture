@@ -67,4 +67,29 @@ public interface OutputCapturer {
      * @return an instance of OngoingCapturedOutput
      */
     OngoingCapturedOutput copyOfThread(ThrowingCallable callable);
+
+    /**
+     * Capture all output written while the callable is running.
+     *
+     * <p>This method will also capture any other output from other threads during the time the callable is running.</p>
+     *
+     * @param callable the callable to capture output during
+     *
+     * @return an instance of CapturedOutput
+     */
+    CapturedOutput whileDoing(ThrowingCallable callable);
+
+    /**
+     * Capture all output written while the callable is running.
+     *
+     * <p>This method will also capture any other output from other threads during the time the callable is
+     * running.</p>
+     *
+     * <p>{@code callable} is started in a new thread.</p>
+     *
+     * @param callable the callable to capture output during
+     *
+     * @return an instance of OngoingCapturedOutput
+     */
+    OngoingCapturedOutput copyWhileDoing(ThrowingCallable callable);
 }

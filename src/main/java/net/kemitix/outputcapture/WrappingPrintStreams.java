@@ -21,46 +21,36 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.Getter;
+import lombok.NonNull;
 import net.kemitix.wrapper.Wrapper;
 
-import java.io.OutputStream;
 import java.io.PrintStream;
 
 /**
- * Routes output between the capturing stream and the original stream.
+ * A simple collection of PrintStream Wrappers, with one main wrapper and any number of others.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
- * @see {@link RedirectRouter}
- * @see {@link CopyRouter}
  */
-interface Router {
+class WrappingPrintStreams {
+
+    @Getter
+    private final Wrapper<PrintStream> mainWrapper;
+
+    @Getter
+    private final Wrapper<PrintStream>[] otherWrappers;
 
     /**
-     * Create an output stream that routes the output to the appropriate stream(s).
+     * Constructor.
      *
-     * @param captureTo      the output stream capturing the output
-     * @param originalStream the stream where output would normally have gone
-     * @param targetThread   the thread to filter on, if filtering is required
-     *
-     * @return a PrintStream to be used to write to
+     * @param mainWrapper   The main Wrapper
+     * @param otherWrappers The other Wrappers
      */
-    WrappingPrintStreams wrap(OutputStream captureTo, PrintStream originalStream, Thread targetThread);
-
-    /**
-     * Creates a WrappingPrintStreams object.
-     *
-     * <p>This default implementation creates an object containing only the wrapper provided. The targetThread is
-     * ignored.</p>
-     *
-     * @param wrapped      The main PrintStream Wrapper
-     * @param targetThread The target Thread for filtering, if used
-     *
-     * @return a WrappingPrintStreams instance containing {@code wrapped}
-     */
-    default WrappingPrintStreams createWrappedPrintStream(
-            final Wrapper<PrintStream> wrapped,
-            final Thread targetThread
-                                                         ) {
-        return new WrappingPrintStreams(wrapped);
+    WrappingPrintStreams(
+            @NonNull final Wrapper<PrintStream> mainWrapper,
+            final Wrapper<PrintStream>... otherWrappers
+                        ) {
+        this.mainWrapper = mainWrapper;
+        this.otherWrappers = otherWrappers;
     }
 }

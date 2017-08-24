@@ -21,19 +21,50 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
+import net.kemitix.wrapper.Wrapper;
+import net.kemitix.wrapper.printstream.RedirectPrintStreamWrapper;
+
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Router that redirects output away from the original output stream to the capturing stream.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
+@RequiredArgsConstructor
 class RedirectRouter implements Router {
 
+    private final WrapperFactory wrapperFactory;
+
     @Override
-    public PrintStream handle(
-            final PrintStream capturingStream, final PrintStream originalStream, final Thread parentThread
-                             ) {
-        return capturingStream;
+    public WrappingPrintStreams wrap(
+            @NonNull final OutputStream captureTo,
+            @NonNull final PrintStream originalStream,
+            final Thread targetThread
+                                    ) {
+        final PrintStream redirectTo = new PrintStream(captureTo);
+        val wrapped = Wrapper.asWrapper(originalStream)
+                             .map(wrapWrapper(redirectTo))
+                             .orElseGet(wrapPrintStream(originalStream, redirectTo));
+        return createWrappedPrintStream(wrapped, targetThread);
+    }
+
+    private Function<Wrapper<PrintStream>, Wrapper<PrintStream>> wrapWrapper(
+            final PrintStream redirectTo
+                                                                                  ) {
+        return wrapper -> new RedirectPrintStreamWrapper(wrapper, redirectTo);
+    }
+
+    private Supplier<Wrapper<PrintStream>> wrapPrintStream(
+            final PrintStream originalStream,
+            final PrintStream redirectTo
+                                                                ) {
+        return () -> wrapperFactory.redirectPrintStream(originalStream, redirectTo);
     }
 }
