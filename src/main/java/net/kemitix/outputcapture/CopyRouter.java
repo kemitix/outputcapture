@@ -19,21 +19,51 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
 package net.kemitix.outputcapture;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
+import net.kemitix.wrapper.Wrapper;
+
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Router the copies the output to both the original output stream and the capturing stream.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
+@RequiredArgsConstructor
 class CopyRouter implements Router {
 
+    private final WrapperFactory wrapperFactory;
+
     @Override
-    public PrintStream handle(
-            final PrintStream capturingStream, final PrintStream originalStream, final Thread parentThread
-                             ) {
-        return new TeeOutputStream(capturingStream, parentThread, originalStream);
+    public WrappingPrintStreams wrap(
+            @NonNull final OutputStream captureTo,
+            @NonNull final PrintStream originalStream,
+            final Thread targetThread
+                                    ) {
+        val copyTo = new PrintStream(captureTo);
+        val wrapped = Wrapper.asWrapper(originalStream)
+                             .map(wrapWrapper(copyTo))
+                             .orElseGet(wrapPrintStream(originalStream, copyTo));
+        return createWrappedPrintStream(wrapped, targetThread);
     }
+
+    private Function<Wrapper<PrintStream>, Wrapper<PrintStream>> wrapWrapper(final PrintStream copyTo) {
+        return wrapper -> wrapperFactory.copyPrintStream(wrapper, copyTo);
+    }
+
+    private Supplier<Wrapper<PrintStream>> wrapPrintStream(
+            final PrintStream originalStream,
+            final PrintStream copyTo
+                                                            ) {
+        return () -> wrapperFactory.copyPrintStream(originalStream, copyTo);
+    }
+
 }

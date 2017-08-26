@@ -21,7 +21,9 @@
 
 package net.kemitix.outputcapture;
 
-import java.io.OutputStream;
+import net.kemitix.wrapper.Wrapper;
+import net.kemitix.wrapper.printstream.PassthroughPrintStreamWrapper;
+
 import java.io.PrintStream;
 
 /**
@@ -29,18 +31,18 @@ import java.io.PrintStream;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-class ThreadFilteredPrintStream extends PrintStream {
+class ThreadFilteredPrintStreamWrapper extends PassthroughPrintStreamWrapper {
 
     private final Thread filteredThread;
 
     /**
      * Constructor.
      *
-     * @param out            The output stream
+     * @param wrapped        The wrapped PrintStream to wrap
      * @param filteredThread The thread to filter on
      */
-    ThreadFilteredPrintStream(final OutputStream out, final Thread filteredThread) {
-        super(out);
+    ThreadFilteredPrintStreamWrapper(final Wrapper<PrintStream> wrapped, final Thread filteredThread) {
+        super(wrapped);
         this.filteredThread = filteredThread;
     }
 
@@ -98,6 +100,7 @@ class ThreadFilteredPrintStream extends PrintStream {
     }
 
     private boolean onFilteredThread() {
-        return filteredThread.equals(Thread.currentThread());
+        final Thread currentThread = Thread.currentThread();
+        return filteredThread.equals(currentThread);
     }
 }

@@ -30,27 +30,43 @@ import java.util.concurrent.CountDownLatch;
  */
 public final class CaptureOutput implements OutputCapturer {
 
-    private static final RedirectRouter REDIRECT_ROUTER = new RedirectRouter();
+    private static final WrapperFactory WRAPPER_FACTORY = new WrapperFactoryImpl();
 
-    private static final CopyRouter COPY_ROUTER = new CopyRouter();
+    private static final Router THREAD_FILTERED_REDIRECT_ROUTER = new ThreadFilteredRedirectRouter(WRAPPER_FACTORY);
+
+    private static final Router THREAD_FILTERED_COPY_ROUTER = new ThreadFilteredCopyRouter(WRAPPER_FACTORY);
+
+    private static final Router COPY_ROUTER = new CopyRouter(WRAPPER_FACTORY);
+
+    private static final Router REDIRECT_ROUTER = new RedirectRouter(WRAPPER_FACTORY);
 
     @Override
     public CapturedOutput of(final ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(REDIRECT_ROUTER).capture(callable);
+        return new SynchronousOutputCapturer(THREAD_FILTERED_REDIRECT_ROUTER).capture(callable);
     }
 
     @Override
     public CapturedOutput copyOf(final ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(COPY_ROUTER).capture(callable);
+        return new SynchronousOutputCapturer(THREAD_FILTERED_COPY_ROUTER).capture(callable);
     }
 
     @Override
     public OngoingCapturedOutput ofThread(final ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(REDIRECT_ROUTER).capture(callable, CountDownLatch::new);
+        return new AsynchronousOutputCapturer(THREAD_FILTERED_REDIRECT_ROUTER).capture(callable, CountDownLatch::new);
     }
 
     @Override
     public OngoingCapturedOutput copyOfThread(final ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(COPY_ROUTER).capture(callable, CountDownLatch::new);
+        return new AsynchronousOutputCapturer(THREAD_FILTERED_COPY_ROUTER).capture(callable, CountDownLatch::new);
+    }
+
+    @Override
+    public CapturedOutput whileDoing(final ThrowingCallable callable) {
+        return new SynchronousOutputCapturer(COPY_ROUTER).capture(callable);
+    }
+
+    @Override
+    public OngoingCapturedOutput copyWhileDoing(final ThrowingCallable callable) {
+        return new AsynchronousOutputCapturer(REDIRECT_ROUTER).capture(callable, CountDownLatch::new);
     }
 }

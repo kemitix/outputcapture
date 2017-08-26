@@ -20,6 +20,7 @@
 package net.kemitix.outputcapture;
 
 import lombok.SneakyThrows;
+import lombok.val;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.Before;
 import org.junit.Test;
@@ -162,7 +163,7 @@ public class CaptureTest {
         final AtomicReference<CapturedOutput> inner = new AtomicReference<>();
         final CountDownLatch latch = createLatch();
         //when
-        final CapturedOutput capturedEcho = captureCopy.of(() -> {
+        final CapturedOutput capturedEcho = captureCopy.whileDoing(() -> {
             inner.set(captureOutput.copyOf(() -> {
                 System.out.println(line1);
                 System.err.println(line2);
@@ -172,12 +173,15 @@ public class CaptureTest {
             awaitLatch(latch);
         });
         //then
-        assertThat(capturedEcho.getStdOut()).containsExactly(line1, "a");
-        assertThat(capturedEcho.getStdErr()).containsExactly(line2);
-        assertThat(inner.get()
-                        .getStdOut()).containsExactly(line1, "a");
-        assertThat(inner.get()
-                        .getStdErr()).containsExactly(line2);
+        val capturedOutput = inner.get();
+        assertThat(capturedOutput.getStdOut()).as("inner std out written")
+                                              .containsExactly(line1, "a");
+        assertThat(capturedOutput.getStdErr()).as("inner std err written")
+                                              .containsExactly(line2);
+        assertThat(capturedEcho.getStdOut()).as("outer std out written")
+                                            .containsExactly(line1, "a");
+        assertThat(capturedEcho.getStdErr()).as("outer std err written")
+                                            .containsExactly(line2);
     }
 
     @Test
@@ -279,8 +283,10 @@ public class CaptureTest {
     }
 
     @Test(timeout = A_SHORT_PERIOD)
-    public void exceptionIsThrownWhenMultipleOutputCapturesOverlap() throws InterruptedException {
+    public void canRestoreSystemOutAndErrWhenMultipleOutputCapturesOverlap() throws InterruptedException {
         //given
+        final PrintStream originalOut = System.out;
+        final PrintStream originalErr = System.err;
         final CountDownLatch latch1 = createLatch();
         final CountDownLatch latch2 = createLatch();
         final CountDownLatch latch3 = createLatch();
@@ -294,20 +300,16 @@ public class CaptureTest {
             });
         });
         executor.submit(executor::shutdown);
-
         //when
-        final ThrowableAssert.ThrowingCallable action = () -> {
-            new CaptureOutput().of(() -> {
-                releaseLatch(latch1);
-                awaitLatch(latch2);
-            });
-        };
+        captureOutput.of(() -> {
+            releaseLatch(latch1);
+            awaitLatch(latch2);
+        });
         //then
-        assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
-                                  .hasMessage("System.out has been replaced")
-                                  .hasNoCause();
         releaseLatch(latch3);
         executor.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
+        assertThat(System.out).isSameAs(originalOut);
+        assertThat(System.err).isSameAs(originalErr);
     }
 
     private void releaseLatch(final CountDownLatch latch) {
@@ -539,17 +541,23 @@ public class CaptureTest {
         //given
         final CaptureOutput outer = new CaptureOutput();
         final CaptureOutput inner = new CaptureOutput();
+        final CountDownLatch latch1 = createLatch();
+        final CountDownLatch latch2 = createLatch();
         //when
-        final CapturedOutput outerCaptured = outer.of(() -> {
+        final CapturedOutput outerCaptured = outer.copyWhileDoing(() -> {
             final OngoingCapturedOutput innerCaptured = inner.copyOfThread(() -> {
                 System.out.println(line1);
+                releaseLatch(latch1);
             });
+            awaitLatch(latch1);
             innerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
             System.out.println(line2);
             assertThat(innerCaptured.getStdOut()).containsExactly(line1)
                                                  .doesNotContain(line2);
+            releaseLatch(latch2);
         });
         //then
+        awaitLatch(latch2);
         assertThat(outerCaptured.getStdOut()).containsExactly(line1, line2);
     }
 }

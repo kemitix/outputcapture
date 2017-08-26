@@ -12,6 +12,7 @@
         <pitest.mutation>100</pitest.mutation>
         <jacoco-class-line-covered-ratio>1</jacoco-class-line-covered-ratio>
         <jacoco-class-instruction-covered-ratio>1</jacoco-class-instruction-covered-ratio>
+        <print-stream-wrapper.version>0.3.0</print-stream-wrapper.version>
     </properties>
     <parent>
         <groupId>net.kemitix</groupId>
@@ -23,6 +24,11 @@
     <name>Output Capture</name>
     <description>Capture output written to System.out and System.err</description>
     <dependencies>
+        <dependency>
+            <groupId>net.kemitix</groupId>
+            <artifactId>print-stream-wrapper</artifactId>
+            <version>${print-stream-wrapper.version}</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

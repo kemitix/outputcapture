@@ -22,9 +22,12 @@
 package net.kemitix.outputcapture;
 
 import lombok.Getter;
+import net.kemitix.wrapper.Wrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Holder for the original stream and its replacement.
@@ -34,26 +37,27 @@ import java.io.PrintStream;
 class CapturedPrintStream {
 
     @Getter
-    private final PrintStream originalStream;
-
-    @Getter
-    private final PrintStream replacementStream;
+    private final Wrapper<PrintStream> replacementStream;
 
     @Getter
     private final ByteArrayOutputStream capturedTo;
+
+    @Getter
+    private Set<Wrapper<PrintStream>> wrappers;
 
     /**
      * Constructor.
      *
      * @param originalStream The original stream
      * @param router         The output router
-     * @param parentThread   The thread that invoked the output capture and the owner of the original stream
+     * @param targetThread   The target thread to filter by
      */
-    CapturedPrintStream(final PrintStream originalStream, final Router router, final Thread parentThread) {
-        this.originalStream = originalStream;
+    CapturedPrintStream(final PrintStream originalStream, final Router router, final Thread targetThread) {
         this.capturedTo = new ByteArrayOutputStream();
-        final PrintStream capturingStream = new PrintStream(this.capturedTo);
-        final PrintStream filteredStream = new ThreadFilteredPrintStream(capturingStream, Thread.currentThread());
-        this.replacementStream = router.handle(filteredStream, this.originalStream, parentThread);
+        this.wrappers = new HashSet<>();
+        final WrappingPrintStreams wrapped = router.wrap(capturedTo, originalStream, targetThread);
+        replacementStream = wrapped.getMainWrapper();
+        wrappers.addAll(wrapped.getOtherWrappers());
+        wrappers.add(replacementStream);
     }
 }

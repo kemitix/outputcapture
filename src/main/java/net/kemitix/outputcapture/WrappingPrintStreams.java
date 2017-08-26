@@ -21,46 +21,51 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.Getter;
+import lombok.NonNull;
 import net.kemitix.wrapper.Wrapper;
 
-import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Routes output between the capturing stream and the original stream.
+ * A simple collection of PrintStream Wrappers, with one main wrapper and any number of others.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
- * @see {@link RedirectRouter}
- * @see {@link CopyRouter}
  */
-interface Router {
+class WrappingPrintStreams {
+
+    @Getter
+    private final Wrapper<PrintStream> mainWrapper;
+
+    @Getter
+    private final List<Wrapper<PrintStream>> otherWrappers;
 
     /**
-     * Create an output stream that routes the output to the appropriate stream(s).
+     * Constructor for one wrapper.
      *
-     * @param captureTo      the output stream capturing the output
-     * @param originalStream the stream where output would normally have gone
-     * @param targetThread   the thread to filter on, if filtering is required
-     *
-     * @return a PrintStream to be used to write to
+     * @param mainWrapper  The main Wrapper
      */
-    WrappingPrintStreams wrap(OutputStream captureTo, PrintStream originalStream, Thread targetThread);
+    WrappingPrintStreams(
+            @NonNull final Wrapper<PrintStream> mainWrapper
+                        ) {
+        this.mainWrapper = mainWrapper;
+        this.otherWrappers = Collections.emptyList();
+    }
 
     /**
-     * Creates a WrappingPrintStreams object.
+     * Constructor for multiple wrappers.
      *
-     * <p>This default implementation creates an object containing only the wrapper provided. The targetThread is
-     * ignored.</p>
-     *
-     * @param wrapped      The main PrintStream Wrapper
-     * @param targetThread The target Thread for filtering, if used
-     *
-     * @return a WrappingPrintStreams instance containing {@code wrapped}
+     * @param mainWrapper   The main Wrapper
+     * @param otherWrappers The other Wrappers
      */
-    default WrappingPrintStreams createWrappedPrintStream(
-            final Wrapper<PrintStream> wrapped,
-            final Thread targetThread
-                                                         ) {
-        return new WrappingPrintStreams(wrapped);
+    WrappingPrintStreams(
+            @NonNull final Wrapper<PrintStream> mainWrapper,
+            @NonNull final List<Wrapper<PrintStream>> otherWrappers
+                        ) {
+        this.mainWrapper = mainWrapper;
+        this.otherWrappers = new ArrayList<>(otherWrappers);
     }
 }
