@@ -43,6 +43,14 @@ class WrapperFactoryImpl implements WrapperFactory {
     }
 
     @Override
+    public Wrapper<PrintStream> copyPrintStream(
+            final Wrapper<PrintStream> wrapped,
+            final PrintStream copyTo
+                                               ) {
+        return new CopyPrintStreamWrapper(wrapped, copyTo);
+    }
+
+    @Override
     public Wrapper<PrintStream> redirectPrintStream(
             final PrintStream original,
             final PrintStream redirectTo

@@ -46,6 +46,19 @@ interface WrapperFactory {
                                         );
 
     /**
+     * Create a {@link Wrapper} for the wrapped PrintStream that copies all output written to the other PrintStream.
+     *
+     * @param wrapped The wrapped PrintStream
+     * @param copyTo  The PrintStream to copy all writes to
+     *
+     * @return an instance of a {@code Wrapper<PrintStream>}
+     */
+    Wrapper<PrintStream> copyPrintStream(
+            Wrapper<PrintStream> wrapped,
+            PrintStream copyTo
+                                        );
+
+    /**
      * Create a {@link Wrapper} for the original PrintStream that redirects all output written to the other PrintStream.
      *
      * @param original   The original PrintStream
@@ -59,7 +72,7 @@ interface WrapperFactory {
                             );
 
     /**
-     * Create a {@link Wrapper} for the wrapper PrintStream that redirects all output written to the other PrintStream.
+     * Create a {@link Wrapper} for the wrapped PrintStream that redirects all output written to the other PrintStream.
      *
      * @param wrapped    The wrapper PrintStream
      * @param redirectTo The PrintStream to redirect all writes to

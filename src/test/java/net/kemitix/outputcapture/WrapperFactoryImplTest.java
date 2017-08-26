@@ -44,6 +44,15 @@ public class WrapperFactoryImplTest {
     }
 
     @Test
+    public void canCreateCopyPrintStreamWrapperForWrapper() {
+        //when
+        val result = wrapperFactory.copyPrintStream(wrapper, copyTo);
+        //then
+        assertThat(result).isInstanceOf(CopyPrintStreamWrapper.class)
+                           .returns(wrapper, Wrapper::getWrapperDelegate);
+    }
+
+    @Test
     public void canCreateRedirectPrintStreamWrapperForPrintStream() {
         //when
         val result = wrapperFactory.redirectPrintStream(original, copyTo);

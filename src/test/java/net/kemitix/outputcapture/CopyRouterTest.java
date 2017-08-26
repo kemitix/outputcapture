@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -30,20 +31,30 @@ public class CopyRouterTest {
     private CopyRouter copyRouter;
 
     @Mock
-    private Wrapper<PrintStream> wrapper;
+    private Wrapper<PrintStream> createdWrapper;
+
+    private OutputStream captureTo;
+
+    private PrintStream original;
+
+    private Thread targetThread;
+
+    private PrintStream wrapper;
 
     @Before
     public void setUp() {
         initMocks(this);
         copyRouter = new CopyRouter(wrapperFactory);
+        captureTo = new ByteArrayOutputStream();
+        original = new PrintStream(new ByteArrayOutputStream());
+        targetThread = Thread.currentThread();
+        wrapper = new PassthroughPrintStreamWrapper(original);
     }
 
     @Test
     public void wrapRequiresCaptureTo() {
         //given
-        final OutputStream captureTo = null;
-        final PrintStream original = new PrintStream(new ByteArrayOutputStream());
-        final Thread targetThread = Thread.currentThread();
+        captureTo = null;
         //then
         Assertions.assertThatNullPointerException()
                   .isThrownBy(() ->
@@ -56,9 +67,7 @@ public class CopyRouterTest {
     @Test
     public void wrapRequiresOriginalStream() {
         //given
-        final OutputStream captureTo = new ByteArrayOutputStream();
-        final PrintStream original = null;
-        final Thread targetThread = Thread.currentThread();
+        original = null;
         //then
         Assertions.assertThatNullPointerException()
                   .isThrownBy(() ->
@@ -71,15 +80,12 @@ public class CopyRouterTest {
     @Test
     public void canWrapPrintStream() {
         //given
-        final OutputStream captureTo = new ByteArrayOutputStream();
-        final PrintStream original = new PrintStream(new ByteArrayOutputStream());
-        final Thread targetThread = Thread.currentThread();
-        given(wrapperFactory.copyPrintStream(any(), any())).willReturn(wrapper);
+        given(wrapperFactory.copyPrintStream(eq(original), any())).willReturn(createdWrapper);
         //when
         val wrappingPrintStreams = copyRouter.wrap(captureTo, original, targetThread);
         //then
         Assertions.assertThat(wrappingPrintStreams.getMainWrapper())
-                  .isSameAs(wrapper);
+                  .isSameAs(createdWrapper);
         Assertions.assertThat(wrappingPrintStreams.getOtherWrappers())
                   .isEmpty();
     }
@@ -87,18 +93,13 @@ public class CopyRouterTest {
     @Test
     public void canWrapWrapper() {
         //given
-        final OutputStream captureTo = new ByteArrayOutputStream();
-        final PrintStream original = new PrintStream(new ByteArrayOutputStream());
-        final PrintStream wrapper = new PassthroughPrintStreamWrapper(original);
-        final Thread targetThread = Thread.currentThread();
+        given(wrapperFactory.copyPrintStream(eq(wrapper), any())).willReturn(createdWrapper);
         //when
         val wrappingPrintStreams = copyRouter.wrap(captureTo, wrapper, targetThread);
         //then
         Assertions.assertThat(wrappingPrintStreams.getMainWrapper())
-                  .isInstanceOf(CopyPrintStreamWrapper.class)
-                  .returns(wrapper, Wrapper::getWrapperDelegate);
+                  .isSameAs(createdWrapper);
         Assertions.assertThat(wrappingPrintStreams.getOtherWrappers())
                   .isEmpty();
     }
-
 }

@@ -26,7 +26,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import net.kemitix.wrapper.Wrapper;
-import net.kemitix.wrapper.printstream.CopyPrintStreamWrapper;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -57,7 +56,7 @@ class CopyRouter implements Router {
     }
 
     private Function<Wrapper<PrintStream>, Wrapper<PrintStream>> wrapWrapper(final PrintStream copyTo) {
-        return wrapper -> new CopyPrintStreamWrapper(wrapper, copyTo);
+        return wrapper -> wrapperFactory.copyPrintStream(wrapper, copyTo);
     }
 
     private Supplier<Wrapper<PrintStream>> wrapPrintStream(
