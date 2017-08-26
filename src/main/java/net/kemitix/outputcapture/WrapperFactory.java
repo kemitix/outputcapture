@@ -57,4 +57,17 @@ interface WrapperFactory {
             PrintStream original,
             PrintStream redirectTo
                             );
+
+    /**
+     * Create a {@link Wrapper} for the wrapped PrintStream that filters all output to that written on the targetThread.
+     *
+     * @param wrapped      The wrapped PrintStream
+     * @param targetThread The target Thread
+     *
+     * @return an instance of {@code Wrapper<PrintStream>}
+     */
+    Wrapper<PrintStream> threadFilteredPrintStream(
+            Wrapper<PrintStream> wrapped,
+            Thread targetThread
+                                  );
 }

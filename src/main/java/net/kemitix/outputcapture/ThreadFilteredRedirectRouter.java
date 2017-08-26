@@ -33,6 +33,8 @@ import java.io.PrintStream;
  */
 class ThreadFilteredRedirectRouter extends RedirectRouter {
 
+    private final WrapperFactory wrapperFactory;
+
     /**
      * Constructor.
      *
@@ -40,13 +42,14 @@ class ThreadFilteredRedirectRouter extends RedirectRouter {
      */
     ThreadFilteredRedirectRouter(final WrapperFactory wrapperFactory) {
         super(wrapperFactory);
+        this.wrapperFactory = wrapperFactory;
     }
 
     @Override
     public WrappingPrintStreams createWrappedPrintStream(
             final Wrapper<PrintStream> wrapped, final Thread targetThread
                                                         ) {
-        val threadFilterWrapper = new ThreadFilteredPrintStreamWrapper(wrapped, targetThread);
+        val threadFilterWrapper = wrapperFactory.threadFilteredPrintStream(wrapped, targetThread);
         return new WrappingPrintStreams(threadFilterWrapper, wrapped);
     }
 }
