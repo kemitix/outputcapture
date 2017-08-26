@@ -8,7 +8,11 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.Collections;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -19,6 +23,19 @@ public class WrappingPrintStreamsTest {
     public void requiresAWrapper() {
         assertThatNullPointerException().isThrownBy(() -> new WrappingPrintStreams(null))
                                         .withMessage("mainWrapper");
+    }
+
+    @Test
+    public void requiresAWrapperForSecondaryWrappers() {
+        assertThatNullPointerException().isThrownBy(
+                () -> new WrappingPrintStreams(null, Collections.singletonList(wrapper())))
+                                        .withMessage("mainWrapper");
+    }
+
+    @Test
+    public void requiresAListForSecondaryWrappers() {
+        assertThatNullPointerException().isThrownBy(() -> new WrappingPrintStreams(wrapper(), null))
+                                        .withMessage("otherWrappers");
     }
 
     @Test
@@ -38,7 +55,7 @@ public class WrappingPrintStreamsTest {
         val wrapper1 = wrapper();
         val wrapper2 = wrapper();
         //when
-        val result = new WrappingPrintStreams(wrapper1, wrapper2);
+        val result = new WrappingPrintStreams(wrapper1, singletonList(wrapper2));
         //then
         assertThat(result).returns(wrapper1, WrappingPrintStreams::getMainWrapper);
         assertThat(result.getOtherWrappers()).containsExactly(wrapper2);
@@ -51,7 +68,7 @@ public class WrappingPrintStreamsTest {
         val wrapper2 = wrapper();
         val wrapper3 = wrapper();
         //when
-        val result = new WrappingPrintStreams(wrapper1, wrapper2, wrapper3);
+        val result = new WrappingPrintStreams(wrapper1, asList(wrapper2, wrapper3));
         //then
         assertThat(result).returns(wrapper1, WrappingPrintStreams::getMainWrapper);
         assertThat(result.getOtherWrappers()).containsExactly(wrapper2, wrapper3);

@@ -26,7 +26,6 @@ import net.kemitix.wrapper.Wrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -58,7 +57,7 @@ class CapturedPrintStream {
         this.wrappers = new HashSet<>();
         final WrappingPrintStreams wrapped = router.wrap(capturedTo, originalStream, targetThread);
         replacementStream = wrapped.getMainWrapper();
-        wrappers.addAll(Arrays.asList(wrapped.getOtherWrappers()));
+        wrappers.addAll(wrapped.getOtherWrappers());
         wrappers.add(replacementStream);
     }
 }

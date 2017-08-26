@@ -26,6 +26,9 @@ import lombok.NonNull;
 import net.kemitix.wrapper.Wrapper;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A simple collection of PrintStream Wrappers, with one main wrapper and any number of others.
@@ -38,19 +41,31 @@ class WrappingPrintStreams {
     private final Wrapper<PrintStream> mainWrapper;
 
     @Getter
-    private final Wrapper<PrintStream>[] otherWrappers;
+    private final List<Wrapper<PrintStream>> otherWrappers;
 
     /**
-     * Constructor.
+     * Constructor for one wrapper.
+     *
+     * @param mainWrapper  The main Wrapper
+     */
+    WrappingPrintStreams(
+            @NonNull final Wrapper<PrintStream> mainWrapper
+                        ) {
+        this.mainWrapper = mainWrapper;
+        this.otherWrappers = Collections.emptyList();
+    }
+
+    /**
+     * Constructor for multiple wrappers.
      *
      * @param mainWrapper   The main Wrapper
      * @param otherWrappers The other Wrappers
      */
     WrappingPrintStreams(
             @NonNull final Wrapper<PrintStream> mainWrapper,
-            final Wrapper<PrintStream>... otherWrappers
+            @NonNull final List<Wrapper<PrintStream>> otherWrappers
                         ) {
         this.mainWrapper = mainWrapper;
-        this.otherWrappers = otherWrappers;
+        this.otherWrappers = new ArrayList<>(otherWrappers);
     }
 }

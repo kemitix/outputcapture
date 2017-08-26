@@ -25,6 +25,7 @@ import lombok.val;
 import net.kemitix.wrapper.Wrapper;
 
 import java.io.PrintStream;
+import java.util.Collections;
 
 /**
  * Router the copies the output from the target thread to both the original output stream and the capturing stream.
@@ -50,6 +51,6 @@ class ThreadFilteredCopyRouter extends CopyRouter {
             final Wrapper<PrintStream> wrapped, final Thread targetThread
                                                         ) {
         val threadFilterWrapper = wrapperFactory.threadFilteredPrintStream(wrapped, targetThread);
-        return new WrappingPrintStreams(threadFilterWrapper, wrapped);
+        return new WrappingPrintStreams(threadFilterWrapper, Collections.singletonList(wrapped));
     }
 }

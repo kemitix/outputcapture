@@ -25,6 +25,7 @@ import lombok.val;
 import net.kemitix.wrapper.Wrapper;
 
 import java.io.PrintStream;
+import java.util.Collections;
 
 /**
  * Router that redirects output from the target thread away from the original output stream to the capturing stream.
@@ -47,9 +48,10 @@ class ThreadFilteredRedirectRouter extends RedirectRouter {
 
     @Override
     public WrappingPrintStreams createWrappedPrintStream(
-            final Wrapper<PrintStream> wrapped, final Thread targetThread
+            final Wrapper<PrintStream> wrapped,
+            final Thread targetThread
                                                         ) {
         val threadFilterWrapper = wrapperFactory.threadFilteredPrintStream(wrapped, targetThread);
-        return new WrappingPrintStreams(threadFilterWrapper, wrapped);
+        return new WrappingPrintStreams(threadFilterWrapper, Collections.singletonList(wrapped));
     }
 }
