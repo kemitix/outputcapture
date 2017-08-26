@@ -51,6 +51,14 @@ class WrapperFactoryImpl implements WrapperFactory {
     }
 
     @Override
+    public Wrapper<PrintStream> redirectPrintStream(
+            final Wrapper<PrintStream> wrapped,
+            final PrintStream redirectTo
+                                                   ) {
+        return new RedirectPrintStreamWrapper(wrapped, redirectTo);
+    }
+
+    @Override
     public Wrapper<PrintStream> threadFilteredPrintStream(
             final Wrapper<PrintStream> wrapped,
             final Thread targetThread

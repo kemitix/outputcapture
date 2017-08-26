@@ -2,10 +2,10 @@ package net.kemitix.outputcapture;
 
 import lombok.val;
 import net.kemitix.wrapper.Wrapper;
-import net.kemitix.wrapper.printstream.CopyPrintStreamWrapper;
 import net.kemitix.wrapper.printstream.PassthroughPrintStreamWrapper;
 import net.kemitix.wrapper.printstream.RedirectPrintStreamWrapper;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.ThrowableAssertAlternative;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -31,56 +32,54 @@ public class RedirectRouterTest {
     private Router router;
 
     @Mock
+    private Wrapper<PrintStream> createdWrapper;
+
     private Wrapper<PrintStream> wrapper;
+
+    private OutputStream captureTo;
+
+    private OutputStream originalOutput;
+
+    private PrintStream original;
+
+    private Thread targetThread;
 
     @Before
     public void setUp() {
         initMocks(this);
+        originalOutput = new ByteArrayOutputStream();
+        original = new PrintStream(originalOutput);
+        captureTo = new ByteArrayOutputStream();
+        wrapper = new PassthroughPrintStreamWrapper(original);
         router = new RedirectRouter(wrapperFactory);
+        targetThread = Thread.currentThread();
     }
 
     @Test
     public void wrapRequiresCaptureTo() {
         //given
-        final OutputStream captureTo = null;
-        final PrintStream original = new PrintStream(new ByteArrayOutputStream());
-        final Thread targetThread = Thread.currentThread();
+        captureTo = null;
         //then
-        Assertions.assertThatNullPointerException()
-                  .isThrownBy(() ->
-                                      //when
-                                      router.wrap(captureTo, original, targetThread))
-                  //and
-                  .withMessage("captureTo");
+        assertThatRouterWrapThrowsNullPointerException().withMessage("captureTo");
     }
 
     @Test
     public void wrapRequiresOriginalStream() {
         //given
-        final OutputStream captureTo = new ByteArrayOutputStream();
-        final PrintStream original = null;
-        final Thread targetThread = Thread.currentThread();
+        original = null;
         //then
-        Assertions.assertThatNullPointerException()
-                  .isThrownBy(() ->
-                                      //when
-                                      router.wrap(captureTo, original, targetThread))
-                  //and
-                  .withMessage("originalStream");
+        assertThatRouterWrapThrowsNullPointerException().withMessage("originalStream");
     }
 
     @Test
     public void canWrapPrintStream() {
         //given
-        final OutputStream captureTo = new ByteArrayOutputStream();
-        final PrintStream original = new PrintStream(new ByteArrayOutputStream());
-        final Thread targetThread = Thread.currentThread();
-        given(wrapperFactory.redirectPrintStream(any(), any())).willReturn(wrapper);
+        given(wrapperFactory.redirectPrintStream(eq(original), any())).willReturn(createdWrapper);
         //when
         val wrappingPrintStreams = router.wrap(captureTo, original, targetThread);
         //then
         Assertions.assertThat(wrappingPrintStreams.getMainWrapper())
-                  .isSameAs(wrapper);
+                  .isSameAs(createdWrapper);
         Assertions.assertThat(wrappingPrintStreams.getOtherWrappers())
                   .isEmpty();
     }
@@ -88,18 +87,18 @@ public class RedirectRouterTest {
     @Test
     public void canWrapWrapper() {
         //given
-        final OutputStream captureTo = new ByteArrayOutputStream();
-        final PrintStream original = new PrintStream(new ByteArrayOutputStream());
-        final PrintStream wrapper = new PassthroughPrintStreamWrapper(original);
-        final Thread targetThread = Thread.currentThread();
+        given(wrapperFactory.redirectPrintStream(eq(wrapper), any())).willReturn(createdWrapper);
         //when
-        val wrappingPrintStreams = router.wrap(captureTo, wrapper, targetThread);
+        val wrappingPrintStreams = router.wrap(captureTo, wrapper.asCore(), targetThread);
         //then
         Assertions.assertThat(wrappingPrintStreams.getMainWrapper())
-                  .isInstanceOf(RedirectPrintStreamWrapper.class)
-                  .returns(wrapper, Wrapper::getWrapperDelegate);
+                  .isSameAs(createdWrapper);
         Assertions.assertThat(wrappingPrintStreams.getOtherWrappers())
                   .isEmpty();
     }
 
+    private ThrowableAssertAlternative<NullPointerException> assertThatRouterWrapThrowsNullPointerException() {
+        return Assertions.assertThatNullPointerException()
+                         .isThrownBy(() -> router.wrap(captureTo, original, targetThread));
+    }
 }
