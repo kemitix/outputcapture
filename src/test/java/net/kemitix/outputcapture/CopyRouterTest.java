@@ -13,6 +13,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -74,10 +76,8 @@ public class CopyRouterTest {
         //when
         val wrappingPrintStreams = copyRouter.wrap(captureTo, original, targetThread);
         //then
-        Assertions.assertThat(wrappingPrintStreams.getMainWrapper())
-                  .isSameAs(createdWrapper);
-        Assertions.assertThat(wrappingPrintStreams.getOtherWrappers())
-                  .isEmpty();
+        assertThat(wrappingPrintStreams.getMainWrapper()).isSameAs(createdWrapper);
+        assertThat(wrappingPrintStreams.getOtherWrappers()).isEmpty();
     }
 
     @Test
@@ -87,14 +87,11 @@ public class CopyRouterTest {
         //when
         val wrappingPrintStreams = copyRouter.wrap(captureTo, wrapper, targetThread);
         //then
-        Assertions.assertThat(wrappingPrintStreams.getMainWrapper())
-                  .isSameAs(createdWrapper);
-        Assertions.assertThat(wrappingPrintStreams.getOtherWrappers())
-                  .isEmpty();
+        assertThat(wrappingPrintStreams.getMainWrapper()).isSameAs(createdWrapper);
+        assertThat(wrappingPrintStreams.getOtherWrappers()).isEmpty();
     }
 
     private ThrowableAssertAlternative<NullPointerException> assertThatWrapThrowsNullPointerException() {
-        return Assertions.assertThatNullPointerException()
-                         .isThrownBy(() -> copyRouter.wrap(captureTo, original, targetThread));
+        return assertThatNullPointerException().isThrownBy(() -> copyRouter.wrap(captureTo, original, targetThread));
     }
 }
