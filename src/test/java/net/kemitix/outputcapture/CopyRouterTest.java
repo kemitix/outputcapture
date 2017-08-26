@@ -2,9 +2,9 @@ package net.kemitix.outputcapture;
 
 import lombok.val;
 import net.kemitix.wrapper.Wrapper;
-import net.kemitix.wrapper.printstream.CopyPrintStreamWrapper;
 import net.kemitix.wrapper.printstream.PassthroughPrintStreamWrapper;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.ThrowableAssertAlternative;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -56,12 +56,7 @@ public class CopyRouterTest {
         //given
         captureTo = null;
         //then
-        Assertions.assertThatNullPointerException()
-                  .isThrownBy(() ->
-                                      //when
-                                      copyRouter.wrap(captureTo, original, targetThread))
-                  //and
-                  .withMessage("captureTo");
+        assertThatWrapThrowsNullPointerException().withMessage("captureTo");
     }
 
     @Test
@@ -69,12 +64,7 @@ public class CopyRouterTest {
         //given
         original = null;
         //then
-        Assertions.assertThatNullPointerException()
-                  .isThrownBy(() ->
-                                      //when
-                                      copyRouter.wrap(captureTo, original, targetThread))
-                  //and
-                  .withMessage("originalStream");
+        assertThatWrapThrowsNullPointerException().withMessage("originalStream");
     }
 
     @Test
@@ -101,5 +91,10 @@ public class CopyRouterTest {
                   .isSameAs(createdWrapper);
         Assertions.assertThat(wrappingPrintStreams.getOtherWrappers())
                   .isEmpty();
+    }
+
+    private ThrowableAssertAlternative<NullPointerException> assertThatWrapThrowsNullPointerException() {
+        return Assertions.assertThatNullPointerException()
+                         .isThrownBy(() -> copyRouter.wrap(captureTo, original, targetThread));
     }
 }
