@@ -3,7 +3,6 @@ package net.kemitix.outputcapture;
 import lombok.val;
 import net.kemitix.wrapper.Wrapper;
 import net.kemitix.wrapper.printstream.PassthroughPrintStreamWrapper;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ThrowableAssertAlternative;
 import org.junit.Before;
 import org.junit.Test;

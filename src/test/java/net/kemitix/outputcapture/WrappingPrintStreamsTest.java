@@ -3,19 +3,15 @@ package net.kemitix.outputcapture;
 import lombok.val;
 import net.kemitix.wrapper.Wrapper;
 import net.kemitix.wrapper.WrapperState;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.Collections;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class WrappingPrintStreamsTest {
 
@@ -28,7 +24,7 @@ public class WrappingPrintStreamsTest {
     @Test
     public void requiresAWrapperForSecondaryWrappers() {
         assertThatNullPointerException().isThrownBy(
-                () -> new WrappingPrintStreams(null, Collections.singletonList(wrapper())))
+                () -> new WrappingPrintStreams(null, singletonList(wrapper())))
                                         .withMessage("mainWrapper");
     }
 

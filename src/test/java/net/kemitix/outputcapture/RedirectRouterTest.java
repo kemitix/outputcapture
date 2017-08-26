@@ -3,7 +3,6 @@ package net.kemitix.outputcapture;
 import lombok.val;
 import net.kemitix.wrapper.Wrapper;
 import net.kemitix.wrapper.printstream.PassthroughPrintStreamWrapper;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ThrowableAssertAlternative;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,8 +38,6 @@ public class RedirectRouterTest {
 
     private OutputStream captureTo;
 
-    private OutputStream originalOutput;
-
     private PrintStream original;
 
     private Thread targetThread;
@@ -48,8 +45,7 @@ public class RedirectRouterTest {
     @Before
     public void setUp() {
         initMocks(this);
-        originalOutput = new ByteArrayOutputStream();
-        original = new PrintStream(originalOutput);
+        original = new PrintStream(new ByteArrayOutputStream());
         captureTo = new ByteArrayOutputStream();
         wrapper = new PassthroughPrintStreamWrapper(original);
         router = new RedirectRouter(wrapperFactory);
