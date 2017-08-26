@@ -283,8 +283,10 @@ public class CaptureTest {
     }
 
     @Test(timeout = A_SHORT_PERIOD)
-    public void exceptionIsThrownWhenMultipleOutputCapturesOverlap() throws InterruptedException {
+    public void canRestoreSystemOutAndErrWhenMultipleOutputCapturesOverlap() throws InterruptedException {
         //given
+        final PrintStream originalOut = System.out;
+        final PrintStream originalErr = System.err;
         final CountDownLatch latch1 = createLatch();
         final CountDownLatch latch2 = createLatch();
         final CountDownLatch latch3 = createLatch();
@@ -298,20 +300,16 @@ public class CaptureTest {
             });
         });
         executor.submit(executor::shutdown);
-
         //when
-        final ThrowableAssert.ThrowingCallable action = () -> {
-            new CaptureOutput().of(() -> {
-                releaseLatch(latch1);
-                awaitLatch(latch2);
-            });
-        };
+        captureOutput.of(() -> {
+            releaseLatch(latch1);
+            awaitLatch(latch2);
+        });
         //then
-        assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
-                                  .hasMessage("System.out has been replaced")
-                                  .hasNoCause();
         releaseLatch(latch3);
         executor.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
+        assertThat(System.out).isSameAs(originalOut);
+        assertThat(System.err).isSameAs(originalErr);
     }
 
     private void releaseLatch(final CountDownLatch latch) {

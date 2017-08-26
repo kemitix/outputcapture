@@ -61,18 +61,11 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
         executor.submit(finishedLatch::countDown);
         executor.submit(executor::shutdown);
         awaitLatch(finishedLatch);
-        final CapturedPrintStream capturedOut = getCapturedOut();
-        if (System.out != capturedOut.getReplacementStream()) {
-            throw new OutputCaptureException("System.out has been replaced");
-        }
-        final CapturedPrintStream capturedErr = getCapturedErr();
-        stop(capturedOut, capturedErr);
-        if (Optional.ofNullable(getThrownException().get())
-                    .isPresent()) {
-            throw new OutputCaptureException(getThrownException().get());
-        }
-        final DefaultCapturedOutput capturedOutput =
-                new DefaultCapturedOutput(capturedTo(capturedOut), capturedTo(capturedErr));
-        return capturedOutput;
+        stop(getCapturedOut(), getCapturedErr());
+        Optional.ofNullable(getThrownException().get())
+                .ifPresent(e -> {
+                    throw new OutputCaptureException(e);
+                });
+        return new DefaultCapturedOutput(capturedTo(getCapturedOut()), capturedTo(getCapturedErr()));
     }
 }
