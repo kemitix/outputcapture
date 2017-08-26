@@ -3,7 +3,6 @@ package net.kemitix.outputcapture;
 import lombok.val;
 import net.kemitix.wrapper.Wrapper;
 import net.kemitix.wrapper.printstream.PassthroughPrintStreamWrapper;
-import net.kemitix.wrapper.printstream.RedirectPrintStreamWrapper;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ThrowableAssertAlternative;
 import org.junit.Before;
@@ -14,6 +13,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -78,10 +79,8 @@ public class RedirectRouterTest {
         //when
         val wrappingPrintStreams = router.wrap(captureTo, original, targetThread);
         //then
-        Assertions.assertThat(wrappingPrintStreams.getMainWrapper())
-                  .isSameAs(createdWrapper);
-        Assertions.assertThat(wrappingPrintStreams.getOtherWrappers())
-                  .isEmpty();
+        assertThat(wrappingPrintStreams.getMainWrapper()).isSameAs(createdWrapper);
+        assertThat(wrappingPrintStreams.getOtherWrappers()).isEmpty();
     }
 
     @Test
@@ -91,14 +90,11 @@ public class RedirectRouterTest {
         //when
         val wrappingPrintStreams = router.wrap(captureTo, wrapper.asCore(), targetThread);
         //then
-        Assertions.assertThat(wrappingPrintStreams.getMainWrapper())
-                  .isSameAs(createdWrapper);
-        Assertions.assertThat(wrappingPrintStreams.getOtherWrappers())
-                  .isEmpty();
+        assertThat(wrappingPrintStreams.getMainWrapper()).isSameAs(createdWrapper);
+        assertThat(wrappingPrintStreams.getOtherWrappers()).isEmpty();
     }
 
     private ThrowableAssertAlternative<NullPointerException> assertThatRouterWrapThrowsNullPointerException() {
-        return Assertions.assertThatNullPointerException()
-                         .isThrownBy(() -> router.wrap(captureTo, original, targetThread));
+        return assertThatNullPointerException().isThrownBy(() -> router.wrap(captureTo, original, targetThread));
     }
 }
