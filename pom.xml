@@ -18,7 +18,7 @@
         <java.version>1.8</java.version>
         <junit.version>4.12</junit.version>
         <assertj.version>3.9.1</assertj.version>
-        <mockito.version>2.8.47</mockito.version>
+        <mockito.version>2.17.0</mockito.version>
 
         <pitest.coverage>100</pitest.coverage>
         <pitest.mutation>100</pitest.mutation>
