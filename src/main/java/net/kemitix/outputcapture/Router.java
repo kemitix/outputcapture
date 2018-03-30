@@ -30,8 +30,6 @@ import java.io.PrintStream;
  * Routes output between the capturing stream and the original stream.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
- * @see {@link RedirectRouter}
- * @see {@link CopyRouter}
  */
 interface Router {
 

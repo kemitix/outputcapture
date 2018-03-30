@@ -21,6 +21,7 @@
 
 package net.kemitix.outputcapture;
 
+import net.kemitix.conditional.Condition;
 import net.kemitix.wrapper.Wrapper;
 import net.kemitix.wrapper.printstream.PassthroughPrintStreamWrapper;
 
@@ -41,7 +42,10 @@ class ThreadFilteredPrintStreamWrapper extends PassthroughPrintStreamWrapper {
      * @param wrapped        The wrapped PrintStream to wrap
      * @param filteredThread The thread to filter on
      */
-    ThreadFilteredPrintStreamWrapper(final Wrapper<PrintStream> wrapped, final Thread filteredThread) {
+    ThreadFilteredPrintStreamWrapper(
+            final Wrapper<PrintStream> wrapped,
+            final Thread filteredThread
+                                    ) {
         super(wrapped);
         this.filteredThread = filteredThread;
     }
@@ -53,9 +57,8 @@ class ThreadFilteredPrintStreamWrapper extends PassthroughPrintStreamWrapper {
      */
     @Override
     public void write(final int b) {
-        if (onFilteredThread()) {
-            super.write(b);
-        }
+        Condition.where(onFilteredThread())
+                 .then(() -> super.write(b));
     }
 
     /**
@@ -67,21 +70,27 @@ class ThreadFilteredPrintStreamWrapper extends PassthroughPrintStreamWrapper {
      * @param len Number of bytes to write
      */
     @Override
-    public void write(final byte[] buf, final int off, final int len) {
-        if (onFilteredThread()) {
-            super.write(buf, off, len);
-        }
+    public void write(
+            final byte[] buf,
+            final int off,
+            final int len
+                     ) {
+        Condition.where(onFilteredThread())
+                 .then(() -> super.write(buf, off, len));
     }
 
-    /** Writes the specified byte to the output stream if the parent thread is the filtered thread.
+    /**
+     * Writes the specified byte to the output stream if the parent thread is the filtered thread.
      *
      * @param b            The byte to be written
      * @param parentThread The parent thread
      */
-    public void write(final int b, final Thread parentThread) {
-        if (filteredThread.equals(parentThread)) {
-            super.write(b);
-        }
+    public void write(
+            final int b,
+            final Thread parentThread
+                     ) {
+        Condition.where(isFilteredThread(parentThread))
+                 .then(() -> super.write(b));
     }
 
     /**
@@ -93,14 +102,22 @@ class ThreadFilteredPrintStreamWrapper extends PassthroughPrintStreamWrapper {
      * @param len          Number of bytes to write
      * @param parentThread The parent thread
      */
-    public void write(final byte[] buf, final int off, final int len, final Thread parentThread) {
-        if (filteredThread.equals(parentThread)) {
-            super.write(buf, off, len);
-        }
+    public void write(
+            final byte[] buf,
+            final int off,
+            final int len,
+            final Thread parentThread
+                     ) {
+        Condition.where(isFilteredThread(parentThread))
+                 .then(() -> super.write(buf, off, len));
+    }
+
+    private boolean isFilteredThread(final Thread thread) {
+        return filteredThread.equals(thread);
     }
 
     private boolean onFilteredThread() {
         final Thread currentThread = Thread.currentThread();
-        return filteredThread.equals(currentThread);
+        return isFilteredThread(currentThread);
     }
 }
