@@ -27,6 +27,10 @@ pipeline {
                             "-Dcommit=`git rev-parse HEAD`"
                     jacoco exclusionPattern: '**/*{Test|IT|Main|Application|Immutable}.class'
                     pmd canComputeNew: false, defaultEncoding: '', healthy: '', pattern: '', unHealthy: ''
+                    step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
+                          pattern: '**/target/checkstyle-result.xml',
+                          healthy:'20',
+                          unHealthy:'100'])
                     sh "${mvn} install"
                 }
             }
