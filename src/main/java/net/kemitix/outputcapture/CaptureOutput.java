@@ -23,7 +23,6 @@ package net.kemitix.outputcapture;
 
 import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.concurrent.CountDownLatch;
 

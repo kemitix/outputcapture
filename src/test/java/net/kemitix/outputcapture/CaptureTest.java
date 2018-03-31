@@ -22,7 +22,6 @@ package net.kemitix.outputcapture;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.assertj.core.api.ThrowableAssert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;

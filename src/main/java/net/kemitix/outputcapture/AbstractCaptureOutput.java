@@ -23,14 +23,17 @@ package net.kemitix.outputcapture;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import net.kemitix.wrapper.Wrapper;
 import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import static java.util.Collections.synchronizedList;
 
 /**
  * Base for capturing output written to {@code System::out} and {@code System::err} as a {@link CapturedOutput}.
@@ -47,6 +50,10 @@ abstract class AbstractCaptureOutput {
 
     @Getter(AccessLevel.PROTECTED)
     private AtomicReference<Exception> thrownException = new AtomicReference<>();
+
+    private static List<CapturedOutput> activeCaptures = synchronizedList(new ArrayList<>());
+    private static PrintStream savedOut;
+    private static PrintStream savedErr;
 
     /**
      * Get the backing byte array from the CapturedPrintStream.
@@ -140,6 +147,8 @@ abstract class AbstractCaptureOutput {
     private void stopCapturing(
             final PrintStream current, final Consumer<PrintStream> setPrintStream, final CapturedPrintStream captured
     ) {
+
+
         final AtomicReference<PrintStream> head = new AtomicReference<>(current);
         captured.getWrappers()
                 .forEach(wrapperToRemove -> remove(head, wrapperToRemove));
@@ -151,5 +160,29 @@ abstract class AbstractCaptureOutput {
                 .filter(wrapper -> wrapper instanceof PrintStreamWrapper)
                 .map(wrapper -> ((PrintStreamWrapper)wrapper).printStreamDelegate())
                 .ifPresent(printStream -> remove(head, wrapperToRemove));
+    }
+
+    protected void enable(final CapturedOutput capturedOutput) {
+        if (activeCaptures.isEmpty()) {
+            savedOut = System.out;
+            savedErr = System.err;
+            System.setOut(PrintStreamWrapper.filter(savedOut, (PrintStreamWrapper.ByteFilter) aByte -> {
+                activeCaptures.forEach(co -> co.out().accept(aByte));
+                return true;
+            }));
+            System.setErr(PrintStreamWrapper.filter(savedErr, (PrintStreamWrapper.ByteFilter) aByte -> {
+                activeCaptures.forEach(co -> co.err().accept(aByte));
+                return true;
+            }));
+        }
+        activeCaptures.add(capturedOutput);
+    }
+
+    protected void disable(final CapturedOutput capturedOutput) {
+        activeCaptures.remove(capturedOutput);
+        if (activeCaptures.isEmpty()) {
+            System.setOut(savedOut);
+            System.setErr(savedErr);
+        }
     }
 }

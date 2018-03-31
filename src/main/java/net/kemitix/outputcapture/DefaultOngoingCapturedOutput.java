@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -72,6 +73,16 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
             @Override
             public Stream<String> getStdErr() {
                 return collectedErr.stream();
+            }
+
+            @Override
+            public Consumer<Byte> out() {
+                return null;
+            }
+
+            @Override
+            public Consumer<Byte> err() {
+                return null;
             }
         };
     }

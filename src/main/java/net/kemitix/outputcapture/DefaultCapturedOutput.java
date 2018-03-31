@@ -25,6 +25,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 
 import java.io.ByteArrayOutputStream;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -59,5 +60,15 @@ class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOu
     @Override
     public Stream<String> getStdErr() {
         return asStream(capturedErr);
+    }
+
+    @Override
+    public Consumer<Byte> out() {
+        return capturedOut::write;
+    }
+
+    @Override
+    public Consumer<Byte> err() {
+        return capturedErr::write;
     }
 }

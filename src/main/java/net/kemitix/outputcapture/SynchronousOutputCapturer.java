@@ -21,6 +21,7 @@
 
 package net.kemitix.outputcapture;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -54,18 +55,24 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      * @return an instance of CapturedOutput
      */
     protected CapturedOutput capture(final ThrowingCallable callable) {
+        final CapturedOutput capturedOutput = new DefaultCapturedOutput(new ByteArrayOutputStream(), new ByteArrayOutputStream());
+        invoke(capturedOutput, callable);
+        return capturedOutput;
+    }
+
+    private void invoke(CapturedOutput capturedOutput, final ThrowingCallable callable) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         final CountDownLatch finishedLatch = new CountDownLatch(1);
-        executor.submit(() -> initiateCapture(router, Thread.currentThread()));
+        executor.submit(() -> enable(capturedOutput));
         executor.submit(() -> invokeCallable(callable));
         executor.submit(finishedLatch::countDown);
         executor.submit(executor::shutdown);
         awaitLatch(finishedLatch);
-        stop(getCapturedOut(), getCapturedErr());
+        disable(capturedOutput);
         Optional.ofNullable(getThrownException().get())
                 .ifPresent(e -> {
                     throw new OutputCaptureException(e);
                 });
-        return new DefaultCapturedOutput(capturedTo(getCapturedOut()), capturedTo(getCapturedErr()));
     }
+
 }
