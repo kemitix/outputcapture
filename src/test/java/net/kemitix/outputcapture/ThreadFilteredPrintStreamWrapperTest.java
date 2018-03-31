@@ -64,7 +64,7 @@ public class ThreadFilteredPrintStreamWrapperTest {
         assertThat(buffer.toString()).isEqualTo("");
     }
 
-    @Test
+    @Test(timeout = 200)
     public void canWriteByteWhenOnParentThread() throws InterruptedException {
         //given
         final CountDownLatch latch = new CountDownLatch(1);
@@ -83,7 +83,7 @@ public class ThreadFilteredPrintStreamWrapperTest {
         assertThat(buffer.toString()).isEqualTo("x");
     }
 
-    @Test
+    @Test(timeout = 200)
     public void canWriteByteArrayWhenOnParentThread() throws InterruptedException {
         //given
         final CountDownLatch latch = new CountDownLatch(1);
