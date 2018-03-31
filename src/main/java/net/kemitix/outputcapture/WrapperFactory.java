@@ -45,6 +45,12 @@ interface WrapperFactory {
             PrintStream wrapped,
             Thread targetThread
                                   ) {
-        return PrintStreamWrapper.filter(wrapped, (Byte b) -> Thread.currentThread().equals(targetThread));
+        return PrintStreamWrapper.filter(wrapped, (Byte b) -> isOnSubjectThread(targetThread));
+    }
+
+    static boolean isOnSubjectThread(Thread targetThread) {
+        final Thread currentThread = Thread.currentThread();
+        return currentThread.equals(targetThread) ||
+            targetThread.getThreadGroup().parentOf(currentThread.getThreadGroup());
     }
 }
