@@ -4,6 +4,8 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,47 +65,40 @@ public class ThreadFilteredPrintStreamWrapperTest {
     }
 
     @Test
-    public void canWriteByteWhenOnParentThread() {
+    public void canWriteByteWhenOnParentThread() throws InterruptedException {
         //given
-        final Thread thread = new Thread();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<PrintStream> reference = new AtomicReference<>();
+        final Thread thread = new Thread(() ->
+                new Thread(() -> {
+                    reference.get().write('x');
+                    latch.countDown();
+                }).start());
         final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
+        reference.set(filtered);
         //when
-        filtered.write('x');
+        thread.start();
         //then
+        latch.await();
         assertThat(buffer.toString()).isEqualTo("x");
     }
 
     @Test
-    public void doesNotWriteByteWhenNotOnParentThread() {
+    public void canWriteByteArrayWhenOnParentThread() throws InterruptedException {
         //given
-        final Thread thread = new Thread();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<PrintStream> reference = new AtomicReference<>();
+        final Thread thread = new Thread(() ->
+                new Thread(() -> {
+                    reference.get().write("test".getBytes(), 0, 4);
+                    latch.countDown();
+                }).start());
         final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
+        reference.set(filtered);
         //when
-        filtered.write('x');
+        thread.start();
         //then
-        assertThat(buffer.toString()).isEqualTo("");
-    }
-
-    @Test
-    public void canWriteByteArrayWhenOnParentThread() {
-        //given
-        final Thread thread = new Thread();
-        final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
-        //when
-        filtered.write("test".getBytes(), 0, 4);
-        //then
+        latch.await();
         assertThat(buffer.toString()).isEqualTo("test");
     }
-
-    @Test
-    public void doesNotWriteByteArrayWhenNotOnParentThread() {
-        //given
-        final Thread thread = new Thread();
-        final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
-        //when
-        filtered.write("test".getBytes(), 0, 4);
-        //then
-        assertThat(buffer.toString()).isEqualTo("");
-    }
-
 }
