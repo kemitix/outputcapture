@@ -536,7 +536,7 @@ public class CaptureTest {
         assertThat(ongoingCapturedOutput.thrownException()).contains(outputCaptureException);
     }
 
-    @Test
+    @Test(timeout = 200)
     public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
         //given
         final CaptureOutput outer = new CaptureOutput();
