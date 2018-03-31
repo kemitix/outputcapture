@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for capturing output.
@@ -64,9 +65,9 @@ public class CaptureTest {
         System.err.println("finished err");
     };
 
-    private Function<Integer, CountDownLatch> latchFactory = CountDownLatch::new;
+    private Function<Integer, CountDownLatch> latchFactory = mock(Function.class);
 
-    private CountDownLatch latch = latchFactory.apply(1);
+    private CountDownLatch latch = mock(CountDownLatch.class);
 
     private ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
 
