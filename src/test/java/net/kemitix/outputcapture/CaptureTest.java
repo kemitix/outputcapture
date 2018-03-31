@@ -24,9 +24,9 @@ import lombok.val;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -41,7 +41,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * Tests for capturing output.
@@ -54,42 +53,27 @@ public class CaptureTest {
 
     private static final long A_SHORT_PERIOD = 100L;
 
-    private String line1;
+    private String line1 = "1:" + UUID.randomUUID().toString();
 
-    private String line2;
+    private String line2 = "2:" + UUID.randomUUID().toString();
 
-    private ThrowingCallable asyncRunnable;
+    private ThrowingCallable asyncRunnable = () -> {
+        System.out.println("starting out");
+        System.err.println("starting err");
+        sleep(A_PERIOD);
+        System.out.println("finished out");
+        System.err.println("finished err");
+    };
 
-    @Mock
-    private Function<Integer, CountDownLatch> latchFactory;
+    private Function<Integer, CountDownLatch> latchFactory = CountDownLatch::new;
 
-    @Mock
-    private CountDownLatch latch;
+    private CountDownLatch latch = latchFactory.apply(1);
 
-    @Mock
-    private Router router;
+    private ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
 
-    @Mock
-    private ByteArrayOutputStream capturedOut;
-
-    @Mock
-    private ByteArrayOutputStream capturedErr;
+    private ByteArrayOutputStream capturedErr = new ByteArrayOutputStream();
 
     private AtomicReference<Exception> thrownException = new AtomicReference<>();
-
-    @Before
-    public void setUp() throws Exception {
-        initMocks(this);
-        line1 = "1:" + randomText();
-        line2 = "2:" + randomText();
-        asyncRunnable = () -> {
-            System.out.println("starting out");
-            System.err.println("starting err");
-            sleep(A_PERIOD);
-            System.out.println("finished out");
-            System.err.println("finished err");
-        };
-    }
 
     @Test
     public void canCaptureSystemOut() {
@@ -118,7 +102,7 @@ public class CaptureTest {
     }
 
     @Test
-    public void canRestoreNormalSystemOut() throws Exception {
+    public void canRestoreNormalSystemOut() {
         //given
         final CaptureOutput outer = new CaptureOutput();
         final CaptureOutput inner = new CaptureOutput();
@@ -137,7 +121,7 @@ public class CaptureTest {
     }
 
     @Test
-    public void canRestoreNormalSystemErr() throws Exception {
+    public void canRestoreNormalSystemErr() {
         //given
         final CaptureOutput outer = new CaptureOutput();
         final CaptureOutput inner = new CaptureOutput();
@@ -335,13 +319,8 @@ public class CaptureTest {
         thread.join();
     }
 
-    private String randomText() {
-        return UUID.randomUUID()
-                   .toString();
-    }
-
     @Test
-    public void canCaptureOutputAsynchronously() throws InterruptedException {
+    public void canCaptureOutputAsynchronously() {
         //given
         final PrintStream originalOut = System.out;
         final PrintStream originalErr = System.err;
@@ -375,7 +354,7 @@ public class CaptureTest {
     }
 
     @Test
-    public void canRestoreNormalSystemOutWhenCapturingAsynchronously() throws Exception {
+    public void canRestoreNormalSystemOutWhenCapturingAsynchronously() {
         //given
         final CaptureOutput outer = new CaptureOutput();
         final CaptureOutput inner = new CaptureOutput();
@@ -395,7 +374,7 @@ public class CaptureTest {
     }
 
     @Test
-    public void canRestoreNormalSystemErrWhenCapturingAsynchronously() throws Exception {
+    public void canRestoreNormalSystemErrWhenCapturingAsynchronously() {
         //given
         final CaptureOutput outer = new CaptureOutput();
         final CaptureOutput inner = new CaptureOutput();
@@ -415,7 +394,7 @@ public class CaptureTest {
     }
 
     @Test
-    public void canFlushCapturedOutputWhenCapturingAsynchronously() throws InterruptedException {
+    public void canFlushCapturedOutputWhenCapturingAsynchronously() {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
         final CountDownLatch latch1 = createLatch();
@@ -441,7 +420,7 @@ public class CaptureTest {
     }
 
     @Test
-    public void canCapturedOutputAndFlushWhenCapturingAsynchronously() throws InterruptedException {
+    public void canCapturedOutputAndFlushWhenCapturingAsynchronously() {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
         final CountDownLatch latch1 = createLatch();
@@ -493,7 +472,12 @@ public class CaptureTest {
     @Test
     public void interruptionDuringAsyncThreadSetupIsWrappedInOutputCaptureException() throws InterruptedException {
         //given
-        final AsynchronousOutputCapturer outputCapturer = new AsynchronousOutputCapturer(router);
+        final AsynchronousOutputCapturer outputCapturer = new AsynchronousOutputCapturer(new Router() {
+            @Override
+            public WrappingPrintStreams wrap(OutputStream captureTo, PrintStream originalStream, Thread targetThread) {
+                return null;
+            }
+        });
         given(latchFactory.apply(1)).willReturn(latch);
         doThrow(InterruptedException.class).when(latch)
                                            .await();
