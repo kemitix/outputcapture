@@ -22,6 +22,8 @@
 package net.kemitix.outputcapture;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -29,7 +31,7 @@ import java.util.stream.Stream;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public interface CapturedOutput {
+public interface CapturedOutput extends Predicate<Byte> {
 
     /**
      * Get a stream of the captured standard output so far.
@@ -45,7 +47,7 @@ public interface CapturedOutput {
      */
     Stream<String> getStdErr();
 
-    Consumer<Byte> out();
+    Function<Byte, Boolean> out();
 
-    Consumer<Byte> err();
+    Function<Byte, Boolean> err();
 }

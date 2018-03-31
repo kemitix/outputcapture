@@ -167,11 +167,15 @@ abstract class AbstractCaptureOutput {
             savedOut = System.out;
             savedErr = System.err;
             System.setOut(PrintStreamWrapper.filter(savedOut, (PrintStreamWrapper.ByteFilter) aByte -> {
-                activeCaptures.forEach(co -> co.out().accept(aByte));
+                final AtomicReference<Boolean> cascade = new AtomicReference<>(true);
+                activeCaptures.stream().filter(b -> cascade.get())
+                        .forEach(co -> cascade.set(co.out().apply(aByte)));
                 return true;
             }));
             System.setErr(PrintStreamWrapper.filter(savedErr, (PrintStreamWrapper.ByteFilter) aByte -> {
-                activeCaptures.forEach(co -> co.err().accept(aByte));
+                final AtomicReference<Boolean> cascade = new AtomicReference<>(true);
+                activeCaptures.stream().filter(b -> cascade.get())
+                        .forEach(co -> cascade.set(co.err().apply(aByte)));
                 return true;
             }));
         }

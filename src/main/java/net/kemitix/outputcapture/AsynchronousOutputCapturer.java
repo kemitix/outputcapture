@@ -21,6 +21,7 @@
 
 package net.kemitix.outputcapture;
 
+import java.io.ByteArrayOutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,16 +60,34 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
     protected OngoingCapturedOutput capture(
             final ThrowingCallable callable, final Function<Integer, CountDownLatch> latchFactory
                                            ) {
-        final CountDownLatch outputCapturedLatch = latchFactory.apply(1);
         final CountDownLatch completedLatch = latchFactory.apply(1);
+        final OngoingCapturedOutput captureOutput =
+                new DefaultOngoingCapturedOutput(
+                        new ByteArrayOutputStream(),
+                        new ByteArrayOutputStream(),
+                        completedLatch,
+                        getThrownException()
+                        );
+        invoke(captureOutput, callable, latchFactory);
+        return captureOutput;
+    }
+
+    private void invoke(
+            OngoingCapturedOutput captureOutput,
+            ThrowingCallable callable,
+            Function<Integer, CountDownLatch> latchFactory
+    ) {
+        final CountDownLatch outputCapturedLatch = latchFactory.apply(1);
         final ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> initiateCapture(router, Thread.currentThread()));
+        executor.submit(() -> enable(captureOutput, Thread.currentThread()));
         executor.submit(outputCapturedLatch::countDown);
         executor.submit(() -> invokeCallable(callable));
-        executor.submit(() -> shutdownAsyncCapture(getCapturedOut(), getCapturedErr(), completedLatch));
         executor.submit(executor::shutdown);
         awaitLatch(outputCapturedLatch);
-        return new DefaultOngoingCapturedOutput(
-                capturedTo(getCapturedOut()), capturedTo(getCapturedErr()), completedLatch, getThrownException());
+    }
+
+    private void enable(OngoingCapturedOutput captureOutput, Thread currentThread) {
+        captureOutput.filterOn(currentThread);
+        enable(captureOutput);
     }
 }

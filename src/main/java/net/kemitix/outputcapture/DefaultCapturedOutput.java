@@ -25,7 +25,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 
 import java.io.ByteArrayOutputStream;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -63,12 +63,27 @@ class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOu
     }
 
     @Override
-    public Consumer<Byte> out() {
-        return capturedOut::write;
+    public boolean test(Byte aByte) {
+        return true;
     }
 
     @Override
-    public Consumer<Byte> err() {
-        return capturedErr::write;
+    public Function<Byte, Boolean> out() {
+        return b -> {
+            if (test(b)) {
+                capturedOut.write(b);
+            }
+            return true;
+        };
+    }
+
+    @Override
+    public Function<Byte, Boolean> err() {
+        return b -> {
+            if (test(b)) {
+                capturedErr.write(b);
+            }
+            return true;
+        };
     }
 }

@@ -21,13 +21,17 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.NonNull;
+
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,6 +45,8 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     private final CountDownLatch completedLatch;
 
     private final AtomicReference<Exception> thrownException;
+
+    private Thread filterThread;
 
     /**
      * Constructor.
@@ -66,6 +72,11 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
         flush();
         return new CapturedOutput() {
             @Override
+            public boolean test(Byte aByte) {
+                return true;
+            }
+
+            @Override
             public Stream<String> getStdOut() {
                 return collectedOut.stream();
             }
@@ -76,12 +87,12 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
             }
 
             @Override
-            public Consumer<Byte> out() {
+            public Function<Byte, Boolean> out() {
                 return null;
             }
 
             @Override
-            public Consumer<Byte> err() {
+            public Function<Byte, Boolean> err() {
                 return null;
             }
         };
@@ -115,5 +126,15 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     @Override
     public Optional<Throwable> thrownException() {
         return Optional.ofNullable(thrownException.get());
+    }
+
+    @Override
+    public void filterOn(final Thread filterThread) {
+        this.filterThread = filterThread;
+    }
+
+    @Override
+    public boolean test(Byte aByte) {
+        return Thread.currentThread().equals(filterThread);
     }
 }
