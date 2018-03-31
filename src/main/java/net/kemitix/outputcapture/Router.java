@@ -21,8 +21,6 @@
 
 package net.kemitix.outputcapture;
 
-import net.kemitix.wrapper.Wrapper;
-
 import java.io.OutputStream;
 import java.io.PrintStream;
 
@@ -56,7 +54,7 @@ interface Router {
      * @return a WrappingPrintStreams instance containing {@code wrapped}
      */
     default WrappingPrintStreams createWrappedPrintStream(
-            final Wrapper<PrintStream> wrapped,
+            final PrintStream wrapped,
             final Thread targetThread
                                                          ) {
         return new WrappingPrintStreams(wrapped);

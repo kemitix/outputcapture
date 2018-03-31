@@ -22,6 +22,7 @@
 package net.kemitix.outputcapture;
 
 import net.kemitix.wrapper.Wrapper;
+import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 
 import java.io.PrintStream;
 
@@ -33,67 +34,17 @@ import java.io.PrintStream;
 interface WrapperFactory {
 
     /**
-     * Create a {@link Wrapper} for the original PrintStream that copies all output written to the other PrintStream.
-     *
-     * @param original The original PrintStream
-     * @param copyTo   The PrintStream to copy all writes to
-     *
-     * @return an instance of a {@code Wrapper<PrintStream>}
-     */
-    Wrapper<PrintStream> copyPrintStream(
-            PrintStream original,
-            PrintStream copyTo
-                                        );
-
-    /**
-     * Create a {@link Wrapper} for the wrapped PrintStream that copies all output written to the other PrintStream.
-     *
-     * @param wrapped The wrapped PrintStream
-     * @param copyTo  The PrintStream to copy all writes to
-     *
-     * @return an instance of a {@code Wrapper<PrintStream>}
-     */
-    Wrapper<PrintStream> copyPrintStream(
-            Wrapper<PrintStream> wrapped,
-            PrintStream copyTo
-                                        );
-
-    /**
-     * Create a {@link Wrapper} for the original PrintStream that redirects all output written to the other PrintStream.
-     *
-     * @param original   The original PrintStream
-     * @param redirectTo The PrintStream to redirect all writes to
-     *
-     * @return an instance of a {@code Wrapper<PrintStream>}
-     */
-    Wrapper<PrintStream> redirectPrintStream(
-            PrintStream original,
-            PrintStream redirectTo
-                            );
-
-    /**
-     * Create a {@link Wrapper} for the wrapped PrintStream that redirects all output written to the other PrintStream.
-     *
-     * @param wrapped    The wrapper PrintStream
-     * @param redirectTo The PrintStream to redirect all writes to
-     *
-     * @return an instance of a {@code Wrapper<PrintStream>}
-     */
-    Wrapper<PrintStream> redirectPrintStream(
-            Wrapper<PrintStream> wrapped,
-            PrintStream redirectTo
-                            );
-
-    /**
      * Create a {@link Wrapper} for the wrapped PrintStream that filters all output to that written on the targetThread.
      *
      * @param wrapped      The wrapped PrintStream
      * @param targetThread The target Thread
      *
-     * @return an instance of {@code Wrapper<PrintStream>}
+     * @return an instance of {@code PrintStreamWrapper}
      */
-    Wrapper<PrintStream> threadFilteredPrintStream(
-            Wrapper<PrintStream> wrapped,
+    static PrintStream threadFilteredPrintStream(
+            PrintStream wrapped,
             Thread targetThread
-                                  );
+                                  ) {
+        return PrintStreamWrapper.filter(wrapped, (Byte b) -> Thread.currentThread().equals(targetThread));
+    }
 }

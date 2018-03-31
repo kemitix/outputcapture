@@ -23,6 +23,7 @@ package net.kemitix.outputcapture;
 
 import lombok.Getter;
 import net.kemitix.wrapper.Wrapper;
+import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -37,13 +38,13 @@ import java.util.Set;
 class CapturedPrintStream {
 
     @Getter
-    private final Wrapper<PrintStream> replacementStream;
+    private final PrintStream replacementStream;
 
     @Getter
-    private final ByteArrayOutputStream capturedTo;
+    private final ByteArrayOutputStream capturedTo = new ByteArrayOutputStream();
 
     @Getter
-    private Set<Wrapper<PrintStream>> wrappers;
+    private Set<PrintStream> wrappers = new HashSet<>();
 
     /**
      * Constructor.
@@ -53,8 +54,6 @@ class CapturedPrintStream {
      * @param targetThread   The target thread to filter by
      */
     CapturedPrintStream(final PrintStream originalStream, final Router router, final Thread targetThread) {
-        this.capturedTo = new ByteArrayOutputStream();
-        this.wrappers = new HashSet<>();
         final WrappingPrintStreams wrapped = router.wrap(capturedTo, originalStream, targetThread);
         replacementStream = wrapped.getMainWrapper();
         wrappers.addAll(wrapped.getOtherWrappers());

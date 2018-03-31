@@ -1,17 +1,17 @@
 /**
  * The MIT License (MIT)
- *
+ * <p>
  * Copyright (c) 2017 Paul Campbell
- *
+ * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without restriction,
  * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- *
+ * <p>
  * The above copyright notice and this permission notice shall be included in all copies
  * or substantial portions of the Software.
- *
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
  * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
@@ -21,6 +21,10 @@
 
 package net.kemitix.outputcapture;
 
+import net.kemitix.wrapper.printstream.PrintStreamWrapper;
+
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -30,15 +34,19 @@ import java.util.concurrent.CountDownLatch;
  */
 public final class CaptureOutput implements OutputCapturer {
 
-    private static final WrapperFactory WRAPPER_FACTORY = new WrapperFactoryImpl();
-
-    private static final Router THREAD_FILTERED_REDIRECT_ROUTER = new ThreadFilteredRedirectRouter(WRAPPER_FACTORY);
-
-    private static final Router THREAD_FILTERED_COPY_ROUTER = new ThreadFilteredCopyRouter(WRAPPER_FACTORY);
-
-    private static final Router COPY_ROUTER = new CopyRouter(WRAPPER_FACTORY);
-
-    private static final Router REDIRECT_ROUTER = new RedirectRouter(WRAPPER_FACTORY);
+    private static final Router THREAD_FILTERED_REDIRECT_ROUTER =
+            (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
+                    WrapperFactory.threadFilteredPrintStream(new PrintStream(captureTo), targetThread));
+    private static final Router THREAD_FILTERED_COPY_ROUTER =
+            (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
+                    WrapperFactory.threadFilteredPrintStream(
+                            PrintStreamWrapper.copy(originalStream, new PrintStream(captureTo)), targetThread));
+    private static final Router COPY_ROUTER =
+            (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
+                    PrintStreamWrapper.copy(originalStream, new PrintStream(captureTo)));
+    private static final Router REDIRECT_ROUTER =
+            (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
+                    new PrintStream(captureTo));
 
     @Override
     public CapturedOutput of(final ThrowingCallable callable) {

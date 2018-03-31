@@ -24,6 +24,7 @@ package net.kemitix.outputcapture;
 import lombok.Getter;
 import lombok.NonNull;
 import net.kemitix.wrapper.Wrapper;
+import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -38,34 +39,34 @@ import java.util.List;
 class WrappingPrintStreams {
 
     @Getter
-    private final Wrapper<PrintStream> mainWrapper;
+    private final PrintStream mainWrapper;
 
     @Getter
-    private final List<Wrapper<PrintStream>> otherWrappers;
+    private final List<PrintStream> otherWrappers;
 
     /**
      * Constructor for one wrapper.
      *
-     * @param mainWrapper  The main Wrapper
+     * @param origin  The origin PrintStream
      */
     WrappingPrintStreams(
-            @NonNull final Wrapper<PrintStream> mainWrapper
+            @NonNull final PrintStream origin
                         ) {
-        this.mainWrapper = mainWrapper;
+        this.mainWrapper = origin;
         this.otherWrappers = Collections.emptyList();
     }
 
     /**
      * Constructor for multiple wrappers.
      *
-     * @param mainWrapper   The main Wrapper
+     * @param origin   The origin PrintStream
      * @param otherWrappers The other Wrappers
      */
     WrappingPrintStreams(
-            @NonNull final Wrapper<PrintStream> mainWrapper,
-            @NonNull final List<Wrapper<PrintStream>> otherWrappers
+            @NonNull final PrintStream origin,
+            @NonNull final List<PrintStream> otherWrappers
                         ) {
-        this.mainWrapper = mainWrapper;
+        this.mainWrapper = origin;
         this.otherWrappers = new ArrayList<>(otherWrappers);
     }
 }

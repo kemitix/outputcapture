@@ -1,8 +1,5 @@
 package net.kemitix.outputcapture;
 
-import net.kemitix.wrapper.Wrapper;
-import net.kemitix.wrapper.printstream.PassthroughPrintStreamWrapper;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -17,21 +14,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class ThreadFilteredPrintStreamWrapperTest {
 
-    private ByteArrayOutputStream buffer;
+    private ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
-    private Wrapper<PrintStream> printStream;
-
-    @Before
-    public void setUp() throws Exception {
-        buffer = new ByteArrayOutputStream();
-        printStream = new PassthroughPrintStreamWrapper(new PrintStream(buffer));
-    }
+    private PrintStream printStream = new PrintStream(buffer);
 
     @Test
     public void canWriteByteWhenOnFilteredThread() {
         //given
         final Thread thread = Thread.currentThread();
-        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
+        final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
         //when
         filtered.write('x');
         //then
@@ -42,18 +33,18 @@ public class ThreadFilteredPrintStreamWrapperTest {
     public void doesNotWriteByteWhenNotOnFilteredThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
+        final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
         //when
         filtered.write('x');
         //then
-        assertThat(buffer.toString()).isEqualTo("");
+        assertThat(buffer.toString()).isEmpty();
     }
 
     @Test
     public void canWriteByteArrayWhenOnFilteredThread() {
         //given
         final Thread thread = Thread.currentThread();
-        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
+        final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
         //when
         filtered.write("test".getBytes(), 0, 4);
         //then
@@ -64,7 +55,7 @@ public class ThreadFilteredPrintStreamWrapperTest {
     public void doesNotWriteByteArrayWhenNotOnFilteredThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
+        final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
         //when
         filtered.write("test".getBytes(), 0, 4);
         //then
@@ -75,9 +66,9 @@ public class ThreadFilteredPrintStreamWrapperTest {
     public void canWriteByteWhenOnParentThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
+        final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
         //when
-        filtered.write('x', thread);
+        filtered.write('x');
         //then
         assertThat(buffer.toString()).isEqualTo("x");
     }
@@ -86,10 +77,9 @@ public class ThreadFilteredPrintStreamWrapperTest {
     public void doesNotWriteByteWhenNotOnParentThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
-        final Thread otherThread = new Thread();
+        final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
         //when
-        filtered.write('x', otherThread);
+        filtered.write('x');
         //then
         assertThat(buffer.toString()).isEqualTo("");
     }
@@ -98,9 +88,9 @@ public class ThreadFilteredPrintStreamWrapperTest {
     public void canWriteByteArrayWhenOnParentThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
+        final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
         //when
-        filtered.write("test".getBytes(), 0, 4, thread);
+        filtered.write("test".getBytes(), 0, 4);
         //then
         assertThat(buffer.toString()).isEqualTo("test");
     }
@@ -109,10 +99,9 @@ public class ThreadFilteredPrintStreamWrapperTest {
     public void doesNotWriteByteArrayWhenNotOnParentThread() {
         //given
         final Thread thread = new Thread();
-        final ThreadFilteredPrintStreamWrapper filtered = new ThreadFilteredPrintStreamWrapper(printStream, thread);
-        final Thread otherThread = new Thread();
+        final PrintStream filtered = WrapperFactory.threadFilteredPrintStream(printStream, thread);
         //when
-        filtered.write("test".getBytes(), 0, 4, otherThread);
+        filtered.write("test".getBytes(), 0, 4);
         //then
         assertThat(buffer.toString()).isEqualTo("");
     }

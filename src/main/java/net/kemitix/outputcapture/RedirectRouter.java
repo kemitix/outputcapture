@@ -25,6 +25,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import net.kemitix.wrapper.Wrapper;
+import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -39,8 +40,6 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 class RedirectRouter implements Router {
 
-    private final WrapperFactory wrapperFactory;
-
     @Override
     public WrappingPrintStreams wrap(
             @NonNull final OutputStream captureTo,
@@ -48,22 +47,6 @@ class RedirectRouter implements Router {
             final Thread targetThread
                                     ) {
         final PrintStream redirectTo = new PrintStream(captureTo);
-        val wrapped = Wrapper.asWrapper(originalStream)
-                             .map(wrapWrapper(redirectTo))
-                             .orElseGet(wrapPrintStream(originalStream, redirectTo));
-        return createWrappedPrintStream(wrapped, targetThread);
-    }
-
-    private Function<Wrapper<PrintStream>, Wrapper<PrintStream>> wrapWrapper(
-            final PrintStream redirectTo
-                                                                                  ) {
-        return wrapper -> wrapperFactory.redirectPrintStream(wrapper, redirectTo);
-    }
-
-    private Supplier<Wrapper<PrintStream>> wrapPrintStream(
-            final PrintStream originalStream,
-            final PrintStream redirectTo
-                                                                ) {
-        return () -> wrapperFactory.redirectPrintStream(originalStream, redirectTo);
+        return createWrappedPrintStream(redirectTo, targetThread);
     }
 }

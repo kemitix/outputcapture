@@ -1,17 +1,17 @@
 /**
  * The MIT License (MIT)
- *
+ * <p>
  * Copyright (c) 2017 Paul Campbell
- *
+ * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without restriction,
  * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- *
+ * <p>
  * The above copyright notice and this permission notice shall be included in all copies
  * or substantial portions of the Software.
- *
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
  * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
@@ -24,6 +24,7 @@ package net.kemitix.outputcapture;
 import lombok.AccessLevel;
 import lombok.Getter;
 import net.kemitix.wrapper.Wrapper;
+import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -67,7 +68,7 @@ abstract class AbstractCaptureOutput {
      */
     protected void shutdownAsyncCapture(
             final CapturedPrintStream out, final CapturedPrintStream err, final CountDownLatch completedLatch
-                                       ) {
+    ) {
         stop(out, err);
         completedLatch.countDown();
     }
@@ -115,10 +116,10 @@ abstract class AbstractCaptureOutput {
     private CapturedPrintStream capturePrintStream(
             final PrintStream originalStream, final Router router, final Consumer<PrintStream> setStream,
             final Thread targetThread
-                                                  ) {
+    ) {
         final CapturedPrintStream capturedPrintStream = new CapturedPrintStream(originalStream, router, targetThread);
-        final Wrapper<PrintStream> replacementStream = capturedPrintStream.getReplacementStream();
-        setStream.accept(replacementStream.asCore());
+        final PrintStream replacementStream = capturedPrintStream.getReplacementStream();
+        setStream.accept(replacementStream);
         return capturedPrintStream;
     }
 
@@ -130,7 +131,7 @@ abstract class AbstractCaptureOutput {
      */
     protected void stop(
             final CapturedPrintStream capturedPrintStreamOut, final CapturedPrintStream capturedPrintStreamErr
-                       ) {
+    ) {
         stopCapturing(System.out, System::setOut, capturedPrintStreamOut);
         stopCapturing(System.err, System::setErr, capturedPrintStreamErr);
     }
@@ -138,12 +139,17 @@ abstract class AbstractCaptureOutput {
     @SuppressWarnings("unchecked")
     private void stopCapturing(
             final PrintStream current, final Consumer<PrintStream> setPrintStream, final CapturedPrintStream captured
-                              ) {
+    ) {
         final AtomicReference<PrintStream> head = new AtomicReference<>(current);
         captured.getWrappers()
-                .forEach(wrapperToRemove -> Wrapper.asWrapper(head.get())
-                                                   .ifPresent(wrapper -> head.set(
-                                                           wrapper.removeWrapper(wrapperToRemove))));
+                .forEach(wrapperToRemove -> remove(head, wrapperToRemove));
         setPrintStream.accept(head.get());
+    }
+
+    private void remove(AtomicReference<PrintStream> head, PrintStream wrapperToRemove) {
+        PrintStreamWrapper.unwrap(head.get())
+                .filter(wrapper -> wrapper instanceof PrintStreamWrapper)
+                .map(wrapper -> ((PrintStreamWrapper)wrapper).printStreamDelegate())
+                .ifPresent(printStream -> remove(head, wrapperToRemove));
     }
 }

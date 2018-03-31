@@ -1,8 +1,6 @@
 package net.kemitix.outputcapture;
 
 import lombok.val;
-import net.kemitix.wrapper.Wrapper;
-import net.kemitix.wrapper.WrapperState;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -18,14 +16,14 @@ public class WrappingPrintStreamsTest {
     @Test
     public void requiresAWrapper() {
         assertThatNullPointerException().isThrownBy(() -> new WrappingPrintStreams(null))
-                                        .withMessage("mainWrapper");
+                                        .withMessage("origin");
     }
 
     @Test
     public void requiresAWrapperForSecondaryWrappers() {
         assertThatNullPointerException().isThrownBy(
                 () -> new WrappingPrintStreams(null, singletonList(wrapper())))
-                                        .withMessage("mainWrapper");
+                                        .withMessage("origin");
     }
 
     @Test
@@ -70,7 +68,7 @@ public class WrappingPrintStreamsTest {
         assertThat(result.getOtherWrappers()).containsExactly(wrapper2, wrapper3);
     }
 
-    private Wrapper<PrintStream> wrapper() {
-        return () -> new WrapperState<>(new PrintStream(new ByteArrayOutputStream()));
+    private PrintStream wrapper() {
+        return new PrintStream(new ByteArrayOutputStream());
     }
 }
