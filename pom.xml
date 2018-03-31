@@ -24,7 +24,7 @@
         <pitest.mutation>100</pitest.mutation>
         <jacoco-class-line-covered-ratio>1</jacoco-class-line-covered-ratio>
         <jacoco-class-instruction-covered-ratio>1</jacoco-class-instruction-covered-ratio>
-        <print-stream-wrapper.version>0.3.0</print-stream-wrapper.version>
+        <print-stream-wrapper.version>0.4.0</print-stream-wrapper.version>
         <conditional.version>0.4.0</conditional.version>
         <lombok.version>1.16.20</lombok.version>
         <tiles-maven-plugin.version>2.11</tiles-maven-plugin.version>
