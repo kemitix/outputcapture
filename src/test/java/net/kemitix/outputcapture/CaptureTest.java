@@ -319,7 +319,7 @@ public class CaptureTest {
         thread.join();
     }
 
-    @Test
+    @Test(timeout = 200)
     public void canCaptureOutputAsynchronously() {
         //given
         final PrintStream originalOut = System.out;
@@ -393,7 +393,7 @@ public class CaptureTest {
                                              .doesNotContain(line1);
     }
 
-    @Test
+    @Test(timeout = 200)
     public void canFlushCapturedOutputWhenCapturingAsynchronously() {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
@@ -419,7 +419,7 @@ public class CaptureTest {
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
     }
 
-    @Test
+    @Test(timeout = 200)
     public void canCapturedOutputAndFlushWhenCapturingAsynchronously() {
         //given
         final CaptureOutput captureOutput = new CaptureOutput();
