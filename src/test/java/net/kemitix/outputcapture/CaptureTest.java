@@ -229,7 +229,7 @@ public class CaptureTest {
         final CaptureOutput captureOutput = new CaptureOutput();
         final AtomicReference<CapturedOutput> capturedOutput = new AtomicReference<>();
         //when
-        runOnThreadAndWait(() -> {
+        runOnAnotherThreadAndWait(() -> {
             capturedOutput.set(captureOutput.of(() -> {
                 System.out.println("message");
                 System.out.write('x');
@@ -312,7 +312,7 @@ public class CaptureTest {
     }
 
     @SneakyThrows
-    private void runOnThreadAndWait(final Runnable runnable) {
+    private void runOnAnotherThreadAndWait(final Runnable runnable) {
         final Thread thread = new Thread(runnable);
         thread.start();
         thread.join();
