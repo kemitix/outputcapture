@@ -59,4 +59,11 @@ interface Router {
                                                          ) {
         return new WrappingPrintStreams(wrapped);
     }
+
+    /**
+     * Returns true if the router is intercepting the stream, rather than passing it on the the next capture or output.
+     *
+     * @return true if next PrintStream should not receive any output
+     */
+    boolean isBlocking();
 }

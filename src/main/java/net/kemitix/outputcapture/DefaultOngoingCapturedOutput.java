@@ -21,16 +21,12 @@
 
 package net.kemitix.outputcapture;
 
-import lombok.NonNull;
-
 import java.io.ByteArrayOutputStream;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,12 +51,14 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      * @param capturedErr     The captured output written to System.err
      * @param completedLatch  The Latch indicating the thread is still running
      * @param thrownException The reference to any exception thrown
+     * @param router
      */
     DefaultOngoingCapturedOutput(
             final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr,
-            final CountDownLatch completedLatch, final AtomicReference<Exception> thrownException
-                                ) {
-        super(capturedOut, capturedErr);
+            final CountDownLatch completedLatch, final AtomicReference<Exception> thrownException,
+            final Router router
+    ) {
+        super(capturedOut, capturedErr, router);
         this.completedLatch = completedLatch;
         this.thrownException = thrownException;
     }

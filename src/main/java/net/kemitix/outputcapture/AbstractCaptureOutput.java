@@ -1,17 +1,17 @@
 /**
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2017 Paul Campbell
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without restriction,
  * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all copies
  * or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
  * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
@@ -27,8 +27,8 @@ import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -51,7 +51,7 @@ abstract class AbstractCaptureOutput {
     @Getter(AccessLevel.PROTECTED)
     private AtomicReference<Exception> thrownException = new AtomicReference<>();
 
-    private static List<CapturedOutput> activeCaptures = synchronizedList(new ArrayList<>());
+    private static Deque<CapturedOutput> activeCaptures = new ArrayDeque<>();
     private static PrintStream savedOut;
     private static PrintStream savedErr;
 
@@ -147,8 +147,6 @@ abstract class AbstractCaptureOutput {
     private void stopCapturing(
             final PrintStream current, final Consumer<PrintStream> setPrintStream, final CapturedPrintStream captured
     ) {
-
-
         final AtomicReference<PrintStream> head = new AtomicReference<>(current);
         captured.getWrappers()
                 .forEach(wrapperToRemove -> remove(head, wrapperToRemove));
@@ -158,7 +156,7 @@ abstract class AbstractCaptureOutput {
     private void remove(AtomicReference<PrintStream> head, PrintStream wrapperToRemove) {
         PrintStreamWrapper.unwrap(head.get())
                 .filter(wrapper -> wrapper instanceof PrintStreamWrapper)
-                .map(wrapper -> ((PrintStreamWrapper)wrapper).printStreamDelegate())
+                .map(wrapper -> ((PrintStreamWrapper) wrapper).printStreamDelegate())
                 .ifPresent(printStream -> remove(head, wrapperToRemove));
     }
 
@@ -167,19 +165,23 @@ abstract class AbstractCaptureOutput {
             savedOut = System.out;
             savedErr = System.err;
             System.setOut(PrintStreamWrapper.filter(savedOut, (PrintStreamWrapper.ByteFilter) aByte -> {
-                final AtomicReference<Boolean> cascade = new AtomicReference<>(true);
-                activeCaptures.stream().filter(b -> cascade.get())
-                        .forEach(co -> cascade.set(co.out().apply(aByte)));
+                for (CapturedOutput co : activeCaptures) {
+                    if (co.out().apply(aByte)) {
+                        break;
+                    }
+                }
                 return true;
             }));
             System.setErr(PrintStreamWrapper.filter(savedErr, (PrintStreamWrapper.ByteFilter) aByte -> {
-                final AtomicReference<Boolean> cascade = new AtomicReference<>(true);
-                activeCaptures.stream().filter(b -> cascade.get())
-                        .forEach(co -> cascade.set(co.err().apply(aByte)));
+                for (CapturedOutput co : activeCaptures) {
+                    if (co.err().apply(aByte)) {
+                        break;
+                    }
+                }
                 return true;
             }));
         }
-        activeCaptures.add(capturedOutput);
+        activeCaptures.addFirst(capturedOutput);
     }
 
     protected void disable(final CapturedOutput capturedOutput) {

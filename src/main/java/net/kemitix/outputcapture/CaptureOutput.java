@@ -34,17 +34,17 @@ import java.util.concurrent.CountDownLatch;
 public final class CaptureOutput implements OutputCapturer {
 
     private static final Router THREAD_FILTERED_REDIRECT_ROUTER =
-            (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
+            (RedirectRouter) (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
                     WrapperFactory.threadFilteredPrintStream(new PrintStream(captureTo), targetThread));
     private static final Router THREAD_FILTERED_COPY_ROUTER =
-            (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
+            (CopyRouter) (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
                     WrapperFactory.threadFilteredPrintStream(
                             PrintStreamWrapper.copy(originalStream, new PrintStream(captureTo)), targetThread));
     private static final Router COPY_ROUTER =
-            (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
+            (CopyRouter) (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
                     PrintStreamWrapper.copy(originalStream, new PrintStream(captureTo)));
     private static final Router REDIRECT_ROUTER =
-            (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
+            (RedirectRouter) (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
                     new PrintStream(captureTo));
 
     @Override

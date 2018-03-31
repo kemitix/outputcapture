@@ -37,16 +37,10 @@ import java.util.function.Supplier;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-@RequiredArgsConstructor
-class RedirectRouter implements Router {
+interface RedirectRouter extends Router {
 
     @Override
-    public WrappingPrintStreams wrap(
-            @NonNull final OutputStream captureTo,
-            @NonNull final PrintStream originalStream,
-            final Thread targetThread
-                                    ) {
-        final PrintStream redirectTo = new PrintStream(captureTo);
-        return createWrappedPrintStream(redirectTo, targetThread);
+    default boolean isBlocking() {
+        return true;
     }
 }

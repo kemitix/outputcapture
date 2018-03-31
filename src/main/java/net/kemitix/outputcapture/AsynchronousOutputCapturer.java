@@ -66,8 +66,8 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
                         new ByteArrayOutputStream(),
                         new ByteArrayOutputStream(),
                         completedLatch,
-                        getThrownException()
-                        );
+                        getThrownException(), router
+                );
         invoke(captureOutput, callable, latchFactory);
         return captureOutput;
     }

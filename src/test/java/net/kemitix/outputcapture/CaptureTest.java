@@ -25,7 +25,6 @@ import org.assertj.core.api.ThrowableAssert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -113,11 +112,11 @@ public class CaptureTest {
             });
             System.out.println(line2);
             assertThat(innerCaptured.getStdOut()).containsExactly(line1)
-                                                 .doesNotContain(line2);
+                    .doesNotContain(line2);
         });
         //then
         assertThat(outerCaptured.getStdOut()).containsExactly(line2)
-                                             .doesNotContain(line1);
+                .doesNotContain(line1);
     }
 
     @Test
@@ -132,11 +131,11 @@ public class CaptureTest {
             });
             System.err.println(line2);
             assertThat(innerCaptured.getStdErr()).containsExactly(line1)
-                                                 .doesNotContain(line2);
+                    .doesNotContain(line2);
         });
         //then
         assertThat(outerCaptured.getStdErr()).containsExactly(line2)
-                                             .doesNotContain(line1);
+                .doesNotContain(line1);
     }
 
     @Test
@@ -159,13 +158,13 @@ public class CaptureTest {
         //then
         val capturedOutput = inner.get();
         assertThat(capturedOutput.getStdOut()).as("inner std out written")
-                                              .containsExactly(line1, "a");
+                .containsExactly(line1, "a");
         assertThat(capturedOutput.getStdErr()).as("inner std err written")
-                                              .containsExactly(line2);
+                .containsExactly(line2);
         assertThat(capturedEcho.getStdOut()).as("outer std out written")
-                                            .containsExactly(line1, "a");
+                .containsExactly(line1, "a");
         assertThat(capturedEcho.getStdErr()).as("outer std err written")
-                                            .containsExactly(line2);
+                .containsExactly(line2);
     }
 
     @Test
@@ -181,7 +180,7 @@ public class CaptureTest {
         };
         //then
         assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
-                                  .hasCause(cause);
+                .hasCause(cause);
     }
 
     @Test
@@ -213,7 +212,7 @@ public class CaptureTest {
         catchMe.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         //then
         assertThat(reference.get()
-                            .getStdOut()).containsExactly("started", "finished");
+                .getStdOut()).containsExactly("started", "finished");
     }
 
     private void awaitLatch(final CountDownLatch latch) {
@@ -238,7 +237,7 @@ public class CaptureTest {
         });
         //then
         assertThat(capturedOutput.get()
-                                 .getStdOut()).containsExactly("message", "x");
+                .getStdOut()).containsExactly("message", "x");
     }
 
     @Test
@@ -263,7 +262,7 @@ public class CaptureTest {
         monitor.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
         //then
         assertThat(reference.get()
-                            .getStdOut()).containsExactly("");
+                .getStdOut()).containsExactly("");
     }
 
     @Test(timeout = A_SHORT_PERIOD)
@@ -348,9 +347,9 @@ public class CaptureTest {
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err", "finished err");
         ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
         assertThat(System.out).as("restore original out")
-                              .isSameAs(originalOut);
+                .isSameAs(originalOut);
         assertThat(System.err).as("restore original err")
-                              .isSameAs(originalErr);
+                .isSameAs(originalErr);
     }
 
     @Test
@@ -366,11 +365,11 @@ public class CaptureTest {
             innerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
             System.out.println(line2);
             assertThat(innerCaptured.getStdOut()).containsExactly(line1)
-                                                 .doesNotContain(line2);
+                    .doesNotContain(line2);
         });
         //then
         assertThat(outerCaptured.getStdOut()).containsExactly(line2)
-                                             .doesNotContain(line1);
+                .doesNotContain(line1);
     }
 
     @Test
@@ -386,11 +385,11 @@ public class CaptureTest {
             innerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
             System.err.println(line2);
             assertThat(innerCaptured.getStdErr()).containsExactly(line1)
-                                                 .doesNotContain(line2);
+                    .doesNotContain(line2);
         });
         //then
         assertThat(outerCaptured.getStdErr()).containsExactly(line2)
-                                             .doesNotContain(line1);
+                .doesNotContain(line1);
     }
 
     @Test(timeout = 200)
@@ -458,52 +457,49 @@ public class CaptureTest {
         });
         //then
         assertThat(ongoingCapturedOutput.isRunning()).as("isRunning = true")
-                                                     .isTrue();
+                .isTrue();
         assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = false")
-                                                      .isFalse();
+                .isFalse();
         releaseLatch(latch);
         ongoingCapturedOutput.await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         assertThat(ongoingCapturedOutput.isRunning()).as("isRunning = false")
-                                                     .isFalse();
+                .isFalse();
         assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = true")
-                                                      .isTrue();
+                .isTrue();
     }
 
     @Test
     public void interruptionDuringAsyncThreadSetupIsWrappedInOutputCaptureException() throws InterruptedException {
         //given
-        final AsynchronousOutputCapturer outputCapturer = new AsynchronousOutputCapturer(new Router() {
-            @Override
-            public WrappingPrintStreams wrap(OutputStream captureTo, PrintStream originalStream, Thread targetThread) {
-                return null;
-            }
-        });
+        final AsynchronousOutputCapturer outputCapturer =
+                new AsynchronousOutputCapturer((CopyRouter) (captureTo, originalStream, targetThread) -> null);
         given(latchFactory.apply(1)).willReturn(latch);
         doThrow(InterruptedException.class).when(latch)
-                                           .await();
+                .await();
         //when
         final ThrowableAssert.ThrowingCallable action = () -> {
             outputCapturer.capture(asyncRunnable, latchFactory);
         };
         //then
         assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
-                                  .hasCauseInstanceOf(InterruptedException.class);
+                .hasCauseInstanceOf(InterruptedException.class);
     }
 
     @Test
     public void interruptionDuringOngoingAwaitIsWrappedInOutputCaptureException() throws InterruptedException {
         //given
         final OngoingCapturedOutput ongoingCapturedOutput =
-                new DefaultOngoingCapturedOutput(capturedOut, capturedErr, latch, thrownException);
+                new DefaultOngoingCapturedOutput(capturedOut, capturedErr, latch, thrownException,
+                        (CopyRouter) (captureTo, originalStream, targetThread) -> null);
         doThrow(InterruptedException.class).when(latch)
-                                           .await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
+                .await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         //when
         final ThrowableAssert.ThrowingCallable action = () -> {
             ongoingCapturedOutput.await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         };
         //then
         assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
-                                  .hasCauseInstanceOf(InterruptedException.class);
+                .hasCauseInstanceOf(InterruptedException.class);
     }
 
     @Test
@@ -537,7 +533,7 @@ public class CaptureTest {
             innerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
             System.out.println(line2);
             assertThat(innerCaptured.getStdOut()).containsExactly(line1)
-                                                 .doesNotContain(line2);
+                    .doesNotContain(line2);
             releaseLatch(latch2);
         });
         //then

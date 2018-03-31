@@ -40,16 +40,18 @@ class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOu
 
     @Getter(AccessLevel.PROTECTED)
     private final ByteArrayOutputStream capturedErr;
+    private final Router router;
 
     /**
      * Constructor.
-     *
-     * @param capturedOut The captured output written to System.out
+     *  @param capturedOut The captured output written to System.out
      * @param capturedErr The captured output written to System.err
+     * @param router
      */
-    DefaultCapturedOutput(final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr) {
+    DefaultCapturedOutput(final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr, final Router router) {
         this.capturedOut = capturedOut;
         this.capturedErr = capturedErr;
+        this.router = router;
     }
 
     @Override
@@ -73,7 +75,7 @@ class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOu
             if (test(b)) {
                 capturedOut.write(b);
             }
-            return true;
+            return router.isBlocking();
         };
     }
 
@@ -83,7 +85,7 @@ class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOu
             if (test(b)) {
                 capturedErr.write(b);
             }
-            return true;
+            return router.isBlocking();
         };
     }
 }
