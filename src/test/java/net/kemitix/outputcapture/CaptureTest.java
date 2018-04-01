@@ -20,7 +20,6 @@
 package net.kemitix.outputcapture;
 
 import lombok.SneakyThrows;
-import lombok.val;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.Ignore;
 import org.junit.Test;
