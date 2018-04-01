@@ -41,7 +41,7 @@ abstract class AbstractCaptureOutput {
     @Getter(AccessLevel.PROTECTED)
     private AtomicReference<Exception> thrownException = new AtomicReference<>();
 
-    private static Deque<CapturedOutput> activeCaptures = new ArrayDeque<>();
+    private final static Deque<CapturedOutput> ACTIVE_CAPTURES = new ArrayDeque<>();
     private static PrintStream savedOut;
     private static PrintStream savedErr;
 
@@ -75,40 +75,52 @@ abstract class AbstractCaptureOutput {
     }
 
     protected void enable(final CapturedOutput capturedOutput, final Router router) {
-        if (activeCaptures.isEmpty()) {
-            savedOut = System.out;
-            savedErr = System.err;
-            System.setOut(PrintStreamWrapper.filter(savedOut, (PrintStreamWrapper.ByteFilter) aByte -> {
-                for (CapturedOutput co : activeCaptures) {
-                    if (router.accepts(aByte)) {
-                        co.out().write(aByte);
-                        if (router.isBlocking()) {
-                            break;
-                        }
-                    }
-                }
-                return true;
-            }));
-            System.setErr(PrintStreamWrapper.filter(savedErr, (PrintStreamWrapper.ByteFilter) aByte -> {
-                for (CapturedOutput co : activeCaptures) {
-                    if (router.accepts(aByte)) {
-                        co.err().write(aByte);
-                        if (router.isBlocking()) {
-                            break;
-                        }
-                    }
-                }
-                return true;
-            }));
+        synchronized (ACTIVE_CAPTURES) {
+            if (ACTIVE_CAPTURES.isEmpty()) {
+                savedOut = System.out;
+                savedErr = System.err;
+                System.setOut(PrintStreamWrapper.filter(savedOut, captureSystemOutFilter(router)));
+                System.setErr(PrintStreamWrapper.filter(savedErr, captureSystemErrFilter(router)));
+            }
+            ACTIVE_CAPTURES.addFirst(capturedOutput);
         }
-        activeCaptures.addFirst(capturedOutput);
+    }
+
+    private static PrintStreamWrapper.ByteFilter captureSystemErrFilter(Router router) {
+        return aByte -> {
+            for (CapturedOutput co : ACTIVE_CAPTURES) {
+                if (router.accepts(aByte)) {
+                    co.err().write(aByte);
+                    if (router.isBlocking()) {
+                        break;
+                    }
+                }
+            }
+            return true;
+        };
+    }
+
+    private static PrintStreamWrapper.ByteFilter captureSystemOutFilter(Router router) {
+        return aByte -> {
+            for (CapturedOutput co : ACTIVE_CAPTURES) {
+                if (router.accepts(aByte)) {
+                    co.out().write(aByte);
+                    if (router.isBlocking()) {
+                        break;
+                    }
+                }
+            }
+            return true;
+        };
     }
 
     protected void disable(final CapturedOutput capturedOutput) {
-        activeCaptures.remove(capturedOutput);
-        if (activeCaptures.isEmpty()) {
-            System.setOut(savedOut);
-            System.setErr(savedErr);
+        synchronized (ACTIVE_CAPTURES) {
+            ACTIVE_CAPTURES.remove(capturedOutput);
+            if (ACTIVE_CAPTURES.isEmpty()) {
+                System.setOut(savedOut);
+                System.setErr(savedErr);
+            }
         }
     }
 }
