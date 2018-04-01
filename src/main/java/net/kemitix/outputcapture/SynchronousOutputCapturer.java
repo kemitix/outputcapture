@@ -65,7 +65,7 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
     private void invoke(CapturedOutput capturedOutput, final ThrowingCallable callable) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         final CountDownLatch finishedLatch = new CountDownLatch(1);
-        executor.submit(() -> enable(capturedOutput, routerFactory.apply(new RouterParameters(Thread.currentThread()))));
+        executor.submit(() -> enable(capturedOutput, routerFactory.apply(RouterParameters.createDefault())));
         executor.submit(() -> invokeCallable(callable));
         executor.submit(finishedLatch::countDown);
         executor.submit(executor::shutdown);
