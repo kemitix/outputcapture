@@ -22,6 +22,7 @@
 package net.kemitix.outputcapture;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.stream.Stream;
 
 /**
@@ -45,7 +46,7 @@ public interface CapturedOutput {
      */
     Stream<String> getStdErr();
 
-    ByteArrayOutputStream out();
+    OutputStream out();
 
-    ByteArrayOutputStream err();
+    OutputStream err();
 }

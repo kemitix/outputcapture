@@ -22,6 +22,8 @@
 package net.kemitix.outputcapture;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -60,8 +62,10 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
 
     @Override
     public CapturedOutput getCapturedOutputAndFlush() {
-        final List<String> collectedOut = asStream(getCapturedOut()).collect(Collectors.toList());
-        final List<String> collectedErr = asStream(getCapturedErr()).collect(Collectors.toList());
+        final OutputStream out = copyOutputStream(out());
+        final List<String> collectedOut = asStream(out).collect(Collectors.toList());
+        final OutputStream err = copyOutputStream(err());
+        final List<String> collectedErr = asStream(err).collect(Collectors.toList());
         flush();
         return new CapturedOutput() {
 
@@ -76,15 +80,21 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
             }
 
             @Override
-            public ByteArrayOutputStream out() {
-                return null;
+            public OutputStream out() {
+                return out;
             }
 
             @Override
-            public ByteArrayOutputStream err() {
-                return null;
+            public OutputStream err() {
+                return err;
             }
         };
+    }
+
+    private OutputStream copyOutputStream(ByteArrayOutputStream outputStream) {
+        final ByteArrayOutputStream result = new ByteArrayOutputStream(outputStream.size());
+        result.write(outputStream.toByteArray(), 0, outputStream.size());
+        return result;
     }
 
     @Override

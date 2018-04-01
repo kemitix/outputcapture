@@ -22,6 +22,7 @@
 package net.kemitix.outputcapture;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -39,7 +40,7 @@ abstract class AbstractCapturedOutput {
      *
      * @return a Stream of Strings
      */
-    protected Stream<String> asStream(final ByteArrayOutputStream outputStream) {
+    protected Stream<String> asStream(final OutputStream outputStream) {
         return Arrays.stream(outputStream.toString()
                                          .split(System.lineSeparator()));
     }
