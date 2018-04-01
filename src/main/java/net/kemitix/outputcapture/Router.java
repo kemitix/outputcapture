@@ -43,24 +43,6 @@ interface Router {
     WrappingPrintStreams wrap(OutputStream captureTo, PrintStream originalStream, Thread targetThread);
 
     /**
-     * Creates a WrappingPrintStreams object.
-     *
-     * <p>This default implementation creates an object containing only the wrapper provided. The targetThread is
-     * ignored.</p>
-     *
-     * @param wrapped      The main PrintStream Wrapper
-     * @param targetThread The target Thread for filtering, if used
-     *
-     * @return a WrappingPrintStreams instance containing {@code wrapped}
-     */
-    default WrappingPrintStreams createWrappedPrintStream(
-            final PrintStream wrapped,
-            final Thread targetThread
-                                                         ) {
-        return new WrappingPrintStreams(wrapped);
-    }
-
-    /**
      * Returns true if the router is intercepting the stream, rather than passing it on the the next capture or output.
      *
      * @return true if next PrintStream should not receive any output

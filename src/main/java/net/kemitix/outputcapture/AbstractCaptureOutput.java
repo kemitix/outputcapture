@@ -25,15 +25,11 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-
-import static java.util.Collections.synchronizedList;
 
 /**
  * Base for capturing output written to {@code System::out} and {@code System::err} as a {@link CapturedOutput}.
@@ -43,42 +39,11 @@ import static java.util.Collections.synchronizedList;
 abstract class AbstractCaptureOutput {
 
     @Getter(AccessLevel.PROTECTED)
-    private CapturedPrintStream capturedOut;
-
-    @Getter(AccessLevel.PROTECTED)
-    private CapturedPrintStream capturedErr;
-
-    @Getter(AccessLevel.PROTECTED)
     private AtomicReference<Exception> thrownException = new AtomicReference<>();
 
     private static Deque<CapturedOutput> activeCaptures = new ArrayDeque<>();
     private static PrintStream savedOut;
     private static PrintStream savedErr;
-
-    /**
-     * Get the backing byte array from the CapturedPrintStream.
-     *
-     * @param capturedPrintStream The CapturedPrintStream containing the backing byte array
-     *
-     * @return the backing byte array
-     */
-    protected ByteArrayOutputStream capturedTo(final CapturedPrintStream capturedPrintStream) {
-        return capturedPrintStream.getCapturedTo();
-    }
-
-    /**
-     * Restore the original PrintStreams for System.out and System.err.
-     *
-     * @param out            The CapturedPrintStream containing the original System.out
-     * @param err            The CapturedPrintStream containing the original System.err
-     * @param completedLatch The latch to release once the PrintStreams are restored
-     */
-    protected void shutdownAsyncCapture(
-            final CapturedPrintStream out, final CapturedPrintStream err, final CountDownLatch completedLatch
-    ) {
-        stop(out, err);
-        completedLatch.countDown();
-    }
 
     /**
      * Invokes the Callable and stores any thrown exception.
@@ -95,17 +60,6 @@ abstract class AbstractCaptureOutput {
     }
 
     /**
-     * Captures the System.out and System.err PrintStreams.
-     *
-     * @param router       The Router
-     * @param targetThread The target thread to filter by
-     */
-    protected void initiateCapture(final Router router, final Thread targetThread) {
-        capturedOut = capturePrintStream(System.out, router, System::setOut, targetThread);
-        capturedErr = capturePrintStream(System.err, router, System::setErr, targetThread);
-    }
-
-    /**
      * Wait for the CountDownLatch to count down to 0.
      *
      * <p>Any {@link InterruptedException} that is thrown will be wrapped in an {@link OutputCaptureException}.</p>
@@ -118,46 +72,6 @@ abstract class AbstractCaptureOutput {
         } catch (InterruptedException e) {
             throw new OutputCaptureException("Error awaiting latch", e);
         }
-    }
-
-    private CapturedPrintStream capturePrintStream(
-            final PrintStream originalStream, final Router router, final Consumer<PrintStream> setStream,
-            final Thread targetThread
-    ) {
-        final CapturedPrintStream capturedPrintStream = new CapturedPrintStream(originalStream, router, targetThread);
-        final PrintStream replacementStream = capturedPrintStream.getReplacementStream();
-        setStream.accept(replacementStream);
-        return capturedPrintStream;
-    }
-
-    /**
-     * Stop capturing the System PrintStreams {@code out} and {@code err}.
-     *
-     * @param capturedPrintStreamOut The {@code System.out} captured PrintStream
-     * @param capturedPrintStreamErr The {@code System.err} captured PrintStream
-     */
-    protected void stop(
-            final CapturedPrintStream capturedPrintStreamOut, final CapturedPrintStream capturedPrintStreamErr
-    ) {
-        stopCapturing(System.out, System::setOut, capturedPrintStreamOut);
-        stopCapturing(System.err, System::setErr, capturedPrintStreamErr);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void stopCapturing(
-            final PrintStream current, final Consumer<PrintStream> setPrintStream, final CapturedPrintStream captured
-    ) {
-        final AtomicReference<PrintStream> head = new AtomicReference<>(current);
-        captured.getWrappers()
-                .forEach(wrapperToRemove -> remove(head, wrapperToRemove));
-        setPrintStream.accept(head.get());
-    }
-
-    private void remove(AtomicReference<PrintStream> head, PrintStream wrapperToRemove) {
-        PrintStreamWrapper.unwrap(head.get())
-                .filter(wrapper -> wrapper instanceof PrintStreamWrapper)
-                .map(wrapper -> ((PrintStreamWrapper) wrapper).printStreamDelegate())
-                .ifPresent(printStream -> remove(head, wrapperToRemove));
     }
 
     protected void enable(final CapturedOutput capturedOutput) {
