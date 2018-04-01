@@ -86,6 +86,16 @@ abstract class AbstractCaptureOutput {
         }
     }
 
+    protected void disable(final CapturedOutput capturedOutput) {
+        synchronized (ACTIVE_CAPTURES) {
+            ACTIVE_CAPTURES.remove(capturedOutput);
+            if (ACTIVE_CAPTURES.isEmpty()) {
+                System.setOut(savedOut);
+                System.setErr(savedErr);
+            }
+        }
+    }
+
     private static PrintStreamWrapper.ByteFilter captureSystemErrFilter(Router router) {
         return aByte -> {
             for (CapturedOutput co : ACTIVE_CAPTURES) {
@@ -112,15 +122,5 @@ abstract class AbstractCaptureOutput {
             }
             return true;
         };
-    }
-
-    protected void disable(final CapturedOutput capturedOutput) {
-        synchronized (ACTIVE_CAPTURES) {
-            ACTIVE_CAPTURES.remove(capturedOutput);
-            if (ACTIVE_CAPTURES.isEmpty()) {
-                System.setOut(savedOut);
-                System.setErr(savedErr);
-            }
-        }
     }
 }
