@@ -6,8 +6,14 @@ interface ThreadFilteredRouter extends Router {
     default boolean accepts(Byte aByte) {
         final Thread currentThread = Thread.currentThread();
         final Thread targetThread = getFilteringThread();
+        if (currentThread.equals(targetThread)) return true;
+
+        final ThreadGroup targetThreadGroup = targetThread.getThreadGroup();
+        final ThreadGroup currentThreadGroup = currentThread.getThreadGroup();
+        if (currentThreadGroup == null || targetThreadGroup == null) return false;
+
         return currentThread.equals(targetThread) ||
-                targetThread.getThreadGroup().parentOf(currentThread.getThreadGroup());
+                targetThreadGroup.parentOf(currentThreadGroup);
     }
 
     /**
