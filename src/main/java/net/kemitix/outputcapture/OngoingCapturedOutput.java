@@ -22,6 +22,7 @@
 package net.kemitix.outputcapture;
 
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -74,4 +75,6 @@ public interface OngoingCapturedOutput extends CapturedOutput {
      * @return an Optional containing an exception, or empty if none was thrown
      */
     Optional<Throwable> thrownException();
+
+    CountDownLatch getCompletedLatch();
 }

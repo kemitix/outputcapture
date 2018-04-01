@@ -21,9 +21,9 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.Getter;
+
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -39,6 +39,7 @@ import java.util.stream.Stream;
  */
 class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements OngoingCapturedOutput {
 
+    @Getter
     private final CountDownLatch completedLatch;
 
     private final AtomicReference<Exception> thrownException;
@@ -62,9 +63,9 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
 
     @Override
     public CapturedOutput getCapturedOutputAndFlush() {
-        final OutputStream out = copyOutputStream(out());
+        final ByteArrayOutputStream out = copyOutputStream(out());
         final List<String> collectedOut = asStream(out).collect(Collectors.toList());
-        final OutputStream err = copyOutputStream(err());
+        final ByteArrayOutputStream err = copyOutputStream(err());
         final List<String> collectedErr = asStream(err).collect(Collectors.toList());
         flush();
         return new CapturedOutput() {
@@ -80,18 +81,18 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
             }
 
             @Override
-            public OutputStream out() {
+            public ByteArrayOutputStream out() {
                 return out;
             }
 
             @Override
-            public OutputStream err() {
+            public ByteArrayOutputStream err() {
                 return err;
             }
         };
     }
 
-    private OutputStream copyOutputStream(ByteArrayOutputStream outputStream) {
+    private ByteArrayOutputStream copyOutputStream(ByteArrayOutputStream outputStream) {
         final ByteArrayOutputStream result = new ByteArrayOutputStream(outputStream.size());
         result.write(outputStream.toByteArray(), 0, outputStream.size());
         return result;
