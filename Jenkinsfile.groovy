@@ -15,7 +15,7 @@ pipeline {
                 error("Build failed because SNAPSHOT version")
             }
         }
-        stage('Build/Test') {
+        stage('Build & Test') {
             steps {
                 withMaven(maven: 'maven', jdk: 'JDK LTS') {
                     sh "${mvn} clean compile checkstyle:checkstyle pmd:pmd test"
@@ -31,6 +31,12 @@ pipeline {
                           pattern: '**/target/checkstyle-result.xml',
                           healthy:'20',
                           unHealthy:'100'])
+                }
+            }
+        }
+        stage('Verify & Install') {
+            steps {
+                withMaven(maven: 'maven', jdk: 'JDK LTS') {
                     sh "${mvn} install"
                 }
             }
