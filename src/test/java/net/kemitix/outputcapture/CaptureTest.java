@@ -478,7 +478,7 @@ public class CaptureTest {
     public void interruptionDuringAsyncThreadSetupIsWrappedInOutputCaptureException() throws InterruptedException {
         //given
         final AsynchronousOutputCapturer outputCapturer =
-                new AsynchronousOutputCapturer((CopyRouter) (captureTo, originalStream, targetThread) -> null);
+                new AsynchronousOutputCapturer(new CopyRouter(){});
         given(latchFactory.apply(1)).willReturn(latch);
         doThrow(InterruptedException.class).when(latch)
                 .await();
@@ -496,7 +496,7 @@ public class CaptureTest {
         //given
         final OngoingCapturedOutput ongoingCapturedOutput =
                 new DefaultOngoingCapturedOutput(capturedOut, capturedErr, latch, thrownException,
-                        (CopyRouter) (captureTo, originalStream, targetThread) -> null);
+                        new CopyRouter(){});
         doThrow(InterruptedException.class).when(latch)
                 .await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         //when

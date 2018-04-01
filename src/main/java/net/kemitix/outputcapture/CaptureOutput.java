@@ -21,9 +21,6 @@
 
 package net.kemitix.outputcapture;
 
-import net.kemitix.wrapper.printstream.PrintStreamWrapper;
-
-import java.io.PrintStream;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -33,19 +30,10 @@ import java.util.concurrent.CountDownLatch;
  */
 public final class CaptureOutput implements OutputCapturer {
 
-    private static final Router THREAD_FILTERED_REDIRECT_ROUTER =
-            (RedirectRouter) (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
-                    WrapperFactory.threadFilteredPrintStream(new PrintStream(captureTo), targetThread));
-    private static final Router THREAD_FILTERED_COPY_ROUTER =
-            (CopyRouter) (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
-                    WrapperFactory.threadFilteredPrintStream(
-                            PrintStreamWrapper.copy(originalStream, new PrintStream(captureTo)), targetThread));
-    private static final Router COPY_ROUTER =
-            (CopyRouter) (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
-                    PrintStreamWrapper.copy(originalStream, new PrintStream(captureTo)));
-    private static final Router REDIRECT_ROUTER =
-            (RedirectRouter) (captureTo, originalStream, targetThread) -> new WrappingPrintStreams(
-                    new PrintStream(captureTo));
+    private static final Router THREAD_FILTERED_REDIRECT_ROUTER = new RedirectRouter() {};
+    private static final Router THREAD_FILTERED_COPY_ROUTER = new CopyRouter() {};
+    private static final Router COPY_ROUTER = new CopyRouter() {};
+    private static final Router REDIRECT_ROUTER = new RedirectRouter() {};
 
     @Override
     public CapturedOutput of(final ThrowingCallable callable) {
