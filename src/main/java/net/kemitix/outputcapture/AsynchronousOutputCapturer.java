@@ -36,15 +36,15 @@ import java.util.function.Function;
  */
 class AsynchronousOutputCapturer extends AbstractCaptureOutput {
 
-    private final Router router;
+    private final Function<RouterParameters, Router> routerFactory;
 
     /**
      * Constructor.
      *
-     * @param router The Router to direct where written output is sent
+     * @param routerFactory The Router to direct where written output is sent
      */
-    AsynchronousOutputCapturer(final Router router) {
-        this.router = router;
+    AsynchronousOutputCapturer(final Function<RouterParameters, Router> routerFactory) {
+        this.routerFactory = routerFactory;
     }
 
     /**
@@ -66,7 +66,7 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
                         new ByteArrayOutputStream(),
                         new ByteArrayOutputStream(),
                         completedLatch,
-                        getThrownException(), router
+                        getThrownException()
                 );
         invoke(captureOutput, callable, latchFactory);
         return captureOutput;
@@ -79,15 +79,10 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
     ) {
         final CountDownLatch outputCapturedLatch = latchFactory.apply(1);
         final ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> enable(captureOutput, Thread.currentThread()));
+        executor.submit(() -> enable(captureOutput, routerFactory.apply(new RouterParameters(Thread.currentThread()))));
         executor.submit(outputCapturedLatch::countDown);
         executor.submit(() -> invokeCallable(callable));
         executor.submit(executor::shutdown);
         awaitLatch(outputCapturedLatch);
-    }
-
-    private void enable(OngoingCapturedOutput captureOutput, Thread currentThread) {
-        captureOutput.filterOn(currentThread);
-        enable(captureOutput);
     }
 }

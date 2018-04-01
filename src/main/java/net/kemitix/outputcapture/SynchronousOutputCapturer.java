@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 /**
  * Capture the output of a callable, then return the captured output.
@@ -36,15 +37,15 @@ import java.util.concurrent.Executors;
  */
 class SynchronousOutputCapturer extends AbstractCaptureOutput {
 
-    private final Router router;
+    private final Function<RouterParameters, Router> routerFactory;
 
     /**
      * Constructor.
      *
-     * @param router   The Router to direct where written output is sent
+     * @param routerFactory   The Router to direct where written output is sent
      */
-    SynchronousOutputCapturer(final Router router) {
-        this.router = router;
+    SynchronousOutputCapturer(final Function<RouterParameters, Router> routerFactory) {
+        this.routerFactory = routerFactory;
     }
 
     /**
@@ -56,7 +57,7 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      */
     protected CapturedOutput capture(final ThrowingCallable callable) {
         final CapturedOutput capturedOutput =
-                new DefaultCapturedOutput(new ByteArrayOutputStream(), new ByteArrayOutputStream(), router);
+                new DefaultCapturedOutput(new ByteArrayOutputStream(), new ByteArrayOutputStream());
         invoke(capturedOutput, callable);
         return capturedOutput;
     }
@@ -64,7 +65,7 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
     private void invoke(CapturedOutput capturedOutput, final ThrowingCallable callable) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         final CountDownLatch finishedLatch = new CountDownLatch(1);
-        executor.submit(() -> enable(capturedOutput));
+        executor.submit(() -> enable(capturedOutput, routerFactory.apply(new RouterParameters(Thread.currentThread()))));
         executor.submit(() -> invokeCallable(callable));
         executor.submit(finishedLatch::countDown);
         executor.submit(executor::shutdown);

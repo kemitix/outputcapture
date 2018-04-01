@@ -21,17 +21,6 @@
 
 package net.kemitix.outputcapture;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
-import net.kemitix.wrapper.Wrapper;
-import net.kemitix.wrapper.printstream.PrintStreamWrapper;
-
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 /**
  * Router that redirects output away from the original output stream to the capturing stream.
  *

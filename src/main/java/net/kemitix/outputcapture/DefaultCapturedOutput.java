@@ -23,9 +23,9 @@ package net.kemitix.outputcapture;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.io.ByteArrayOutputStream;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -33,6 +33,7 @@ import java.util.stream.Stream;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
+@RequiredArgsConstructor
 class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOutput {
 
     @Getter(AccessLevel.PROTECTED)
@@ -40,19 +41,6 @@ class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOu
 
     @Getter(AccessLevel.PROTECTED)
     private final ByteArrayOutputStream capturedErr;
-    private final Router router;
-
-    /**
-     * Constructor.
-     *  @param capturedOut The captured output written to System.out
-     * @param capturedErr The captured output written to System.err
-     * @param router
-     */
-    DefaultCapturedOutput(final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr, final Router router) {
-        this.capturedOut = capturedOut;
-        this.capturedErr = capturedErr;
-        this.router = router;
-    }
 
     @Override
     public Stream<String> getStdOut() {
@@ -65,27 +53,13 @@ class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOu
     }
 
     @Override
-    public boolean test(Byte aByte) {
-        return true;
+    public ByteArrayOutputStream out() {
+        return capturedOut;
     }
 
     @Override
-    public Function<Byte, Boolean> out() {
-        return b -> {
-            if (test(b)) {
-                capturedOut.write(b);
-            }
-            return router.isBlocking();
-        };
+    public ByteArrayOutputStream err() {
+        return capturedErr;
     }
 
-    @Override
-    public Function<Byte, Boolean> err() {
-        return b -> {
-            if (test(b)) {
-                capturedErr.write(b);
-            }
-            return router.isBlocking();
-        };
-    }
 }

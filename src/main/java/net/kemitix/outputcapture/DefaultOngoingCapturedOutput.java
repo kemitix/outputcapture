@@ -27,7 +27,6 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,8 +41,6 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
 
     private final AtomicReference<Exception> thrownException;
 
-    private Thread filterThread;
-
     /**
      * Constructor.
      *
@@ -51,14 +48,12 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      * @param capturedErr     The captured output written to System.err
      * @param completedLatch  The Latch indicating the thread is still running
      * @param thrownException The reference to any exception thrown
-     * @param router
      */
     DefaultOngoingCapturedOutput(
             final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr,
-            final CountDownLatch completedLatch, final AtomicReference<Exception> thrownException,
-            final Router router
+            final CountDownLatch completedLatch, final AtomicReference<Exception> thrownException
     ) {
-        super(capturedOut, capturedErr, router);
+        super(capturedOut, capturedErr);
         this.completedLatch = completedLatch;
         this.thrownException = thrownException;
     }
@@ -69,10 +64,6 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
         final List<String> collectedErr = asStream(getCapturedErr()).collect(Collectors.toList());
         flush();
         return new CapturedOutput() {
-            @Override
-            public boolean test(Byte aByte) {
-                return true;
-            }
 
             @Override
             public Stream<String> getStdOut() {
@@ -85,12 +76,12 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
             }
 
             @Override
-            public Function<Byte, Boolean> out() {
+            public ByteArrayOutputStream out() {
                 return null;
             }
 
             @Override
-            public Function<Byte, Boolean> err() {
+            public ByteArrayOutputStream err() {
                 return null;
             }
         };
@@ -98,8 +89,8 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
 
     @Override
     public void flush() {
-        getCapturedOut().reset();
-        getCapturedErr().reset();
+        out().reset();
+        err().reset();
     }
 
     @Override
@@ -124,15 +115,5 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     @Override
     public Optional<Throwable> thrownException() {
         return Optional.ofNullable(thrownException.get());
-    }
-
-    @Override
-    public void filterOn(final Thread filterThread) {
-        this.filterThread = filterThread;
-    }
-
-    @Override
-    public boolean test(Byte aByte) {
-        return Thread.currentThread().equals(filterThread);
     }
 }

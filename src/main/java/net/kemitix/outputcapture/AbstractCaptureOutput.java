@@ -74,22 +74,28 @@ abstract class AbstractCaptureOutput {
         }
     }
 
-    protected void enable(final CapturedOutput capturedOutput) {
+    protected void enable(final CapturedOutput capturedOutput, final Router router) {
         if (activeCaptures.isEmpty()) {
             savedOut = System.out;
             savedErr = System.err;
             System.setOut(PrintStreamWrapper.filter(savedOut, (PrintStreamWrapper.ByteFilter) aByte -> {
                 for (CapturedOutput co : activeCaptures) {
-                    if (co.out().apply(aByte)) {
-                        break;
+                    if (router.accepts(aByte)) {
+                        co.out().write(aByte);
+                        if (router.isBlocking()) {
+                            break;
+                        }
                     }
                 }
                 return true;
             }));
             System.setErr(PrintStreamWrapper.filter(savedErr, (PrintStreamWrapper.ByteFilter) aByte -> {
                 for (CapturedOutput co : activeCaptures) {
-                    if (co.err().apply(aByte)) {
-                        break;
+                    if (router.accepts(aByte)) {
+                        co.err().write(aByte);
+                        if (router.isBlocking()) {
+                            break;
+                        }
                     }
                 }
                 return true;

@@ -34,4 +34,13 @@ interface Router {
      * @return true if next PrintStream should not receive any output
      */
     boolean isBlocking();
+
+    /**
+     * Returns true is the router will accept the byte.
+     *
+     * @param aByte the byte to be written.
+     *
+     * @return true if the byte should be written to the stream
+     */
+    boolean accepts(final Byte aByte);
 }

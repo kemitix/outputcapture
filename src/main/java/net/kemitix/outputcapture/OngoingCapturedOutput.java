@@ -74,6 +74,4 @@ public interface OngoingCapturedOutput extends CapturedOutput {
      * @return an Optional containing an exception, or empty if none was thrown
      */
     Optional<Throwable> thrownException();
-
-    void filterOn(Thread currentThread);
 }
