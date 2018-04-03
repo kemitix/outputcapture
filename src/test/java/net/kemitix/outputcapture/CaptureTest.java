@@ -76,10 +76,8 @@ public class CaptureTest {
 
     @Test
     public void canCaptureSystemOut() {
-        //given
-        final CaptureOutput captureOutput = new CaptureOutput();
         //when
-        final CapturedOutput captured = captureOutput.of(() -> {
+        final CapturedOutput captured = CaptureOutput.of(() -> {
             System.out.println(line1);
             System.out.println(line2);
         });
@@ -89,10 +87,8 @@ public class CaptureTest {
 
     @Test
     public void canCaptureSystemErr() {
-        //given
-        final CaptureOutput captureOutput = new CaptureOutput();
         //when
-        final CapturedOutput captured = captureOutput.of(() -> {
+        final CapturedOutput captured = CaptureOutput.of(() -> {
             System.err.println(line1);
             System.err.println(line2);
         });
@@ -102,12 +98,9 @@ public class CaptureTest {
 
     @Test
     public void canRestoreNormalSystemOut() {
-        //given
-        final CaptureOutput outer = new CaptureOutput();
-        final CaptureOutput inner = new CaptureOutput();
         //when
-        final CapturedOutput outerCaptured = outer.of(() -> {
-            final CapturedOutput innerCaptured = inner.of(() -> {
+        final CapturedOutput outerCaptured = CaptureOutput.of(() -> {
+            final CapturedOutput innerCaptured = CaptureOutput.of(() -> {
                 System.out.println(line1);
             });
             System.out.println(line2);
@@ -121,12 +114,9 @@ public class CaptureTest {
 
     @Test
     public void canRestoreNormalSystemErr() {
-        //given
-        final CaptureOutput outer = new CaptureOutput();
-        final CaptureOutput inner = new CaptureOutput();
         //when
-        final CapturedOutput outerCaptured = outer.of(() -> {
-            final CapturedOutput innerCaptured = inner.of(() -> {
+        final CapturedOutput outerCaptured = CaptureOutput.of(() -> {
+            final CapturedOutput innerCaptured = CaptureOutput.of(() -> {
                 System.err.println(line1);
             });
             System.err.println(line2);
@@ -142,12 +132,10 @@ public class CaptureTest {
     @Ignore("this test is failing due to outside interference")
     public void canCaptureOutputAndCopyItToNormalOutputs() {
         //given
-        final CaptureOutput captureOutput = new CaptureOutput();
-        final CaptureOutput captureCopy = new CaptureOutput();
         final AtomicReference<CapturedOutput> inner = new AtomicReference<>();
         //when
-        final CapturedOutput capturedEcho = captureCopy.whileDoing(() -> {
-            inner.set(captureOutput.copyOf(() -> {
+        final CapturedOutput capturedEcho = CaptureOutput.whileDoing(() -> {
+            inner.set(CaptureOutput.copyOf(() -> {
                 System.out.println(line1);
                 System.err.println(line2);
                 System.out.write('a');
@@ -168,11 +156,10 @@ public class CaptureTest {
     @Test
     public void exceptionThrownInCallableAreWrappedInOutputCaptureException() {
         //given
-        final CaptureOutput captureOutput = new CaptureOutput();
         final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
         //when
         final ThrowableAssert.ThrowingCallable action = () -> {
-            captureOutput.of(() -> {
+            CaptureOutput.of(() -> {
                 throw cause;
             });
         };
@@ -185,7 +172,6 @@ public class CaptureTest {
     @Ignore("broken")
     public void onlyCapturesOutputFromTargetRunnable() throws InterruptedException {
         //given
-        final CaptureOutput captureOutput = new CaptureOutput();
         final ExecutorService catchMe = Executors.newSingleThreadExecutor();
         final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
         final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
@@ -199,7 +185,7 @@ public class CaptureTest {
         });
         ignoreMe.submit(ignoreMe::shutdown);
         catchMe.submit(() -> {
-            reference.set(captureOutput.of(() -> {
+            reference.set(CaptureOutput.of(() -> {
                 System.out.println("started");
                 releaseLatch(releaseLatch);
                 awaitLatch(doneLatch);
@@ -225,11 +211,10 @@ public class CaptureTest {
     @Test
     public void capturesOutputOnRequiredThread() {
         //given
-        final CaptureOutput captureOutput = new CaptureOutput();
         final AtomicReference<CapturedOutput> capturedOutput = new AtomicReference<>();
         //when
         runOnAnotherThreadAndWait(() -> {
-            capturedOutput.set(captureOutput.of(() -> {
+            capturedOutput.set(CaptureOutput.of(() -> {
                 System.out.println("message");
                 System.out.write('x');
             }));
@@ -242,13 +227,12 @@ public class CaptureTest {
     @Test
     public void ignoresOutputFromOtherThreads() throws InterruptedException {
         //given
-        final CaptureOutput captureOutput = new CaptureOutput();
         final ExecutorService monitor = Executors.newSingleThreadExecutor();
         final ExecutorService subject = Executors.newSingleThreadExecutor();
         final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
         //when
         monitor.submit(() -> {
-            reference.set(captureOutput.of(() -> {
+            reference.set(CaptureOutput.of(() -> {
                 subject.submit(() -> {
                     System.out.println("message");
                     System.out.write('x');
@@ -272,18 +256,17 @@ public class CaptureTest {
         final CountDownLatch latch1 = createLatch();
         final CountDownLatch latch2 = createLatch();
         final CountDownLatch latch3 = createLatch();
-        final CaptureOutput captureOutput = new CaptureOutput();
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
             awaitLatch(latch1);
-            captureOutput.of(() -> {
+            CaptureOutput.of(() -> {
                 releaseLatch(latch2);
                 awaitLatch(latch3);
             });
         });
         executor.submit(executor::shutdown);
         //when
-        captureOutput.of(() -> {
+        CaptureOutput.of(() -> {
             releaseLatch(latch1);
             awaitLatch(latch2);
         });
@@ -323,12 +306,11 @@ public class CaptureTest {
         //given
         final PrintStream originalOut = System.out;
         final PrintStream originalErr = System.err;
-        final CaptureOutput captureOutput = new CaptureOutput();
         final CountDownLatch latch1 = createLatch();
         final CountDownLatch latch2 = createLatch();
         final CountDownLatch latch3 = createLatch();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+        final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.ofThread(() -> {
             System.out.println("starting out");
             System.err.println("starting err");
             releaseLatch(latch1);
@@ -355,12 +337,9 @@ public class CaptureTest {
     @Test
     @Ignore("broken")
     public void canRestoreNormalSystemOutWhenCapturingAsynchronously() {
-        //given
-        final CaptureOutput outer = new CaptureOutput();
-        final CaptureOutput inner = new CaptureOutput();
         //when
-        final CapturedOutput outerCaptured = outer.of(() -> {
-            final OngoingCapturedOutput innerCaptured = inner.ofThread(() -> {
+        final CapturedOutput outerCaptured = CaptureOutput.of(() -> {
+            final OngoingCapturedOutput innerCaptured = CaptureOutput.ofThread(() -> {
                 System.out.println(line1);
             });
             innerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
@@ -376,12 +355,9 @@ public class CaptureTest {
     @Test
     @Ignore("broken")
     public void canRestoreNormalSystemErrWhenCapturingAsynchronously() {
-        //given
-        final CaptureOutput outer = new CaptureOutput();
-        final CaptureOutput inner = new CaptureOutput();
         //when
-        final CapturedOutput outerCaptured = outer.of(() -> {
-            final OngoingCapturedOutput innerCaptured = inner.ofThread(() -> {
+        final CapturedOutput outerCaptured = CaptureOutput.of(() -> {
+            final OngoingCapturedOutput innerCaptured = CaptureOutput.ofThread(() -> {
                 System.err.println(line1);
             });
             innerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
@@ -398,12 +374,11 @@ public class CaptureTest {
     @Ignore("this test is failing due to outside interference")
     public void canFlushCapturedOutputWhenCapturingAsynchronously() {
         //given
-        final CaptureOutput captureOutput = new CaptureOutput();
         final CountDownLatch readyToFlush = createLatch();
         final CountDownLatch flushCompleted = createLatch();
         final CountDownLatch allDone = createLatch();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+        final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.ofThread(() -> {
             System.out.println("starting out");
             System.err.println("starting err");
             releaseLatch(readyToFlush);
@@ -424,12 +399,11 @@ public class CaptureTest {
     @Test(timeout = 200)
     public void canCapturedOutputAndFlushWhenCapturingAsynchronously() {
         //given
-        final CaptureOutput captureOutput = new CaptureOutput();
         final CountDownLatch readyToFlush = createLatch();
         final CountDownLatch flushCompleted = createLatch();
         final CountDownLatch allDone = createLatch();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+        final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.ofThread(() -> {
             System.out.println("starting out");
             System.err.println("starting err");
             releaseLatch(readyToFlush);
@@ -453,10 +427,9 @@ public class CaptureTest {
     @Ignore("broken")
     public void canWaitForThreadToComplete() {
         //given
-        final CaptureOutput captureOutput = new CaptureOutput();
         final CountDownLatch latch = createLatch();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+        final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.ofThread(() -> {
             awaitLatch(latch);
         });
         //then
@@ -507,10 +480,9 @@ public class CaptureTest {
     @Test
     public void exceptionThrownInThreadIsAvailableToOngoingCapturedOutput() {
         //given
-        final CaptureOutput captureOutput = new CaptureOutput();
         final OutputCaptureException outputCaptureException = new OutputCaptureException("");
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(() -> {
+        final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.ofThread(() -> {
             throw outputCaptureException;
         });
         //then
@@ -522,13 +494,11 @@ public class CaptureTest {
     @Ignore("broken")
     public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
         //given
-        final CaptureOutput outer = new CaptureOutput();
-        final CaptureOutput inner = new CaptureOutput();
         final CountDownLatch latch1 = createLatch();
         final CountDownLatch latch2 = createLatch();
         //when
-        final CapturedOutput outerCaptured = outer.copyWhileDoing(() -> {
-            final OngoingCapturedOutput innerCaptured = inner.copyOfThread(() -> {
+        final CapturedOutput outerCaptured = CaptureOutput.copyWhileDoing(() -> {
+            final OngoingCapturedOutput innerCaptured = CaptureOutput.copyOfThread(() -> {
                 System.out.println(line1);
                 releaseLatch(latch1);
             });

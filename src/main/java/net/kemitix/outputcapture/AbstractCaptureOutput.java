@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-abstract class AbstractCaptureOutput {
+abstract class AbstractCaptureOutput implements CaptureOutput {
 
     @Getter(AccessLevel.PROTECTED)
     private AtomicReference<Exception> thrownException = new AtomicReference<>();
@@ -122,5 +122,9 @@ abstract class AbstractCaptureOutput {
             }
             return true;
         };
+    }
+
+    static int activeCount() {
+        return ACTIVE_CAPTURES.size();
     }
 }
