@@ -142,6 +142,7 @@ public class CaptureTest {
             }));
         });
         //then
+        assertThat(CaptureOutput.activeCount()).isEqualTo(0);
         final CapturedOutput capturedOutput = inner.get();
         assertThat(capturedOutput.getStdOut()).as("inner std out written")
                 .containsExactly(line1, "a");

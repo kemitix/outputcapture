@@ -83,5 +83,6 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
         executor.submit(() -> invokeCallable(callable));
         executor.submit(executor::shutdown);
         awaitLatch(completedLatch);
+        disable(captureOutput);
     }
 }
