@@ -377,7 +377,6 @@ public class CaptureTest {
         //given
         final CountDownLatch readyToFlush = createLatch();
         final CountDownLatch flushCompleted = createLatch();
-        final CountDownLatch allDone = createLatch();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.ofThread(() -> {
             System.out.println("starting out");
@@ -386,15 +385,18 @@ public class CaptureTest {
             awaitLatch(flushCompleted);
             System.out.println("finished out");
             System.err.println("finished err");
-            releaseLatch(allDone);
         });
         awaitLatch(readyToFlush);
+        assertThat(ongoingCapturedOutput.getStdOut()).as("starting out").containsExactly("starting out");
+        assertThat(ongoingCapturedOutput.getStdErr()).as("starting err").containsExactly("starting err");
         ongoingCapturedOutput.flush();
         releaseLatch(flushCompleted);
-        awaitLatch(allDone);
+        awaitLatch(ongoingCapturedOutput.getCompletedLatch());
         //then
-        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
-        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
+        assertThat(CaptureOutput.activeCount()).isEqualTo(0);
+        assertThat(ongoingCapturedOutput.isShutdown()).isTrue();
+        assertThat(ongoingCapturedOutput.getStdOut()).as("finished out").containsExactly("finished out");
+        assertThat(ongoingCapturedOutput.getStdErr()).as("finished err").containsExactly("finished err");
     }
 
     @Test(timeout = 200)
