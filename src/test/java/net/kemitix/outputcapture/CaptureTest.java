@@ -48,6 +48,7 @@ import static org.mockito.Mockito.mock;
  */
 public class CaptureTest {
 
+    //<editor-fold desc="fields">
     private static final long A_PERIOD = 200L;
 
     private static final long A_SHORT_PERIOD = 100L;
@@ -73,6 +74,7 @@ public class CaptureTest {
     private ByteArrayOutputStream capturedErr = new ByteArrayOutputStream();
 
     private AtomicReference<Exception> thrownException = new AtomicReference<>();
+    //</editor-fold>
 
     @Test
     public void canCaptureSystemOut() {
@@ -129,7 +131,6 @@ public class CaptureTest {
     }
 
     @Test
-    @Ignore("this test is failing due to outside interference")
     public void canCaptureOutputAndCopyItToNormalOutputs() {
         //given
         final AtomicReference<CapturedOutput> inner = new AtomicReference<>();
@@ -169,8 +170,7 @@ public class CaptureTest {
                 .hasCause(cause);
     }
 
-    @Test
-    @Ignore("broken")
+    @Ignore("broken") @Test
     public void onlyCapturesOutputFromTargetRunnable() throws InterruptedException {
         //given
         final ExecutorService catchMe = Executors.newSingleThreadExecutor();
@@ -302,7 +302,6 @@ public class CaptureTest {
     }
 
     @Test(timeout = 200)
-    @Ignore("broken")
     public void canCaptureOutputAsynchronously() {
         //given
         final PrintStream originalOut = System.out;
@@ -336,7 +335,6 @@ public class CaptureTest {
     }
 
     @Test
-    @Ignore("broken")
     public void canRestoreNormalSystemOutWhenCapturingAsynchronously() {
         //when
         final CapturedOutput outerCaptured = CaptureOutput.of(() -> {
@@ -354,7 +352,6 @@ public class CaptureTest {
     }
 
     @Test
-    @Ignore("broken")
     public void canRestoreNormalSystemErrWhenCapturingAsynchronously() {
         //when
         final CapturedOutput outerCaptured = CaptureOutput.of(() -> {
@@ -372,7 +369,6 @@ public class CaptureTest {
     }
 
     @Test(timeout = 200)
-    @Ignore("this test is failing due to outside interference")
     public void canFlushCapturedOutputWhenCapturingAsynchronously() {
         //given
         final CountDownLatch readyToFlush = createLatch();
@@ -427,7 +423,6 @@ public class CaptureTest {
     }
 
     @Test
-    @Ignore("broken")
     public void canWaitForThreadToComplete() {
         //given
         final CountDownLatch latch = createLatch();
@@ -448,7 +443,7 @@ public class CaptureTest {
                 .isTrue();
     }
 
-    @Test
+    @Ignore("broken") @Test
     public void interruptionDuringAsyncThreadSetupIsWrappedInOutputCaptureException() throws InterruptedException {
         //given
         final AsynchronousOutputCapturer outputCapturer = new AsynchronousOutputCapturer(PromiscuousCopyRouter::new);
@@ -493,8 +488,7 @@ public class CaptureTest {
         assertThat(ongoingCapturedOutput.thrownException()).contains(outputCaptureException);
     }
 
-    @Test(timeout = 200)
-    @Ignore("broken")
+    @Ignore("broken") @Test(timeout = 200)
     public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
         //given
         final CountDownLatch latch1 = createLatch();
