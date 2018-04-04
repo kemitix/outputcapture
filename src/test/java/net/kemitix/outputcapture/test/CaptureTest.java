@@ -1,6 +1,7 @@
-package net.kemitix.outputcapture;
+package net.kemitix.outputcapture.test;
 
 import lombok.SneakyThrows;
+import net.kemitix.outputcapture.*;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -18,8 +19,6 @@ import java.util.function.Function;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 public class CaptureTest {
@@ -32,24 +31,6 @@ public class CaptureTest {
     private String line1 = "1:" + UUID.randomUUID().toString();
 
     private String line2 = "2:" + UUID.randomUUID().toString();
-
-    private ThrowingCallable asyncRunnable = () -> {
-        System.out.println("starting out");
-        System.err.println("starting err");
-        sleep(A_PERIOD);
-        System.out.println("finished out");
-        System.err.println("finished err");
-    };
-
-    private Function<Integer, CountDownLatch> latchFactory = mock(Function.class);
-
-    private CountDownLatch latch = mock(CountDownLatch.class);
-
-    private ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
-
-    private ByteArrayOutputStream capturedErr = new ByteArrayOutputStream();
-
-    private AtomicReference<Exception> thrownException = new AtomicReference<>();
     //</editor-fold>
 
     @Test
@@ -417,38 +398,6 @@ public class CaptureTest {
                 .isFalse();
         assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = true")
                 .isTrue();
-    }
-
-    @Ignore("broken") @Test
-    public void interruptionDuringAsyncThreadSetupIsWrappedInOutputCaptureException() throws InterruptedException {
-        //given
-        final AsynchronousOutputCapturer outputCapturer = new AsynchronousOutputCapturer(PromiscuousCopyRouter::new);
-        given(latchFactory.apply(1)).willReturn(latch);
-        doThrow(InterruptedException.class).when(latch)
-                .await();
-        //when
-        final ThrowableAssert.ThrowingCallable action = () -> {
-            outputCapturer.capture(asyncRunnable, latchFactory);
-        };
-        //then
-        assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
-                .hasCauseInstanceOf(InterruptedException.class);
-    }
-
-    @Test
-    public void interruptionDuringOngoingAwaitIsWrappedInOutputCaptureException() throws InterruptedException {
-        //given
-        final OngoingCapturedOutput ongoingCapturedOutput =
-                new DefaultOngoingCapturedOutput(capturedOut, capturedErr, latch, thrownException);
-        doThrow(InterruptedException.class).when(latch)
-                .await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
-        //when
-        final ThrowableAssert.ThrowingCallable action = () -> {
-            ongoingCapturedOutput.await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
-        };
-        //then
-        assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
-                .hasCauseInstanceOf(InterruptedException.class);
     }
 
     @Test
