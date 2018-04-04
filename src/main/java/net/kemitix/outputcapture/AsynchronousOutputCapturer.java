@@ -57,9 +57,10 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
      *
      * @return an instance of OngoingCapturedOutput
      */
-    protected OngoingCapturedOutput capture(
-            final ThrowingCallable callable, final Function<Integer, CountDownLatch> latchFactory
-                                           ) {
+    OngoingCapturedOutput capture(
+        final ThrowingCallable callable,
+        final Function<Integer, CountDownLatch> latchFactory
+    ) {
         final CountDownLatch completedLatch = latchFactory.apply(1);
         final OngoingCapturedOutput captureOutput =
                 new DefaultOngoingCapturedOutput(
