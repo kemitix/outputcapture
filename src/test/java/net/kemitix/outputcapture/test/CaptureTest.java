@@ -95,7 +95,7 @@ public class CaptureTest {
         //given
         final AtomicReference<CapturedOutput> inner = new AtomicReference<>();
         //when
-        final CapturedOutput capturedEcho = CaptureOutput.whileDoing(() -> {
+        final OngoingCapturedOutput capturedEcho = CaptureOutput.copyWhileDoing(() -> {
             inner.set(CaptureOutput.copyOf(() -> {
                 System.out.println(line1);
                 System.err.println(line2);
@@ -103,6 +103,7 @@ public class CaptureTest {
             }));
         });
         //then
+        awaitLatch(capturedEcho.getCompletedLatch());
         assertThat(CaptureOutput.activeCount()).isZero();
         final CapturedOutput capturedOutput = inner.get();
         assertThat(capturedOutput.getStdOut()).as("inner std out written")

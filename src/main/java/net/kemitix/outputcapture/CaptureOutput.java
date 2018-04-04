@@ -26,6 +26,20 @@ import java.util.concurrent.CountDownLatch;
 /**
  * Captures the output written to standard out and standard error.
  *
+ * <table>
+ *     <thead><tr><th>method</th><th>a/sync</th><th>filtering</th><th>redirect/copy</th></tr></thead>
+ *     <tbody>
+ *         <tr><td>of</td><td>sync</td><td>thread</td><td>redirect</td></tr>
+ *         <tr><td>copyOf</td><td>sync</td><td>thread</td><td>copy</td></tr>
+ *         <tr><td>ofThread</td><td>async</td><td>thread</td><td>redirect</td></tr>
+ *         <tr><td>copyOfThread</td><td>async</td><td>thread</td><td>copy</td></tr>
+ *         <tr><td>?</td><td>sync</td><td>any</td><td>redirect</td></tr>
+ *         <tr><td>?</td><td>sync</td><td>any</td><td>copy</td></tr>
+ *         <tr><td>whileDoing</td><td>async</td><td>any</td><td>redirect</td></tr>
+ *         <tr><td>copyWhileDoing</td><td>async</td><td>any</td><td>copy</td></tr>
+ *     </tbody>
+ * </table>
+ *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
 public interface CaptureOutput {
@@ -91,9 +105,9 @@ public interface CaptureOutput {
      *
      * @return an instance of CapturedOutput
      */
-    static CapturedOutput whileDoing(ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(PromiscuousRedirectRouter::new)
-                .capture(callable);
+    static OngoingCapturedOutput whileDoing(ThrowingCallable callable) {
+        return new AsynchronousOutputCapturer(PromiscuousRedirectRouter::new)
+                .capture(callable, CountDownLatch::new);
     }
 
     /**
