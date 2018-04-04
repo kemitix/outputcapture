@@ -42,5 +42,5 @@ interface Router {
      *
      * @return true if the byte should be written to the stream
      */
-    boolean accepts(final Byte aByte);
+    boolean accepts(Byte aByte);
 }
