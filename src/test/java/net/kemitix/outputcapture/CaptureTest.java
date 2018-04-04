@@ -170,7 +170,7 @@ public class CaptureTest {
                 .hasCause(cause);
     }
 
-    @Ignore("broken") @Test
+    @Test
     public void onlyCapturesOutputFromTargetRunnable() throws InterruptedException {
         //given
         final ExecutorService catchMe = Executors.newSingleThreadExecutor();
