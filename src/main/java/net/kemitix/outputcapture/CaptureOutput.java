@@ -92,7 +92,7 @@ public interface CaptureOutput {
      * @return an instance of CapturedOutput
      */
     static CapturedOutput whileDoing(ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(PromiscuousCopyRouter::new)
+        return new SynchronousOutputCapturer(PromiscuousRedirectRouter::new)
                 .capture(callable);
     }
 
@@ -109,7 +109,7 @@ public interface CaptureOutput {
      * @return an instance of OngoingCapturedOutput
      */
     static OngoingCapturedOutput copyWhileDoing(ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(PromiscuousRedirectRouter::new)
+        return new AsynchronousOutputCapturer(PromiscuousCopyRouter::new)
                 .capture(callable, CountDownLatch::new);
     }
 
