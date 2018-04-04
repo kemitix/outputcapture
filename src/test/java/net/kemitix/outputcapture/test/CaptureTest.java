@@ -41,6 +41,7 @@ public class CaptureTest {
             System.out.println(line2);
         });
         //then
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(captured.getStdOut()).containsExactly(line1, line2);
     }
 
@@ -52,6 +53,7 @@ public class CaptureTest {
             System.err.println(line2);
         });
         //then
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(captured.getStdErr()).containsExactly(line1, line2);
     }
 
@@ -67,6 +69,7 @@ public class CaptureTest {
                     .doesNotContain(line2);
         });
         //then
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(outerCaptured.getStdOut()).containsExactly(line2)
                 .doesNotContain(line1);
     }
@@ -83,6 +86,7 @@ public class CaptureTest {
                     .doesNotContain(line2);
         });
         //then
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(outerCaptured.getStdErr()).containsExactly(line2)
                 .doesNotContain(line1);
     }
@@ -100,7 +104,7 @@ public class CaptureTest {
             }));
         });
         //then
-        assertThat(CaptureOutput.activeCount()).isEqualTo(0);
+        assertThat(CaptureOutput.activeCount()).isZero();
         final CapturedOutput capturedOutput = inner.get();
         assertThat(capturedOutput.getStdOut()).as("inner std out written")
                 .containsExactly(line1, "a");
@@ -123,6 +127,7 @@ public class CaptureTest {
             });
         };
         //then
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
                 .hasCause(cause);
     }
@@ -154,6 +159,7 @@ public class CaptureTest {
         ignoreMe.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         catchMe.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         //then
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(reference.get()
                 .getStdOut()).containsExactly("started", "finished");
     }
@@ -178,6 +184,7 @@ public class CaptureTest {
             }));
         });
         //then
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(capturedOutput.get()
                 .getStdOut()).containsExactly("message", "x");
     }
@@ -202,6 +209,7 @@ public class CaptureTest {
         subject.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
         monitor.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
         //then
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(reference.get()
                 .getStdOut()).containsExactly("");
     }
@@ -228,9 +236,10 @@ public class CaptureTest {
             releaseLatch(latch1);
             awaitLatch(latch2);
         });
-        //then
         releaseLatch(latch3);
         executor.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
+        //then
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(System.out).isSameAs(originalOut);
         assertThat(System.err).isSameAs(originalErr);
     }
@@ -285,10 +294,9 @@ public class CaptureTest {
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting out", "finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err", "finished err");
         ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
-        assertThat(System.out).as("restore original out")
-                .isSameAs(originalOut);
-        assertThat(System.err).as("restore original err")
-                .isSameAs(originalErr);
+        assertThat(CaptureOutput.activeCount()).isZero();
+        assertThat(System.out).as("restore original out").isSameAs(originalOut);
+        assertThat(System.err).as("restore original err").isSameAs(originalErr);
     }
 
     @Test
@@ -304,7 +312,9 @@ public class CaptureTest {
                     .doesNotContain(line2);
         });
         //then
-        assertThat(outerCaptured.getStdOut()).containsExactly(line2)
+        assertThat(CaptureOutput.activeCount()).isZero();
+        assertThat(outerCaptured.getStdOut())
+                .containsExactly(line2)
                 .doesNotContain(line1);
     }
 
@@ -321,7 +331,9 @@ public class CaptureTest {
                     .doesNotContain(line2);
         });
         //then
-        assertThat(outerCaptured.getStdErr()).containsExactly(line2)
+        assertThat(CaptureOutput.activeCount()).isZero();
+        assertThat(outerCaptured.getStdErr())
+                .containsExactly(line2)
                 .doesNotContain(line1);
     }
 
@@ -346,7 +358,7 @@ public class CaptureTest {
         releaseLatch(flushCompleted);
         awaitLatch(ongoingCapturedOutput.getCompletedLatch());
         //then
-        assertThat(CaptureOutput.activeCount()).isEqualTo(0);
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(ongoingCapturedOutput.isShutdown()).isTrue();
         assertThat(ongoingCapturedOutput.getStdOut()).as("finished out").containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).as("finished err").containsExactly("finished err");
@@ -375,6 +387,7 @@ public class CaptureTest {
         assertThat(initialCapturedOutput.getStdOut()).containsExactly("starting out");
         assertThat(initialCapturedOutput.getStdErr()).containsExactly("starting err");
         awaitLatch(allDone);
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
     }
@@ -394,6 +407,7 @@ public class CaptureTest {
                 .isFalse();
         releaseLatch(latch);
         ongoingCapturedOutput.await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(ongoingCapturedOutput.isRunning()).as("isRunning = false")
                 .isFalse();
         assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = true")
@@ -410,6 +424,7 @@ public class CaptureTest {
         });
         //then
         ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
+        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(ongoingCapturedOutput.thrownException()).contains(outputCaptureException);
     }
 
