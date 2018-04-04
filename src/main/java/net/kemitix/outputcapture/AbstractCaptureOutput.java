@@ -51,7 +51,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
      * @param callable The callable to invoke
      */
     @SuppressWarnings("illegalcatch")
-    protected void invokeCallable(final ThrowingCallable callable) {
+    void invokeCallable(final ThrowingCallable callable) {
         try {
             callable.call();
         } catch (Exception e) {
@@ -66,7 +66,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
      *
      * @param countDownLatch The latch to wait on
      */
-    protected void awaitLatch(final CountDownLatch countDownLatch) {
+    void awaitLatch(final CountDownLatch countDownLatch) {
         try {
             countDownLatch.await();
         } catch (InterruptedException e) {
@@ -74,7 +74,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         }
     }
 
-    protected void enable(final CapturedOutput capturedOutput, final Router router) {
+    void enable(final CapturedOutput capturedOutput, final Router router) {
         synchronized (ACTIVE_CAPTURES) {
             if (ACTIVE_CAPTURES.isEmpty()) {
                 savedOut = System.out;
@@ -86,7 +86,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         }
     }
 
-    protected void disable(final CapturedOutput capturedOutput) {
+    void disable(final CapturedOutput capturedOutput) {
         synchronized (ACTIVE_CAPTURES) {
             ACTIVE_CAPTURES.remove(capturedOutput);
             if (ACTIVE_CAPTURES.isEmpty()) {

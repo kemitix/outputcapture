@@ -55,7 +55,7 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      *
      * @return an instance of CapturedOutput
      */
-    protected CapturedOutput capture(final ThrowingCallable callable) {
+    CapturedOutput capture(final ThrowingCallable callable) {
         final CapturedOutput capturedOutput =
                 new DefaultCapturedOutput(new ByteArrayOutputStream(), new ByteArrayOutputStream());
         invoke(capturedOutput, callable);

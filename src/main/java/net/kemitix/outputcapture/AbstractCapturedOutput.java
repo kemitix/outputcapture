@@ -40,7 +40,7 @@ abstract class AbstractCapturedOutput {
      *
      * @return a Stream of Strings
      */
-    protected Stream<String> asStream(final OutputStream outputStream) {
+    Stream<String> asStream(final OutputStream outputStream) {
         return Arrays.stream(outputStream.toString()
                                          .split(System.lineSeparator()));
     }
