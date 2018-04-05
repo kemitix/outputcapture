@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,6 +44,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     private final CountDownLatch completedLatch;
 
     private final AtomicReference<Exception> thrownException;
+    private final Function<ByteArrayOutputStream, ByteArrayOutputStream> streamCopy = new StreamCopyFunction();
 
     /**
      * Constructor.
@@ -92,10 +94,8 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
         };
     }
 
-    private ByteArrayOutputStream copyOutputStream(ByteArrayOutputStream outputStream) {
-        final ByteArrayOutputStream result = new ByteArrayOutputStream(outputStream.size());
-        result.write(outputStream.toByteArray(), 0, outputStream.size());
-        return result;
+    private ByteArrayOutputStream copyOutputStream(final ByteArrayOutputStream outputStream) {
+        return streamCopy.apply(outputStream);
     }
 
     @Override
