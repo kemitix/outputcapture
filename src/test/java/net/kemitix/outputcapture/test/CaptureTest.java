@@ -463,7 +463,6 @@ public class CaptureTest {
 
 
     @Test(timeout = 200)
-    @Ignore
     public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
         //when
         assertThat(CaptureOutput.activeCount()).isZero();
@@ -483,8 +482,6 @@ public class CaptureTest {
         });
         //then
         outerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
-        assertThat(outerCaptured.thrownException()).isEmpty();
-        awaitLatch(outerCaptured.getCompletedLatch());
         assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(outerCaptured.getStdOut()).as("outer").containsExactly(line1, line2);
     }

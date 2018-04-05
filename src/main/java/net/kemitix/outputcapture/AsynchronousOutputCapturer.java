@@ -21,6 +21,8 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.val;
+
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -58,33 +60,30 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
      * @return an instance of OngoingCapturedOutput
      */
     OngoingCapturedOutput capture(
-        final ThrowingCallable callable,
-        final Function<Integer, CountDownLatch> latchFactory
+            final ThrowingCallable callable,
+            final Function<Integer, CountDownLatch> latchFactory
     ) {
-        final CountDownLatch completedLatch = latchFactory.apply(1);
-        final OngoingCapturedOutput captureOutput =
-                new DefaultOngoingCapturedOutput(
-                        new ByteArrayOutputStream(),
-                        new ByteArrayOutputStream(),
-                        completedLatch,
-                        getThrownException()
-                );
-        invoke(captureOutput, callable, completedLatch);
-        return captureOutput;
+        val completedLatch = latchFactory.apply(1);
+        val capturedOut = new ByteArrayOutputStream();
+        val capturedErr = new ByteArrayOutputStream();
+        val thrownExceptionReference = getThrownExceptionReference();
+        val ongoingCapturedOutput =
+                new DefaultOngoingCapturedOutput(capturedOut, capturedErr, completedLatch, thrownExceptionReference);
+        invoke(ongoingCapturedOutput, callable, completedLatch, routerFactory.apply(RouterParameters.createDefault()));
+        return ongoingCapturedOutput;
     }
 
     private void invoke(
-            final OngoingCapturedOutput captureOutput,
+            final OngoingCapturedOutput ongoingCapturedOutput,
             final ThrowingCallable callable,
-            final CountDownLatch completedLatch
+            final CountDownLatch completedLatch,
+            final Router router
     ) {
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
-            enable(captureOutput, routerFactory.apply(RouterParameters.createDefault()));
-            invokeCallable(callable);
-            disable(captureOutput);
-            completedLatch.countDown();
-            executor.shutdown();
-        });
+        val executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> enable(ongoingCapturedOutput, router));
+        executor.submit(() -> invokeCallable(callable));
+        executor.submit(() -> disable(ongoingCapturedOutput));
+        executor.submit(completedLatch::countDown);
+        executor.submit(executor::shutdown);
     }
 }
