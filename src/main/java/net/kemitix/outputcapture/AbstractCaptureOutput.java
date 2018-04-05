@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 abstract class AbstractCaptureOutput implements CaptureOutput {
 
     @Getter(AccessLevel.PROTECTED)
-    private AtomicReference<Exception> thrownException = new AtomicReference<>();
+    private AtomicReference<Exception> thrownExceptionReference = new AtomicReference<>();
 
     private final static Deque<CapturedOutput> ACTIVE_CAPTURES = new ArrayDeque<>();
     private static PrintStream savedOut;
@@ -55,7 +55,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         try {
             callable.call();
         } catch (Exception e) {
-            thrownException.set(e);
+            thrownExceptionReference.set(e);
         }
     }
 

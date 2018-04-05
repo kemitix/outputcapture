@@ -71,7 +71,7 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
         executor.submit(executor::shutdown);
         awaitLatch(finishedLatch);
         disable(capturedOutput);
-        Optional.ofNullable(getThrownException().get())
+        Optional.ofNullable(getThrownExceptionReference().get())
                 .ifPresent(e -> {
                     throw new OutputCaptureException(e);
                 });
