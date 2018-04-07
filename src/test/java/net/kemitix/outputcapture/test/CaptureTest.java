@@ -4,7 +4,8 @@ import lombok.SneakyThrows;
 import lombok.val;
 import net.kemitix.outputcapture.*;
 import org.assertj.core.api.ThrowableAssert;
-import org.junit.Ignore;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.PrintStream;
@@ -14,11 +15,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
 
 public class CaptureTest {
 
@@ -26,11 +27,25 @@ public class CaptureTest {
     private static final long A_PERIOD = 200L;
 
     private static final long A_SHORT_PERIOD = 100L;
+    private static final String STARTING_OUT = "starting out";
+    private static final String STARTING_ERR = "starting err";
+    private static final String FINISHED_OUT = "finished out";
+    private static final String FINISHED_ERR = "finished err";
 
     private String line1 = "1:" + UUID.randomUUID().toString();
 
     private String line2 = "2:" + UUID.randomUUID().toString();
     //</editor-fold>
+
+    @Before
+    public void setUp() {
+        assertThat(CaptureOutput.activeCount()).as("No existing captures").isZero();
+    }
+
+    @After
+    public void tearDown() {
+        assertThat(CaptureOutput.activeCount()).as("All captures removed").isZero();
+    }
 
     @Test
     public void canCaptureSystemOut() {
@@ -40,7 +55,6 @@ public class CaptureTest {
             System.out.println(line2);
         });
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(captured.getStdOut()).containsExactly(line1, line2);
     }
 
@@ -52,7 +66,6 @@ public class CaptureTest {
             System.err.println(line2);
         });
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(captured.getStdErr()).containsExactly(line1, line2);
     }
 
@@ -68,7 +81,6 @@ public class CaptureTest {
                     .doesNotContain(line2);
         });
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(outerCaptured.getStdOut()).containsExactly(line2)
                 .doesNotContain(line1);
     }
@@ -85,7 +97,6 @@ public class CaptureTest {
                     .doesNotContain(line2);
         });
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(outerCaptured.getStdErr()).containsExactly(line2)
                 .doesNotContain(line1);
     }
@@ -104,7 +115,6 @@ public class CaptureTest {
         });
         //then
         awaitLatch(capturedEcho.getCompletedLatch());
-        assertThat(CaptureOutput.activeCount()).isZero();
         final CapturedOutput capturedOutput = inner.get();
         assertThat(capturedOutput.getStdOut()).as("inner std out written")
                 .containsExactly(line1, "a");
@@ -127,7 +137,6 @@ public class CaptureTest {
             });
         };
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThatThrownBy(action).isInstanceOf(OutputCaptureException.class)
                 .hasCause(cause);
     }
@@ -149,19 +158,15 @@ public class CaptureTest {
         ignoreMe.submit(ignoreMe::shutdown);
         catchMe.submit(() -> {
             reference.set(CaptureOutput.of(() -> {
-                System.out.println("started");
-                releaseLatch(releaseLatch);
-                awaitLatch(doneLatch);
-                System.out.println("finished");
+                asyncWithInterrupt(releaseLatch, doneLatch);
             }));
         });
         catchMe.submit(catchMe::shutdown);
         ignoreMe.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         catchMe.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(reference.get()
-                .getStdOut()).containsExactly("started", "finished");
+                .getStdOut()).containsExactly(STARTING_OUT, FINISHED_OUT);
     }
 
     private void awaitLatch(final CountDownLatch latch) {
@@ -184,7 +189,6 @@ public class CaptureTest {
             }));
         });
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(capturedOutput.get()
                 .getStdOut()).containsExactly("message", "x");
     }
@@ -209,7 +213,6 @@ public class CaptureTest {
         subject.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
         monitor.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(reference.get()
                 .getStdOut()).containsExactly("");
     }
@@ -239,7 +242,6 @@ public class CaptureTest {
         releaseLatch(latch3);
         executor.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(System.out).isSameAs(originalOut);
         assertThat(System.err).isSameAs(originalErr);
     }
@@ -274,29 +276,32 @@ public class CaptureTest {
         final PrintStream originalErr = System.err;
         final CountDownLatch latch1 = createLatch();
         final CountDownLatch latch2 = createLatch();
-        final CountDownLatch latch3 = createLatch();
         //when
         final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.ofThread(() -> {
-            System.out.println("starting out");
-            System.err.println("starting err");
-            releaseLatch(latch1);
-            awaitLatch(latch2);
-            System.out.println("finished out");
-            System.err.println("finished err");
-            releaseLatch(latch3);
+            asyncWithInterrupt(latch1, latch2);
         });
-        //then
         awaitLatch(latch1);
-        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting out");
-        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err");
+        final Stream<String> stdOut = ongoingCapturedOutput.getStdOut();
+        final Stream<String> stdErr = ongoingCapturedOutput.getStdErr();
         releaseLatch(latch2);
-        awaitLatch(latch3);
-        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("starting out", "finished out");
-        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("starting err", "finished err");
-        ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
-        assertThat(CaptureOutput.activeCount()).isZero();
+        awaitLatch(ongoingCapturedOutput.getCompletedLatch());
+        //then
+        assertThat(stdOut).containsExactly(STARTING_OUT);
+        assertThat(stdErr).containsExactly(STARTING_ERR);
+        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(STARTING_OUT, FINISHED_OUT);
+        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly(STARTING_ERR, FINISHED_ERR);
+        awaitLatch(ongoingCapturedOutput.getCompletedLatch());
         assertThat(System.out).as("restore original out").isSameAs(originalOut);
         assertThat(System.err).as("restore original err").isSameAs(originalErr);
+    }
+
+    private void asyncWithInterrupt(CountDownLatch latch1, CountDownLatch latch2) {
+        System.out.println(STARTING_OUT);
+        System.err.println(STARTING_ERR);
+        releaseLatch(latch1);
+        awaitLatch(latch2);
+        System.out.println(FINISHED_OUT);
+        System.err.println(FINISHED_ERR);
     }
 
     @Test
@@ -312,7 +317,6 @@ public class CaptureTest {
                     .doesNotContain(line2);
         });
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(outerCaptured.getStdOut())
                 .containsExactly(line2)
                 .doesNotContain(line1);
@@ -331,7 +335,6 @@ public class CaptureTest {
                     .doesNotContain(line2);
         });
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(outerCaptured.getStdErr())
                 .containsExactly(line2)
                 .doesNotContain(line1);
@@ -343,25 +346,20 @@ public class CaptureTest {
         final CountDownLatch readyToFlush = createLatch();
         final CountDownLatch flushCompleted = createLatch();
         //when
-        final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.ofThread(() -> {
-            System.out.println("starting out");
-            System.err.println("starting err");
-            releaseLatch(readyToFlush);
-            awaitLatch(flushCompleted);
-            System.out.println("finished out");
-            System.err.println("finished err");
+        final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.copyOfThread(() -> {
+            asyncWithInterrupt(readyToFlush, flushCompleted);
         });
         awaitLatch(readyToFlush);
-        assertThat(ongoingCapturedOutput.getStdOut()).as("starting out").containsExactly("starting out");
-        assertThat(ongoingCapturedOutput.getStdErr()).as("starting err").containsExactly("starting err");
+        final Stream<String> stdOut = ongoingCapturedOutput.getStdOut();
+        final Stream<String> stdErr = ongoingCapturedOutput.getStdErr();
         ongoingCapturedOutput.flush();
         releaseLatch(flushCompleted);
         awaitLatch(ongoingCapturedOutput.getCompletedLatch());
         //then
-        assertThat(CaptureOutput.activeCount()).isZero();
-        assertThat(ongoingCapturedOutput.isShutdown()).isTrue();
-        assertThat(ongoingCapturedOutput.getStdOut()).as("finished out").containsExactly("finished out");
-        assertThat(ongoingCapturedOutput.getStdErr()).as("finished err").containsExactly("finished err");
+        assertThat(stdOut).containsExactly(STARTING_OUT);
+        assertThat(stdErr).containsExactly(STARTING_ERR);
+        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(FINISHED_OUT);
+        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly(FINISHED_ERR);
     }
 
     @Test(timeout = 200)
@@ -371,23 +369,20 @@ public class CaptureTest {
         val flushCompleted = createLatch();
         //when
         val ongoingCapturedOutput = CaptureOutput.ofThread(() -> {
-            System.out.println("starting out");
-            System.err.println("starting err");
-            releaseLatch(readyToFlush);
-            awaitLatch(flushCompleted);
-            System.out.println("finished out");
-            System.err.println("finished err");
+            asyncWithInterrupt(readyToFlush, flushCompleted);
         });
         awaitLatch(readyToFlush);
         val initialCapturedOutput = ongoingCapturedOutput.getCapturedOutputAndFlush();
         releaseLatch(flushCompleted);
         //then
-        assertThat(initialCapturedOutput.getStdOut()).containsExactly("starting out");
-        assertThat(initialCapturedOutput.getStdErr()).containsExactly("starting err");
-        awaitLatch(ongoingCapturedOutput.getCompletedLatch());
-        assertThat(CaptureOutput.activeCount()).isZero();
-        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly("finished out");
-        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly("finished err");
+        try {
+            assertThat(initialCapturedOutput.getStdOut()).containsExactly(STARTING_OUT);
+            assertThat(initialCapturedOutput.getStdErr()).containsExactly(STARTING_ERR);
+        } finally {
+            awaitLatch(ongoingCapturedOutput.getCompletedLatch());
+        }
+        assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(FINISHED_OUT);
+        assertThat(ongoingCapturedOutput.getStdErr()).containsExactly(FINISHED_ERR);
     }
 
     @Test
@@ -405,7 +400,6 @@ public class CaptureTest {
                 .isFalse();
         releaseLatch(latch);
         ongoingCapturedOutput.await(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(ongoingCapturedOutput.isRunning()).as("isRunning = false")
                 .isFalse();
         assertThat(ongoingCapturedOutput.isShutdown()).as("isShutdown = true")
@@ -422,7 +416,6 @@ public class CaptureTest {
         });
         //then
         ongoingCapturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(ongoingCapturedOutput.thrownException()).contains(outputCaptureException);
     }
 
@@ -433,9 +426,8 @@ public class CaptureTest {
             System.out.println(line1);
         });
         //then
-        capturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
+        awaitLatch(capturedOutput.getCompletedLatch());
         assertThat(capturedOutput.isShutdown()).isTrue();
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(capturedOutput.getStdOut()).containsExactly(line1);
     }
 
@@ -443,29 +435,29 @@ public class CaptureTest {
     @Test
     public void canCaptureCopyWhileDoing() {
         //given
-        final CountDownLatch latch = createLatch();
+        final CountDownLatch ready = createLatch();
+        final CountDownLatch done = createLatch();
         val capturedOutput = CaptureOutput.copyWhileDoing(() -> {
-            awaitLatch(latch);
+            releaseLatch(ready);
+            awaitLatch(done);
         });
-        assertThat(latch.getCount()).isNotZero();
+        awaitLatch(ready);
+        assertThat(done.getCount()).isNotZero();
         assertThat(CaptureOutput.activeCount()).isEqualTo(1);
         //when
         System.out.println(line1);
-        releaseLatch(latch);
+        releaseLatch(done);
         //then
-        assertThat(latch.getCount()).isZero();
-        capturedOutput.await(A_PERIOD, TimeUnit.MILLISECONDS);
+        assertThat(done.getCount()).isZero();
+        awaitLatch(capturedOutput.getCompletedLatch());
         assertThat(capturedOutput.isShutdown()).isTrue();
-        assertThat(CaptureOutput.activeCount()).isZero();
         assertThat(capturedOutput.getStdOut()).containsExactly(line1);
     }
-
 
 
     @Test(timeout = 200)
     public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
         //when
-        assertThat(CaptureOutput.activeCount()).isZero();
         val outerCaptured = CaptureOutput.copyWhileDoing(() -> {
             assertThat(CaptureOutput.activeCount()).isEqualTo(1);
             val innerCaptured = CaptureOutput.copyOfThread(() -> {
@@ -481,8 +473,7 @@ public class CaptureTest {
                     .doesNotContain(line2);
         });
         //then
-        outerCaptured.await(A_PERIOD, TimeUnit.MILLISECONDS);
-        assertThat(CaptureOutput.activeCount()).isZero();
+        awaitLatch(outerCaptured.getCompletedLatch());
         assertThat(outerCaptured.getStdOut()).as("outer").containsExactly(line1, line2);
     }
 
