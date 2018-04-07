@@ -197,24 +197,24 @@ public class CaptureTest {
     public void ignoresOutputFromOtherThreads() throws InterruptedException {
         //given
         final ExecutorService monitor = Executors.newSingleThreadExecutor();
-        final ExecutorService subject = Executors.newSingleThreadExecutor();
         final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
         //when
         monitor.submit(() -> {
             reference.set(CaptureOutput.of(() -> {
+                final ExecutorService subject = Executors.newSingleThreadExecutor();
                 subject.submit(() -> {
                     System.out.println("message");
                     System.out.write('x');
+                    subject.shutdown();
                 });
-                subject.submit(subject::shutdown);
+                subject.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
             }));
+            monitor.shutdown();
         });
-        monitor.submit(monitor::shutdown);
-        subject.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
         monitor.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
         //then
-        assertThat(reference.get()
-                .getStdOut()).containsExactly("");
+        final CapturedOutput capturedOutput = reference.get();
+        assertThat(capturedOutput.getStdOut()).containsExactly("");
     }
 
     @Test(timeout = A_SHORT_PERIOD)
