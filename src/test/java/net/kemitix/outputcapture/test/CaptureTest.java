@@ -254,14 +254,6 @@ public class CaptureTest {
         return new CountDownLatch(1);
     }
 
-    private void sleep(final long timeout) {
-        try {
-            Thread.sleep(timeout);
-        } catch (InterruptedException e) {
-            fail("sleep() interrupted");
-        }
-    }
-
     @SneakyThrows
     private void runOnAnotherThreadAndWait(final Runnable runnable) {
         final Thread thread = new Thread(runnable);
