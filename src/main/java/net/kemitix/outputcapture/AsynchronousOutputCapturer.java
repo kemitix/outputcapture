@@ -25,7 +25,6 @@ import lombok.val;
 
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 
@@ -69,18 +68,17 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
         val thrownExceptionReference = getThrownExceptionReference();
         val ongoingCapturedOutput =
                 new DefaultOngoingCapturedOutput(capturedOut, capturedErr, completedLatch, thrownExceptionReference);
-        invoke(ongoingCapturedOutput, callable, completedLatch, routerFactory.apply(RouterParameters.createDefault()));
+        invoke(ongoingCapturedOutput, callable, completedLatch);
         return ongoingCapturedOutput;
     }
 
     private void invoke(
             final OngoingCapturedOutput ongoingCapturedOutput,
             final ThrowingCallable callable,
-            final CountDownLatch completedLatch,
-            final Router router
+            final CountDownLatch completedLatch
     ) {
         val executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> enable(ongoingCapturedOutput, router));
+        executor.submit(() -> enable(ongoingCapturedOutput, routerFactory.apply(RouterParameters.createDefault())));
         executor.submit(() -> invokeCallable(callable));
         executor.submit(() -> disable(ongoingCapturedOutput));
         executor.submit(completedLatch::countDown);
