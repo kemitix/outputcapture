@@ -6,7 +6,9 @@ import net.kemitix.outputcapture.*;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import java.io.PrintStream;
 import java.util.UUID;
@@ -36,6 +38,9 @@ public class CaptureTest {
 
     private String line2 = "2:" + UUID.randomUUID().toString();
     //</editor-fold>
+
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(A_SHORT_PERIOD);
 
     @Before
     public void setUp() {
@@ -217,7 +222,7 @@ public class CaptureTest {
         assertThat(capturedOutput.getStdOut()).containsExactly("");
     }
 
-    @Test(timeout = A_SHORT_PERIOD)
+    @Test
     public void canRestoreSystemOutAndErrWhenMultipleOutputCapturesOverlap() throws InterruptedException {
         //given
         final PrintStream originalOut = System.out;
@@ -261,7 +266,7 @@ public class CaptureTest {
         thread.join();
     }
 
-    @Test(timeout = 200)
+    @Test
     public void canCaptureOutputAsynchronously() {
         //given
         final PrintStream originalOut = System.out;
@@ -332,7 +337,7 @@ public class CaptureTest {
                 .doesNotContain(line1);
     }
 
-    @Test(timeout = 200)
+    @Test
     public void canFlushCapturedOutputWhenCapturingAsynchronously() {
         //given
         final CountDownLatch readyToFlush = createLatch();
@@ -354,7 +359,7 @@ public class CaptureTest {
         assertThat(ongoingCapturedOutput.getStdErr()).containsExactly(FINISHED_ERR);
     }
 
-    @Test(timeout = 200)
+    @Test
     public void canCapturedOutputAndFlushWhenCapturingAsynchronously() {
         //given
         val readyToFlush = createLatch();
@@ -447,7 +452,7 @@ public class CaptureTest {
     }
 
 
-    @Test(timeout = 200)
+    @Test
     public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
         //when
         val outerCaptured = CaptureOutput.copyWhileDoing(() -> {
