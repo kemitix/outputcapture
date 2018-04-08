@@ -2,12 +2,16 @@ package net.kemitix.outputcapture;
 
 interface Captors {
 
-    static SynchronousOutputCapturer syncRedirect() {
+    static SynchronousOutputCapturer syncRedirectThread() {
         return new SynchronousOutputCapturer(ThreadFilteredRedirectRouter::new);
     }
 
     static SynchronousOutputCapturer syncCopy() {
         return new SynchronousOutputCapturer(ThreadFilteredCopyRouter::new);
+    }
+
+    static SynchronousOutputCapturer syncRedirectAll() {
+        return new SynchronousOutputCapturer(PromiscuousRedirectRouter::new);
     }
 
     static AsynchronousOutputCapturer asyncRedirectThread() {

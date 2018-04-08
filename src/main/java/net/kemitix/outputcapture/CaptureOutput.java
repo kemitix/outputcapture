@@ -31,7 +31,7 @@ package net.kemitix.outputcapture;
  *   <tbody>
  *     <tr><td>of</td><td>sync</td><td>thread</td><td>redirect</td></tr>
  *     <tr><td>copyOf</td><td>sync</td><td>thread</td><td>copy</td></tr>
- *     <tr><td>?</td><td>sync</td><td>all</td><td>redirect</td></tr>
+ *     <tr><td>ofAll</td><td>sync</td><td>all</td><td>redirect</td></tr>
  *     <tr><td>?</td><td>sync</td><td>all</td><td>copy</td></tr>
  *     <tr><td>ofThread</td><td>async</td><td>thread</td><td>redirect</td></tr>
  *     <tr><td>copyOfThread</td><td>async</td><td>thread</td><td>copy</td></tr>
@@ -52,7 +52,7 @@ public interface CaptureOutput {
      * @return the instance CapturedOutput
      */
     static CapturedOutput of(ThrowingCallable callable) {
-        return Captors.syncRedirect().capture(callable);
+        return Captors.syncRedirectThread().capture(callable);
     }
 
     /**
@@ -64,6 +64,10 @@ public interface CaptureOutput {
      */
     static CapturedOutput copyOf(ThrowingCallable callable) {
         return Captors.syncCopy().capture(callable);
+    }
+
+    static CapturedOutput ofAll(ThrowingCallable callable) {
+        return Captors.syncRedirectAll().capture(callable);
     }
 
     /**
