@@ -55,15 +55,11 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
      * <p>This implementation launches the callable in a background thread then returns immediately.</p>
      *
      * @param callable     The Runnable to capture the output of
-     * @param latchFactory The Factory for creating CountDownLatch objects
      *
      * @return an instance of OngoingCapturedOutput
      */
-    OngoingCapturedOutput capture(
-            final ThrowingCallable callable,
-            final Function<Integer, CountDownLatch> latchFactory
-    ) {
-        val completedLatch = latchFactory.apply(1);
+    OngoingCapturedOutput capture(final ThrowingCallable callable) {
+        val completedLatch = new CountDownLatch(1);
         val capturedOut = new ByteArrayOutputStream();
         val capturedErr = new ByteArrayOutputStream();
         val thrownExceptionReference = getThrownExceptionReference();

@@ -21,8 +21,6 @@
 
 package net.kemitix.outputcapture;
 
-import java.util.concurrent.CountDownLatch;
-
 /**
  * Captures the output written to standard out and standard error.
  *
@@ -79,7 +77,7 @@ public interface CaptureOutput {
      */
     static OngoingCapturedOutput ofThread(ThrowingCallable callable) {
         return new AsynchronousOutputCapturer(ThreadFilteredRedirectRouter::new)
-                .capture(callable, CountDownLatch::new);
+                .capture(callable);
     }
 
     /**
@@ -93,7 +91,7 @@ public interface CaptureOutput {
      */
     static OngoingCapturedOutput copyOfThread(ThrowingCallable callable) {
         return new AsynchronousOutputCapturer(ThreadFilteredCopyRouter::new)
-                .capture(callable, CountDownLatch::new);
+                .capture(callable);
     }
 
     /**
@@ -107,7 +105,7 @@ public interface CaptureOutput {
      */
     static OngoingCapturedOutput whileDoing(ThrowingCallable callable) {
         return new AsynchronousOutputCapturer(PromiscuousRedirectRouter::new)
-                .capture(callable, CountDownLatch::new);
+                .capture(callable);
     }
 
     /**
@@ -124,7 +122,7 @@ public interface CaptureOutput {
      */
     static OngoingCapturedOutput copyWhileDoing(ThrowingCallable callable) {
         return new AsynchronousOutputCapturer(PromiscuousCopyRouter::new)
-                .capture(callable, CountDownLatch::new);
+                .capture(callable);
     }
 
     /**
