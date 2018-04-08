@@ -26,6 +26,7 @@ import lombok.val;
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -66,22 +67,21 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
         val capturedOut = new ByteArrayOutputStream();
         val capturedErr = new ByteArrayOutputStream();
         val thrownExceptionReference = getThrownExceptionReference();
-        val ongoingCapturedOutput =
-                new DefaultOngoingCapturedOutput(capturedOut, capturedErr, completedLatch, thrownExceptionReference);
-        invoke(ongoingCapturedOutput, callable, completedLatch);
-        return ongoingCapturedOutput;
-    }
-
-    private void invoke(
-            final OngoingCapturedOutput ongoingCapturedOutput,
-            final ThrowingCallable callable,
-            final CountDownLatch completedLatch
-    ) {
+        final AtomicReference<OngoingCapturedOutput> capturedOutput = new AtomicReference<>();
         val executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> enable(ongoingCapturedOutput, routerFactory.apply(RouterParameters.createDefault())));
+        final CountDownLatch started = new CountDownLatch(1);
+        executor.submit(() -> capturedOutput.set(
+                new DefaultOngoingCapturedOutput(
+                        capturedOut, capturedErr, completedLatch, thrownExceptionReference,
+                        routerFactory.apply(RouterParameters.createDefault()))));
+        executor.submit(started::countDown);
+        executor.submit(() -> enable(capturedOutput.get()));
         executor.submit(() -> invokeCallable(callable));
-        executor.submit(() -> disable(ongoingCapturedOutput));
+        executor.submit(() -> disable(capturedOutput.get()));
         executor.submit(completedLatch::countDown);
         executor.submit(executor::shutdown);
+        awaitLatch(started);
+        return capturedOutput.get();
     }
+
 }

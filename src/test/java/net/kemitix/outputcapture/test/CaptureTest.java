@@ -2,6 +2,7 @@ package net.kemitix.outputcapture.test;
 
 import lombok.SneakyThrows;
 import lombok.val;
+import net.kemitix.conditional.Action;
 import net.kemitix.outputcapture.*;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.After;
@@ -12,10 +13,7 @@ import org.junit.rules.Timeout;
 
 import java.io.PrintStream;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -233,17 +231,11 @@ public class CaptureTest {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
             awaitLatch(latch1);
-            CaptureOutput.of(() -> {
-                releaseLatch(latch2);
-                awaitLatch(latch3);
-            });
+            CaptureOutput.of(waitAndContinue(latch2, latch3));
         });
         executor.submit(executor::shutdown);
         //when
-        CaptureOutput.of(() -> {
-            releaseLatch(latch1);
-            awaitLatch(latch2);
-        });
+        CaptureOutput.of(waitAndContinue(latch1, latch2));
         releaseLatch(latch3);
         executor.awaitTermination(A_SHORT_PERIOD, TimeUnit.MILLISECONDS);
         //then
@@ -428,29 +420,62 @@ public class CaptureTest {
         assertThat(capturedOutput.getStdOut()).containsExactly(line1);
     }
 
-
     @Test
     public void canCaptureCopyWhileDoing() {
         //given
-        final CountDownLatch ready = createLatch();
-        final CountDownLatch done = createLatch();
-        val capturedOutput = CaptureOutput.copyWhileDoing(() -> {
-            releaseLatch(ready);
-            awaitLatch(done);
-        });
-        awaitLatch(ready);
-        assertThat(done.getCount()).isNotZero();
-        assertThat(CaptureOutput.activeCount()).isEqualTo(1);
+        val reference = new AtomicReference<CapturedOutput>();
+        val action = new ThrowingCallable() {
+            @Override
+            public void call() {
+                val ready = createLatch();
+                val done = createLatch();
+                val capturedOutput = CaptureOutput.copyWhileDoing(waitAndContinue(ready, done));
+                doBetween(ready, done, () -> System.out.println(line1));
+                awaitLatch(capturedOutput.getCompletedLatch());
+                reference.set(capturedOutput);
+            }
+        };
         //when
-        System.out.println(line1);
-        releaseLatch(done);
+        final CapturedOutput outer = CaptureOutput.of(action);
         //then
-        assertThat(done.getCount()).isZero();
-        awaitLatch(capturedOutput.getCompletedLatch());
-        assertThat(capturedOutput.isShutdown()).isTrue();
-        assertThat(capturedOutput.getStdOut()).containsExactly(line1);
+        assertThat(reference.get().getStdOut()).as("capture output").containsExactly(line1);
+        assertThat(outer.getStdOut()).as("copy to original").containsExactly(line1);
     }
 
+    @Test
+    public void canCaptureWhileDoing() {
+       //given
+        val reference = new AtomicReference<CapturedOutput>();
+        val action = new ThrowingCallable() {
+            @Override
+            public void call() {
+                val ready = createLatch();
+                val done = createLatch();
+                val capturedOutput = CaptureOutput.whileDoing(waitAndContinue(ready, done));
+                doBetween(ready, done, () -> System.out.println(line1));
+                awaitLatch(capturedOutput.getCompletedLatch());
+                reference.set(capturedOutput);
+            }
+        };
+        //when
+        final CapturedOutput outer = CaptureOutput.of(action);
+        //then
+        assertThat(reference.get().getStdOut()).containsExactly(line1);
+        assertThat(outer.getStdOut()).isEmpty();
+    }
+
+    private ThrowingCallable waitAndContinue(final CountDownLatch ready, final CountDownLatch done) {
+        return () -> {
+            releaseLatch(ready);
+            awaitLatch(done);
+        };
+    }
+
+    private void doBetween(final CountDownLatch ready, final CountDownLatch done, final Action action) {
+        awaitLatch(ready);
+        action.perform();
+        releaseLatch(done);
+    }
 
     @Test
     public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
@@ -470,6 +495,7 @@ public class CaptureTest {
                     .doesNotContain(line2);
         });
         //then
+        assertThat(outerCaptured).isNotNull();
         awaitLatch(outerCaptured.getCompletedLatch());
         assertThat(outerCaptured.getStdOut()).as("outer").containsExactly(line1, line2);
     }

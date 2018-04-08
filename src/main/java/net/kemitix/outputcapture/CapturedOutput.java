@@ -48,4 +48,6 @@ public interface CapturedOutput {
     ByteArrayOutputStream out();
 
     ByteArrayOutputStream err();
+
+    Router getRouter();
 }

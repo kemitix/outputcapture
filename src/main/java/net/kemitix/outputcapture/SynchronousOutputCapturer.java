@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -56,25 +57,24 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      * @return an instance of CapturedOutput
      */
     CapturedOutput capture(final ThrowingCallable callable) {
-        final CapturedOutput capturedOutput =
-                new DefaultCapturedOutput(new ByteArrayOutputStream(), new ByteArrayOutputStream());
-        invoke(capturedOutput, callable);
-        return capturedOutput;
-    }
-
-    private void invoke(CapturedOutput capturedOutput, final ThrowingCallable callable) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         final CountDownLatch finishedLatch = new CountDownLatch(1);
-        executor.submit(() -> enable(capturedOutput, routerFactory.apply(RouterParameters.createDefault())));
+        final AtomicReference<CapturedOutput> capturedOutput = new AtomicReference<>();
+        executor.submit(() -> capturedOutput.set(
+                new DefaultCapturedOutput(
+                        new ByteArrayOutputStream(), new ByteArrayOutputStream(),
+                        routerFactory.apply(RouterParameters.createDefault()))));
+        executor.submit(() -> enable(capturedOutput.get()));
         executor.submit(() -> invokeCallable(callable));
         executor.submit(finishedLatch::countDown);
         executor.submit(executor::shutdown);
         awaitLatch(finishedLatch);
-        disable(capturedOutput);
+        disable(capturedOutput.get());
         Optional.ofNullable(getThrownExceptionReference().get())
                 .ifPresent(e -> {
                     throw new OutputCaptureException(e);
                 });
+        return capturedOutput.get();
     }
 
 }

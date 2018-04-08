@@ -74,13 +74,13 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         }
     }
 
-    void enable(final CapturedOutput capturedOutput, final Router router) {
+    void enable(final CapturedOutput capturedOutput) {
         synchronized (ACTIVE_CAPTURES) {
             if (ACTIVE_CAPTURES.isEmpty()) {
                 savedOut = System.out;
                 savedErr = System.err;
-                System.setOut(PrintStreamWrapper.filter(savedOut, captureSystemOutFilter(router)));
-                System.setErr(PrintStreamWrapper.filter(savedErr, captureSystemErrFilter(router)));
+                System.setOut(PrintStreamWrapper.filter(savedOut, captureSystemOutFilter()));
+                System.setErr(PrintStreamWrapper.filter(savedErr, captureSystemErrFilter()));
             }
             ACTIVE_CAPTURES.addFirst(capturedOutput);
         }
@@ -96,9 +96,10 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         }
     }
 
-    private static PrintStreamWrapper.ByteFilter captureSystemErrFilter(Router router) {
+    private static PrintStreamWrapper.ByteFilter captureSystemErrFilter() {
         return aByte -> {
             for (CapturedOutput co : ACTIVE_CAPTURES) {
+                final Router router = co.getRouter();
                 if (router.accepts(aByte)) {
                     co.err().write(aByte);
                     if (router.isBlocking()) {
@@ -110,9 +111,10 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         };
     }
 
-    private static PrintStreamWrapper.ByteFilter captureSystemOutFilter(Router router) {
+    private static PrintStreamWrapper.ByteFilter captureSystemOutFilter() {
         return aByte -> {
             for (CapturedOutput co : ACTIVE_CAPTURES) {
+                final Router router = co.getRouter();
                 if (router.accepts(aByte)) {
                     co.out().write(aByte);
                     if (router.isBlocking()) {

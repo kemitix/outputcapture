@@ -59,5 +59,29 @@ public class AbstractCapturedOutputTest {
     }
 
     private class MyCapturedOutput extends AbstractCapturedOutput {
+        @Override
+        public Stream<String> getStdOut() {
+            return null;
+        }
+
+        @Override
+        public Stream<String> getStdErr() {
+            return null;
+        }
+
+        @Override
+        public ByteArrayOutputStream out() {
+            return null;
+        }
+
+        @Override
+        public ByteArrayOutputStream err() {
+            return null;
+        }
+
+        @Override
+        public Router getRouter() {
+            return null;
+        }
     }
 }

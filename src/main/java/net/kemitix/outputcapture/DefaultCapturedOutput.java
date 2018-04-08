@@ -34,13 +34,16 @@ import java.util.stream.Stream;
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
 @RequiredArgsConstructor
-class DefaultCapturedOutput extends AbstractCapturedOutput implements CapturedOutput {
+class DefaultCapturedOutput extends AbstractCapturedOutput {
 
     @Getter(AccessLevel.PROTECTED)
     private final ByteArrayOutputStream capturedOut;
 
     @Getter(AccessLevel.PROTECTED)
     private final ByteArrayOutputStream capturedErr;
+
+    @Getter
+    private final Router  router;
 
     @Override
     public Stream<String> getStdOut() {

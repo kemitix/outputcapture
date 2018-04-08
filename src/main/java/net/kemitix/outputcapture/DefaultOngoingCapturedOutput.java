@@ -56,9 +56,10 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      */
     DefaultOngoingCapturedOutput(
             final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr,
-            final CountDownLatch completedLatch, final AtomicReference<Exception> thrownException
+            final CountDownLatch completedLatch, final AtomicReference<Exception> thrownException,
+            final Router router
     ) {
-        super(capturedOut, capturedErr);
+        super(capturedOut, capturedErr, router);
         this.completedLatch = completedLatch;
         this.thrownException = thrownException;
     }
@@ -70,7 +71,13 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
         final ByteArrayOutputStream err = copyOutputStream(err());
         final List<String> collectedErr = asStream(err).collect(Collectors.toList());
         flush();
+        final Router router = getRouter();
         return new CapturedOutput() {
+
+            @Override
+            public Router getRouter() {
+                return router;
+            }
 
             @Override
             public Stream<String> getStdOut() {
