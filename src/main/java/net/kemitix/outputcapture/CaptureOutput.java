@@ -25,17 +25,19 @@ package net.kemitix.outputcapture;
  * Captures the output written to standard out and standard error.
  *
  * <table>
- *     <thead><tr><th>method</th><th>filtering</th><th>a/sync</th><th>redirect/copy</th></tr></thead>
- *     <tbody>
- *         <tr><td>of</td><td>thread</td><td>sync</td><td>redirect</td></tr>
- *         <tr><td>copyOf</td><td>thread</td><td>sync</td><td>copy</td></tr>
- *         <tr><td>ofThread</td><td>thread</td><td>async</td><td>redirect</td></tr>
- *         <tr><td>copyOfThread</td><td>thread</td><td>async</td><td>copy</td></tr>
- *         <tr><td>?</td><td>all</td><td>sync</td><td>redirect</td></tr>
- *         <tr><td>?</td><td>all</td><td>sync</td><td>copy</td></tr>
- *         <tr><td>whileDoing</td><td>all</td><td>async</td><td>redirect</td></tr>
- *         <tr><td>copyWhileDoing</td><td>all</td><td>async</td><td>copy</td></tr>
- *     </tbody>
+ *   <thead>
+ *      <tr><th>method</th><th>a/sync</th><th>filtering</th><th>redirect/copy</th></tr>
+ *   </thead>
+ *   <tbody>
+ *     <tr><td>of</td><td>sync</td><td>thread</td><td>redirect</td></tr>
+ *     <tr><td>copyOf</td><td>sync</td><td>thread</td><td>copy</td></tr>
+ *     <tr><td>?</td><td>sync</td><td>all</td><td>redirect</td></tr>
+ *     <tr><td>?</td><td>sync</td><td>all</td><td>copy</td></tr>
+ *     <tr><td>ofThread</td><td>async</td><td>thread</td><td>redirect</td></tr>
+ *     <tr><td>copyOfThread</td><td>async</td><td>thread</td><td>copy</td></tr>
+ *     <tr><td>whileDoing</td><td>async</td><td>all</td><td>redirect</td></tr>
+ *     <tr><td>copyWhileDoing</td><td>async</td><td>all</td><td>copy</td></tr>
+ *   </tbody>
  * </table>
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
