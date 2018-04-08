@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
 
 @RunWith(HierarchicalContextRunner.class)
 public class CaptureTest {
