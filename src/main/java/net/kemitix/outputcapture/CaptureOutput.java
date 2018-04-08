@@ -50,8 +50,7 @@ public interface CaptureOutput {
      * @return the instance CapturedOutput
      */
     static CapturedOutput of(ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(ThreadFilteredRedirectRouter::new)
-                .capture(callable);
+        return Captors.syncRedirect().capture(callable);
     }
 
     /**
@@ -62,8 +61,7 @@ public interface CaptureOutput {
      * @return the instance CapturedOutput
      */
     static CapturedOutput copyOf(ThrowingCallable callable) {
-        return new SynchronousOutputCapturer(ThreadFilteredCopyRouter::new)
-                .capture(callable);
+        return Captors.syncCopy().capture(callable);
     }
 
     /**
@@ -76,8 +74,7 @@ public interface CaptureOutput {
      * @return an instance of OngoingCapturedOutput
      */
     static OngoingCapturedOutput ofThread(ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(ThreadFilteredRedirectRouter::new)
-                .capture(callable);
+        return Captors.asyncRedirectThread().capture(callable);
     }
 
     /**
@@ -90,8 +87,7 @@ public interface CaptureOutput {
      * @return an instance of OngoingCapturedOutput
      */
     static OngoingCapturedOutput copyOfThread(ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(ThreadFilteredCopyRouter::new)
-                .capture(callable);
+        return Captors.asyncCopyThread().capture(callable);
     }
 
     /**
@@ -104,8 +100,7 @@ public interface CaptureOutput {
      * @return an instance of CapturedOutput
      */
     static OngoingCapturedOutput whileDoing(ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(PromiscuousRedirectRouter::new)
-                .capture(callable);
+        return Captors.asyncRedirectAll().capture(callable);
     }
 
     /**
@@ -121,8 +116,7 @@ public interface CaptureOutput {
      * @return an instance of OngoingCapturedOutput
      */
     static OngoingCapturedOutput copyWhileDoing(ThrowingCallable callable) {
-        return new AsynchronousOutputCapturer(PromiscuousCopyRouter::new)
-                .capture(callable);
+        return Captors.asyncCopyAll().capture(callable);
     }
 
     /**
