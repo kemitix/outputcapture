@@ -1,5 +1,6 @@
 package net.kemitix.outputcapture.test;
 
+import de.bechte.junit.runners.context.HierarchicalContextRunner;
 import lombok.SneakyThrows;
 import lombok.val;
 import net.kemitix.conditional.Action;
@@ -10,6 +11,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
 
 import java.io.PrintStream;
 import java.util.UUID;
@@ -21,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
+@RunWith(HierarchicalContextRunner.class)
 public class CaptureTest {
 
     //<editor-fold desc="fields">
