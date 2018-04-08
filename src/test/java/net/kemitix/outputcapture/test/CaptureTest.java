@@ -51,154 +51,161 @@ public class CaptureTest {
         assertThat(CaptureOutput.activeCount()).as("All captures removed").isZero();
     }
 
-    public class SynchronousRedirection {
+    public class Synchronous {
 
-        public class CaptureSystem {
+        public class ThreadFiltered {
 
-            @Test
-            public void out() {
-                //when
-                final CapturedOutput captured = CaptureOutput.of(() -> {
-                    writeOutput(System.out, line1, line2);
-                });
-                //then
-                assertThat(captured.getStdOut()).containsExactly(line1, line2);
-            }
+            // of
+            public class Redirect {
 
-            @Test
-            public void err() {
-                //when
-                final CapturedOutput captured = CaptureOutput.of(() -> {
-                    writeOutput(System.err, line1, line2);
-                });
-                //then
-                assertThat(captured.getStdErr()).containsExactly(line1, line2);
-            }
+                public class CaptureSystem {
 
-        }
+                    @Test
+                    public void out() {
+                        //when
+                        final CapturedOutput captured = CaptureOutput.of(() -> {
+                            writeOutput(System.out, line1, line2);
+                        });
+                        //then
+                        assertThat(captured.getStdOut()).containsExactly(line1, line2);
+                    }
 
-        public class ReplaceSystem {
+                    @Test
+                    public void err() {
+                        //when
+                        final CapturedOutput captured = CaptureOutput.of(() -> {
+                            writeOutput(System.err, line1, line2);
+                        });
+                        //then
+                        assertThat(captured.getStdErr()).containsExactly(line1, line2);
+                    }
 
-            private final AtomicReference<PrintStream> original = new AtomicReference<>();
-            private final AtomicReference<PrintStream> replacement = new AtomicReference<>();
+                }
 
-            @Test
-            public void out() {
-                //given
-                original.set(System.out);
-                //when
-                CaptureOutput.of(() -> replacement.set(System.out));
-                //then
-                assertThat(replacement).isNotSameAs(original);
-            }
+                public class ReplaceSystem {
 
-            @Test
-            public void err() {
-                //given
-                original.set(System.err);
-                //when
-                CaptureOutput.of(() -> replacement.set(System.err));
-                //then
-                assertThat(replacement).isNotSameAs(original);
-            }
-        }
+                    private final AtomicReference<PrintStream> original = new AtomicReference<>();
+                    private final AtomicReference<PrintStream> replacement = new AtomicReference<>();
 
-        public class RestoreSystem {
+                    @Test
+                    public void out() {
+                        //given
+                        original.set(System.out);
+                        //when
+                        CaptureOutput.of(() -> replacement.set(System.out));
+                        //then
+                        assertThat(replacement).isNotSameAs(original);
+                    }
 
-            private final AtomicReference<PrintStream> original = new AtomicReference<>();
+                    @Test
+                    public void err() {
+                        //given
+                        original.set(System.err);
+                        //when
+                        CaptureOutput.of(() -> replacement.set(System.err));
+                        //then
+                        assertThat(replacement).isNotSameAs(original);
+                    }
+                }
 
-            @Test
-            public void out() {
-                //given
-                original.set(System.out);
-                //when
-                CaptureOutput.of(() -> {
-                });
-                //then
-                assertThat(System.out).isSameAs(original.get());
-            }
+                public class RestoreSystem {
 
-            @Test
-            public void err() {
-                //given
-                original.set(System.err);
-                //when
-                CaptureOutput.of(() -> {
-                });
-                //then
-                assertThat(System.err).isSameAs(original.get());
-            }
-        }
+                    private final AtomicReference<PrintStream> original = new AtomicReference<>();
 
-        public class Exception {
+                    @Test
+                    public void out() {
+                        //given
+                        original.set(System.out);
+                        //when
+                        CaptureOutput.of(() -> {
+                        });
+                        //then
+                        assertThat(System.out).isSameAs(original.get());
+                    }
 
-            @Test
-            public void ThrownWrappedInOutputCaptureException() {
-                //given
-                final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
-                //then
-                assertThatThrownBy(() -> CaptureOutput.of(() -> {
-                    throw cause;
-                }))
-                        .isInstanceOf(OutputCaptureException.class)
-                        .hasCause(cause);
-            }
-        }
+                    @Test
+                    public void err() {
+                        //given
+                        original.set(System.err);
+                        //when
+                        CaptureOutput.of(() -> {
+                        });
+                        //then
+                        assertThat(System.err).isSameAs(original.get());
+                    }
+                }
 
-        public class FilteredToTargetThread {
+                public class ExceptionThrown {
 
-            private final ExecutorService catchMe = Executors.newSingleThreadExecutor();
-            private final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
-            private final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
-            private final CountDownLatch ready = createLatch();
-            private final CountDownLatch done = createLatch();
-            private final CountDownLatch finished = createLatch();
+                    private final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
 
-            @Test
-            public void out() {
-                //when
-                catchMe.submit(() -> captureThis(ready, done, reference, finished, catchMe));
-                ignoreMe.submit(() -> ignoreThis(ready, done, ignoreMe));
-                //then
-                awaitLatch(finished);
-                final CapturedOutput capturedOutput = reference.get();
-                assertThat(capturedOutput.getStdOut()).containsExactly(STARTING_OUT, FINISHED_OUT);
-            }
+                    @Test
+                    public void wrappedInOutputCaptureException() {
+                        //then
+                        assertThatThrownBy(() -> CaptureOutput.of(() -> {
+                            throw cause;
+                        }))
+                                .isInstanceOf(OutputCaptureException.class)
+                                .hasCause(cause);
+                    }
+                }
 
-            @Test
-            public void err() {
-                //when
-                catchMe.submit(() -> captureThis(ready, done, reference, finished, catchMe));
-                ignoreMe.submit(() -> ignoreThis(ready, done, ignoreMe));
-                //then
-                awaitLatch(finished);
-                final CapturedOutput capturedOutput = reference.get();
-                assertThat(capturedOutput.getStdErr()).containsExactly(STARTING_ERR, FINISHED_ERR);
-            }
+                public class FiltersToTargetThread {
 
-            private void captureThis(
-                    final CountDownLatch ready,
-                    final CountDownLatch done,
-                    final AtomicReference<CapturedOutput> reference,
-                    final CountDownLatch finished,
-                    final ExecutorService catchMe
-            ) {
-                final CapturedOutput capturedOutput =
-                        CaptureOutput.of(() -> asyncWithInterrupt(ready, done));
-                reference.set(capturedOutput);
-                releaseLatch(finished);
-                catchMe.shutdown();
-            }
+                    private final ExecutorService catchMe = Executors.newSingleThreadExecutor();
+                    private final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
+                    private final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
+                    private final CountDownLatch ready = createLatch();
+                    private final CountDownLatch done = createLatch();
+                    private final CountDownLatch finished = createLatch();
 
-            private void ignoreThis(
-                    final CountDownLatch ready,
-                    final CountDownLatch done,
-                    final ExecutorService ignoreMe
-            ) {
-                awaitLatch(ready);
-                System.out.println("ignore me");
-                releaseLatch(done);
-                ignoreMe.shutdown();
+                    @Test
+                    public void out() {
+                        //when
+                        catchMe.submit(() -> captureThis(ready, done, reference, finished, catchMe));
+                        ignoreMe.submit(() -> ignoreThis(ready, done, ignoreMe));
+                        //then
+                        awaitLatch(finished);
+                        final CapturedOutput capturedOutput = reference.get();
+                        assertThat(capturedOutput.getStdOut()).containsExactly(STARTING_OUT, FINISHED_OUT);
+                    }
+
+                    @Test
+                    public void err() {
+                        //when
+                        catchMe.submit(() -> captureThis(ready, done, reference, finished, catchMe));
+                        ignoreMe.submit(() -> ignoreThis(ready, done, ignoreMe));
+                        //then
+                        awaitLatch(finished);
+                        final CapturedOutput capturedOutput = reference.get();
+                        assertThat(capturedOutput.getStdErr()).containsExactly(STARTING_ERR, FINISHED_ERR);
+                    }
+
+                    private void captureThis(
+                            final CountDownLatch ready,
+                            final CountDownLatch done,
+                            final AtomicReference<CapturedOutput> reference,
+                            final CountDownLatch finished,
+                            final ExecutorService catchMe
+                    ) {
+                        final CapturedOutput capturedOutput =
+                                CaptureOutput.of(() -> asyncWithInterrupt(ready, done));
+                        reference.set(capturedOutput);
+                        releaseLatch(finished);
+                        catchMe.shutdown();
+                    }
+
+                    private void ignoreThis(
+                            final CountDownLatch ready,
+                            final CountDownLatch done,
+                            final ExecutorService ignoreMe
+                    ) {
+                        awaitLatch(ready);
+                        System.out.println("ignore me");
+                        releaseLatch(done);
+                        ignoreMe.shutdown();
+                    }
+                }
             }
         }
     }
