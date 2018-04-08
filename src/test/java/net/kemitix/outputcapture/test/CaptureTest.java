@@ -219,7 +219,7 @@ public class CaptureTest {
         monitor.awaitTermination(A_PERIOD, TimeUnit.MILLISECONDS);
         //then
         final CapturedOutput capturedOutput = reference.get();
-        assertThat(capturedOutput.getStdOut()).containsExactly("");
+        assertThat(capturedOutput.getStdOut()).isEmpty();
     }
 
     @Test
