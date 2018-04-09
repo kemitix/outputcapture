@@ -76,7 +76,11 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
         executor.submit(() -> disable(capturedOutput.get()));
         executor.submit(completedLatch::countDown);
         executor.submit(executor::shutdown);
-        awaitLatch(started);
+        try {
+            started.await();
+        } catch (InterruptedException e) {
+            throw new OutputCaptureException("Error awaiting latch", e);
+        }
         return capturedOutput.get();
     }
 

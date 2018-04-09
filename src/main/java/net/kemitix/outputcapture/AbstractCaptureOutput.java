@@ -59,21 +59,6 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         }
     }
 
-    /**
-     * Wait for the CountDownLatch to count down to 0.
-     *
-     * <p>Any {@link InterruptedException} that is thrown will be wrapped in an {@link OutputCaptureException}.</p>
-     *
-     * @param countDownLatch The latch to wait on
-     */
-    void awaitLatch(final CountDownLatch countDownLatch) {
-        try {
-            countDownLatch.await();
-        } catch (InterruptedException e) {
-            throw new OutputCaptureException("Error awaiting latch", e);
-        }
-    }
-
     void enable(final CapturedOutput capturedOutput) {
         synchronized (ACTIVE_CAPTURES) {
             if (ACTIVE_CAPTURES.isEmpty()) {

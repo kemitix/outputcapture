@@ -58,7 +58,7 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      */
     CapturedOutput capture(final ThrowingCallable callable) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
-        final CountDownLatch finishedLatch = new CountDownLatch(1);
+        final CountDownLatch finished = new CountDownLatch(1);
         final AtomicReference<CapturedOutput> capturedOutput = new AtomicReference<>();
         executor.submit(() -> capturedOutput.set(
                 new DefaultCapturedOutput(
@@ -66,10 +66,15 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
                         routerFactory.apply(RouterParameters.createDefault()))));
         executor.submit(() -> enable(capturedOutput.get()));
         executor.submit(() -> invokeCallable(callable));
-        executor.submit(finishedLatch::countDown);
+        executor.submit(finished::countDown);
         executor.submit(executor::shutdown);
-        awaitLatch(finishedLatch);
-        disable(capturedOutput.get());
+        try {
+            finished.await();
+        } catch (InterruptedException e1) {
+            throw new OutputCaptureException("Error awaiting latch", e1);
+        } finally {
+            disable(capturedOutput.get());
+        }
         Optional.ofNullable(getThrownExceptionReference().get())
                 .ifPresent(e -> {
                     throw new OutputCaptureException(e);
