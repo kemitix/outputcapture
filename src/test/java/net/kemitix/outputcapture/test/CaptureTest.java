@@ -207,6 +207,45 @@ public class CaptureTest {
                         ignoreMe.shutdown();
                     }
                 }
+
+                public class RedirectFromOriginal {
+
+                    private final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
+
+                    private final AtomicBoolean finished = new AtomicBoolean(false);
+
+                    @Test
+                    public void out() {
+                        //when
+                        final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
+                            final CapturedOutput copyOf = CaptureOutput.of(() -> {
+                                writeOutput(System.out, line1, line2);
+                                finished.set(true);
+                            });
+                            ref.set(copyOf);
+                        });
+                        //then
+                        assertThat(finished).isTrue();
+                        assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
+                        assertThat(capturedOutput.getStdOut()).isEmpty();
+                    }
+
+                    @Test
+                    public void err() {
+                        //when
+                        final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
+                            final CapturedOutput copyOf = CaptureOutput.of(() -> {
+                                writeOutput(System.err, line1, line2);
+                                finished.set(true);
+                            });
+                            ref.set(copyOf);
+                        });
+                        //then
+                        assertThat(finished).isTrue();
+                        assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
+                        assertThat(capturedOutput.getStdErr()).isEmpty();
+                    }
+                }
             }
 
             // copyOf
