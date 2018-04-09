@@ -36,10 +36,8 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 class DefaultCapturedOutput extends AbstractCapturedOutput {
 
-    @Getter(AccessLevel.PROTECTED)
     private final ByteArrayOutputStream capturedOut;
 
-    @Getter(AccessLevel.PROTECTED)
     private final ByteArrayOutputStream capturedErr;
 
     @Getter
