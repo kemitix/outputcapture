@@ -65,7 +65,7 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
         val thrownExceptionReference = getThrownExceptionReference();
         final AtomicReference<OngoingCapturedOutput> capturedOutput = new AtomicReference<>();
         val executor = Executors.newSingleThreadExecutor();
-        final CountDownLatch started = new CountDownLatch(1);
+        val started = new SafeLatch(1);
         executor.submit(() -> capturedOutput.set(
                 new DefaultOngoingCapturedOutput(
                         capturedOut, capturedErr, completedLatch, thrownExceptionReference,
@@ -76,11 +76,7 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
         executor.submit(() -> disable(capturedOutput.get()));
         executor.submit(completedLatch::countDown);
         executor.submit(executor::shutdown);
-        try {
-            started.await();
-        } catch (InterruptedException e) {
-            throw new OutputCaptureException("Error awaiting latch", e);
-        }
+        started.await();
         return capturedOutput.get();
     }
 

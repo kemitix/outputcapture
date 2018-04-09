@@ -21,6 +21,8 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.val;
+
 import java.io.ByteArrayOutputStream;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -58,7 +60,7 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      */
     CapturedOutput capture(final ThrowingCallable callable) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
-        final CountDownLatch finished = new CountDownLatch(1);
+        val finished = new SafeLatch(1);
         final AtomicReference<CapturedOutput> capturedOutput = new AtomicReference<>();
         executor.submit(() -> capturedOutput.set(
                 new DefaultCapturedOutput(
@@ -70,8 +72,6 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
         executor.submit(executor::shutdown);
         try {
             finished.await();
-        } catch (InterruptedException e1) {
-            throw new OutputCaptureException("Error awaiting latch", e1);
         } finally {
             disable(capturedOutput.get());
         }
