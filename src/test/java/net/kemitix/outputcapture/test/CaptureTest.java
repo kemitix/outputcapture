@@ -211,20 +211,16 @@ public class CaptureTest {
 
                     private final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
 
-                    private final AtomicBoolean finished = new AtomicBoolean(false);
-
                     @Test
                     public void out() {
                         //when
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final CapturedOutput copyOf = CaptureOutput.of(() -> {
                                 writeOutput(System.out, line1, line2);
-                                finished.set(true);
                             });
                             ref.set(copyOf);
                         });
                         //then
-                        assertThat(finished).isTrue();
                         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdOut()).isEmpty();
                     }
@@ -235,12 +231,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final CapturedOutput copyOf = CaptureOutput.of(() -> {
                                 writeOutput(System.err, line1, line2);
-                                finished.set(true);
                             });
                             ref.set(copyOf);
                         });
                         //then
-                        assertThat(finished).isTrue();
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdErr()).isEmpty();
                     }
@@ -344,66 +338,37 @@ public class CaptureTest {
 
                 public class FiltersToTargetThread {
 
-                    private final ExecutorService catchMe = Executors.newSingleThreadExecutor();
-                    private final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
-                    private final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
-                    private final CountDownLatch ready = createLatch();
-                    private final CountDownLatch done = createLatch();
-                    private final CountDownLatch finished = createLatch();
-
                     @Test
                     public void out() {
+                        //given
+                        final LatchPair latchPair = whenReleased(() -> System.out.println(line1));
                         //when
-                        catchMe.submit(() -> captureThis(ready, done, reference, finished, catchMe));
-                        ignoreMe.submit(() -> ignoreThis(ready, done, ignoreMe));
+                        final CapturedOutput capturedOutput = CaptureOutput.copyOf(() -> {
+                            latchPair.releaseAndWait();
+                            System.out.println(line2);
+                        });
                         //then
-                        awaitLatch(finished);
-                        final CapturedOutput capturedOutput = reference.get();
-                        assertThat(capturedOutput.getStdOut()).containsExactly(STARTING_OUT, FINISHED_OUT);
+                        assertThat(capturedOutput.getStdOut()).containsExactly(line2);
                     }
 
                     @Test
                     public void err() {
+                        //given
+                        final LatchPair latchPair = whenReleased(() -> System.err.println(line1));
                         //when
-                        catchMe.submit(() -> captureThis(ready, done, reference, finished, catchMe));
-                        ignoreMe.submit(() -> ignoreThis(ready, done, ignoreMe));
+                        final CapturedOutput capturedOutput = CaptureOutput.copyOf(() -> {
+                            latchPair.releaseAndWait();
+                            System.err.println(line2);
+                        });
                         //then
-                        awaitLatch(finished);
-                        final CapturedOutput capturedOutput = reference.get();
-                        assertThat(capturedOutput.getStdErr()).containsExactly(STARTING_ERR, FINISHED_ERR);
+                        assertThat(capturedOutput.getStdErr()).containsExactly(line2);
                     }
 
-                    private void captureThis(
-                            final CountDownLatch ready,
-                            final CountDownLatch done,
-                            final AtomicReference<CapturedOutput> reference,
-                            final CountDownLatch finished,
-                            final ExecutorService catchMe
-                    ) {
-                        final CapturedOutput capturedOutput =
-                                CaptureOutput.copyOf(() -> asyncWithInterrupt(ready, done));
-                        reference.set(capturedOutput);
-                        releaseLatch(finished);
-                        catchMe.shutdown();
-                    }
-
-                    private void ignoreThis(
-                            final CountDownLatch ready,
-                            final CountDownLatch done,
-                            final ExecutorService ignoreMe
-                    ) {
-                        awaitLatch(ready);
-                        System.out.println("ignore me");
-                        releaseLatch(done);
-                        ignoreMe.shutdown();
-                    }
                 }
 
                 public class CopyToOriginal {
 
                     private final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
-
-                    private final AtomicBoolean finished = new AtomicBoolean(false);
 
                     @Test
                     public void out() {
@@ -411,12 +376,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final CapturedOutput copyOf = CaptureOutput.copyOf(() -> {
                                 writeOutput(System.out, line1, line2);
-                                finished.set(true);
                             });
                             ref.set(copyOf);
                         });
                         //then
-                        assertThat(finished).isTrue();
                         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
                     }
@@ -427,12 +390,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final CapturedOutput copyOf = CaptureOutput.copyOf(() -> {
                                 writeOutput(System.err, line1, line2);
-                                finished.set(true);
                             });
                             ref.set(copyOf);
                         });
                         //then
-                        assertThat(finished).isTrue();
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
                     }
