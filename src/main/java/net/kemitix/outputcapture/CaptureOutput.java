@@ -24,7 +24,7 @@ package net.kemitix.outputcapture;
 /**
  * Captures the output written to standard out and standard error.
  *
- * <table>
+ * <table summary="Options for each CaptureOutput method">
  *   <thead>
  *      <tr><th>method</th><th>a/sync</th><th>filtering</th><th>redirect/copy</th></tr>
  *   </thead>
