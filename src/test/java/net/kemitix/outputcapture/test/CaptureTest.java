@@ -608,6 +608,355 @@ public class CaptureTest {
         }
     }
 
+    public class Asynchronous {
+
+        public class ThreadFiltered {
+
+            // ofThread
+            public class Redirect {
+
+                public class CaptureSystem {
+
+                    @Test
+                    public void out() {
+                        //when
+                        final OngoingCapturedOutput captured = CaptureOutput.ofThread(() -> {
+                            writeOutput(System.out, line1, line2);
+                        });
+                        awaitLatch(captured.getCompletedLatch());
+                        //then
+                        assertThat(captured.getStdOut()).containsExactly(line1, line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //when
+                        OngoingCapturedOutput captured = CaptureOutput.ofThread(() -> {
+                            writeOutput(System.err, line1, line2);
+                        });
+                        awaitLatch(captured.getCompletedLatch());
+                        //then
+                        assertThat(captured.getStdErr()).containsExactly(line1, line2);
+                    }
+
+                }
+
+                public class ReplaceSystem {
+
+                    private final AtomicReference<PrintStream> original = new AtomicReference<>();
+                    private final AtomicReference<PrintStream> replacement = new AtomicReference<>();
+
+                    @Test
+                    public void out() {
+                        //given
+                        original.set(System.out);
+                        //when
+                        CaptureOutput.ofThread(() -> replacement.set(System.out));
+                        //then
+                        assertThat(replacement).isNotSameAs(original);
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        original.set(System.err);
+                        //when
+                        CaptureOutput.ofThread(() -> replacement.set(System.err));
+                        //then
+                        assertThat(replacement).isNotSameAs(original);
+                    }
+                }
+
+                public class RestoreSystem {
+
+                    private final AtomicReference<PrintStream> original = new AtomicReference<>();
+
+                    @Test
+                    public void out() {
+                        //given
+                        original.set(System.out);
+                        //when
+                        awaitLatch(
+                                CaptureOutput.ofThread(() -> {
+                                })
+                                        .getCompletedLatch());
+                        //then
+                        assertThat(System.out).isSameAs(original.get());
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        original.set(System.err);
+                        //when
+                        awaitLatch(
+                                CaptureOutput.ofThread(() -> {
+                                })
+                                        .getCompletedLatch());
+                        //then
+                        assertThat(System.err).isSameAs(original.get());
+                    }
+                }
+
+                public class ExceptionThrown {
+
+                    private final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
+
+                    @Test
+                    public void isAvailable() {
+                        //when
+                        final OngoingCapturedOutput capturedOutput = CaptureOutput.ofThread(() -> {
+                            throw cause;
+                        });
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        assertThat(capturedOutput.thrownException()).contains(cause);
+                    }
+                }
+
+                public class FiltersToTargetThread {
+
+                    @Test
+                    public void out() {
+                        //given
+                        final LatchPair latchPair = whenReleased(() -> System.out.println(line1));
+                        //when
+                        final OngoingCapturedOutput capturedOutput = CaptureOutput.ofThread(() -> {
+                            latchPair.releaseAndWait();
+                            System.out.println(line2);
+                        });
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(capturedOutput.getStdOut()).containsExactly(line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        final LatchPair latchPair = whenReleased(() -> System.err.println(line1));
+                        //when
+                        final OngoingCapturedOutput capturedOutput = CaptureOutput.ofThread(() -> {
+                            latchPair.releaseAndWait();
+                            System.err.println(line2);
+                        });
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(capturedOutput.getStdErr()).containsExactly(line2);
+                    }
+
+                }
+
+                public class RedirectFromOriginal {
+
+                    private final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
+
+                    @Test
+                    public void out() {
+                        //when
+                        final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
+                            final OngoingCapturedOutput copyOf = CaptureOutput.ofThread(() -> {
+                                writeOutput(System.out, line1, line2);
+                            });
+                            awaitLatch(copyOf.getCompletedLatch());
+                            ref.set(copyOf);
+                        });
+                        //then
+                        assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
+                        assertThat(capturedOutput.getStdOut()).isEmpty();
+                    }
+
+                    @Test
+                    public void err() {
+                        //when
+                        final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
+                            final OngoingCapturedOutput copyOf = CaptureOutput.ofThread(() -> {
+                                writeOutput(System.err, line1, line2);
+                            });
+                            awaitLatch(copyOf.getCompletedLatch());
+                            ref.set(copyOf);
+                        });
+                        //then
+                        assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
+                        assertThat(capturedOutput.getStdErr()).isEmpty();
+                    }
+                }
+            }
+
+            // copyOfThread
+            public class Copy {
+
+                public class CaptureSystem {
+
+                    @Test
+                    public void out() {
+                        //when
+                        final OngoingCapturedOutput captured = CaptureOutput.copyOfThread(() -> {
+                            writeOutput(System.out, line1, line2);
+                        });
+                        awaitLatch(captured.getCompletedLatch());
+                        //then
+                        assertThat(captured.getStdOut()).containsExactly(line1, line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //when
+                        final OngoingCapturedOutput captured = CaptureOutput.copyOfThread(() -> {
+                            writeOutput(System.err, line1, line2);
+                        });
+                        awaitLatch(captured.getCompletedLatch());
+                        //then
+                        assertThat(captured.getStdErr()).containsExactly(line1, line2);
+                    }
+
+                }
+
+                public class ReplaceSystem {
+
+                    private final AtomicReference<PrintStream> original = new AtomicReference<>();
+                    private final AtomicReference<PrintStream> replacement = new AtomicReference<>();
+
+                    @Test
+                    public void out() {
+                        //given
+                        original.set(System.out);
+                        //when
+                        awaitLatch(
+                                CaptureOutput.copyOfThread(() -> replacement.set(System.out))
+                                        .getCompletedLatch());
+                        //then
+                        assertThat(replacement).isNotSameAs(original);
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        original.set(System.err);
+                        //when
+                        awaitLatch(
+                                CaptureOutput.copyOfThread(() -> replacement.set(System.err))
+                                        .getCompletedLatch());
+                        //then
+                        assertThat(replacement).isNotSameAs(original);
+                    }
+                }
+
+                public class RestoreSystem {
+
+                    private final AtomicReference<PrintStream> original = new AtomicReference<>();
+
+                    @Test
+                    public void out() {
+                        //given
+                        original.set(System.out);
+                        //when
+                        awaitLatch(
+                                CaptureOutput.copyOfThread(() -> {
+                                })
+                                        .getCompletedLatch());
+                        //then
+                        assertThat(System.out).isSameAs(original.get());
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        original.set(System.err);
+                        //when
+                        awaitLatch(
+                                CaptureOutput.copyOfThread(() -> {
+                                })
+                                        .getCompletedLatch());
+                        //then
+                        assertThat(System.err).isSameAs(original.get());
+                    }
+                }
+
+                public class ExceptionThrown {
+
+                    private final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
+
+                    @Test
+                    public void isAvailable() {
+                        //when
+                        final OngoingCapturedOutput capturedOutput = CaptureOutput.copyOfThread(() -> {
+                            throw cause;
+                        });
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(capturedOutput.thrownException()).contains(cause);
+                    }
+                }
+
+                public class FiltersToTargetThread {
+
+                    @Test
+                    public void out() {
+                        //given
+                        final LatchPair latchPair = whenReleased(() -> System.out.println(line1));
+                        //when
+                        final OngoingCapturedOutput capturedOutput = CaptureOutput.copyOfThread(() -> {
+                            latchPair.releaseAndWait();
+                            System.out.println(line2);
+                        });
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(capturedOutput.getStdOut()).containsExactly(line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        final LatchPair latchPair = whenReleased(() -> System.err.println(line1));
+                        //when
+                        final OngoingCapturedOutput capturedOutput = CaptureOutput.copyOfThread(() -> {
+                            latchPair.releaseAndWait();
+                            System.err.println(line2);
+                        });
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(capturedOutput.getStdErr()).containsExactly(line2);
+                    }
+
+                }
+
+                public class CopyToOriginal {
+
+                    private final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
+
+                    @Test
+                    public void out() {
+                        //when
+                        final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
+                            final OngoingCapturedOutput copyOf = CaptureOutput.copyOfThread(() -> {
+                                writeOutput(System.out, line1, line2);
+                            });
+                            awaitLatch(copyOf.getCompletedLatch());
+                            ref.set(copyOf);
+                        });
+                        //then
+                        assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
+                        assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //when
+                        final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
+                            final OngoingCapturedOutput copyOf = CaptureOutput.copyOfThread(() -> {
+                                writeOutput(System.err, line1, line2);
+                            });
+                            awaitLatch(copyOf.getCompletedLatch());
+                            ref.set(copyOf);
+                        });
+                        //then
+                        assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
+                        assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
+                    }
+                }
+            }
+        }
+    }
+
     private LatchPair whenReleased(final Runnable callable) {
         final LatchPair latchPair = new LatchPair();
         new Thread(() -> {
