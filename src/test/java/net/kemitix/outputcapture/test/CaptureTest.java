@@ -487,13 +487,6 @@ public class CaptureTest {
         return new CountDownLatch(1);
     }
 
-    @SneakyThrows
-    private void runOnAnotherThreadAndWait(final Runnable runnable) {
-        final Thread thread = new Thread(runnable);
-        thread.start();
-        thread.join();
-    }
-
     @Test
     public void canCaptureOutputAsynchronously() {
         //given
