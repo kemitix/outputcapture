@@ -62,14 +62,6 @@ public interface OngoingCapturedOutput extends CapturedOutput {
     boolean isShutdown();
 
     /**
-     * Block until the thread is finished, and System.out and System.err are restored.
-     *
-     * @param timeout The maximum time to wait
-     * @param unit    The time unit of the timeout argument
-     */
-    void await(long timeout, TimeUnit unit);
-
-    /**
      * Returns an optional containing any exception that was thrown by the captured task.
      *
      * @return an Optional containing an exception, or empty if none was thrown

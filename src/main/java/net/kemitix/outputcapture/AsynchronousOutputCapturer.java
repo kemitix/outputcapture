@@ -59,7 +59,7 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
      * @return an instance of OngoingCapturedOutput
      */
     OngoingCapturedOutput capture(final ThrowingCallable callable) {
-        val completedLatch = new CountDownLatch(1);
+        val completedLatch = new SafeLatch(1);
         val capturedOut = new ByteArrayOutputStream();
         val capturedErr = new ByteArrayOutputStream();
         val thrownExceptionReference = getThrownExceptionReference();

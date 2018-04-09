@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements OngoingCapturedOutput {
 
     @Getter
-    private final CountDownLatch completedLatch;
+    private final SafeLatch completedLatch;
 
     private final AtomicReference<Exception> thrownException;
     private final Function<ByteArrayOutputStream, ByteArrayOutputStream> streamCopy = new StreamCopyFunction();
@@ -56,7 +56,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      */
     DefaultOngoingCapturedOutput(
             final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr,
-            final CountDownLatch completedLatch, final AtomicReference<Exception> thrownException,
+            final SafeLatch completedLatch, final AtomicReference<Exception> thrownException,
             final Router router
     ) {
         super(capturedOut, capturedErr, router);
@@ -119,15 +119,6 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     @Override
     public boolean isShutdown() {
         return completedLatch.getCount() == 0;
-    }
-
-    @Override
-    public void await(final long timeout, final TimeUnit unit) {
-        try {
-            completedLatch.await(timeout, unit);
-        } catch (InterruptedException e) {
-            throw new OutputCaptureException("Error awaiting termination", e);
-        }
     }
 
     @Override
