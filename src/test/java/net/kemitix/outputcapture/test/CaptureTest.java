@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @RunWith(HierarchicalContextRunner.class)
@@ -734,6 +735,59 @@ public class CaptureTest {
                         assertThat(capturedOutput.getStdErr()).isEmpty();
                     }
                 }
+
+                public class Flush {
+
+                    @Test
+                    public void out() {
+                        //given
+                        final CountDownLatch ready = createLatch();
+                        final CountDownLatch done = createLatch();
+                        final OngoingCapturedOutput capturedOutput =
+                                CaptureOutput.ofThread(() -> {
+                                    System.out.println(line1);
+                                    releaseLatch(ready);
+                                    awaitLatch(done);
+                                    System.out.println(line2);
+                                });
+                        awaitLatch(ready);
+                        //when
+                        final CapturedOutput initialOutput =
+                                capturedOutput.getCapturedOutputAndFlush();
+                        releaseLatch(done);
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(initialOutput.getStdOut()).containsExactly(line1);
+                        assertThat(capturedOutput.getStdOut()).containsExactly(line2);
+                        assertThat(initialOutput.out().toString()).isEqualToIgnoringWhitespace(line1);
+                        assertThat(capturedOutput.out().toString()).isEqualToIgnoringWhitespace(line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        final CountDownLatch ready = createLatch();
+                        final CountDownLatch done = createLatch();
+                        final OngoingCapturedOutput capturedOutput =
+                                CaptureOutput.ofThread(() -> {
+                                    System.err.println(line1);
+                                    releaseLatch(ready);
+                                    awaitLatch(done);
+                                    System.err.println(line2);
+                                });
+                        awaitLatch(ready);
+                        //when
+                        final CapturedOutput initialOutput =
+                                capturedOutput.getCapturedOutputAndFlush();
+                        releaseLatch(done);
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(initialOutput.getStdErr()).containsExactly(line1);
+                        assertThat(capturedOutput.getStdErr()).containsExactly(line2);
+                        assertThat(initialOutput.err().toString()).isEqualToIgnoringWhitespace(line1);
+                        assertThat(capturedOutput.err().toString()).isEqualToIgnoringWhitespace(line2);
+                    }
+                }
             }
 
             // copyOfThread
@@ -906,6 +960,59 @@ public class CaptureTest {
                         //then
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
+                    }
+                }
+
+                public class Flush {
+
+                    @Test
+                    public void out() {
+                        //given
+                        final CountDownLatch ready = createLatch();
+                        final CountDownLatch done = createLatch();
+                        final OngoingCapturedOutput capturedOutput =
+                                CaptureOutput.copyOfThread(() -> {
+                                    System.out.println(line1);
+                                    releaseLatch(ready);
+                                    awaitLatch(done);
+                                    System.out.println(line2);
+                                });
+                        awaitLatch(ready);
+                        //when
+                        final CapturedOutput initialOutput =
+                                capturedOutput.getCapturedOutputAndFlush();
+                        releaseLatch(done);
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(initialOutput.getStdOut()).containsExactly(line1);
+                        assertThat(capturedOutput.getStdOut()).containsExactly(line2);
+                        assertThat(initialOutput.out().toString()).isEqualToIgnoringWhitespace(line1);
+                        assertThat(capturedOutput.out().toString()).isEqualToIgnoringWhitespace(line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        final CountDownLatch ready = createLatch();
+                        final CountDownLatch done = createLatch();
+                        final OngoingCapturedOutput capturedOutput =
+                                CaptureOutput.copyOfThread(() -> {
+                                    System.err.println(line1);
+                                    releaseLatch(ready);
+                                    awaitLatch(done);
+                                    System.err.println(line2);
+                                });
+                        awaitLatch(ready);
+                        //when
+                        final CapturedOutput initialOutput =
+                                capturedOutput.getCapturedOutputAndFlush();
+                        releaseLatch(done);
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(initialOutput.getStdErr()).containsExactly(line1);
+                        assertThat(capturedOutput.getStdErr()).containsExactly(line2);
+                        assertThat(initialOutput.err().toString()).isEqualToIgnoringWhitespace(line1);
+                        assertThat(capturedOutput.err().toString()).isEqualToIgnoringWhitespace(line2);
                     }
                 }
             }
@@ -1086,6 +1193,59 @@ public class CaptureTest {
                         assertThat(capturedOutput.getStdErr()).isEmpty();
                     }
                 }
+
+                public class Flush {
+
+                    @Test
+                    public void out() {
+                        //given
+                        final CountDownLatch ready = createLatch();
+                        final CountDownLatch done = createLatch();
+                        final OngoingCapturedOutput capturedOutput =
+                                CaptureOutput.whileDoing(() -> {
+                                    releaseLatch(ready);
+                                    awaitLatch(done);
+                                });
+                        awaitLatch(ready);
+                        //when
+                        System.out.println(line1);
+                        final CapturedOutput initialOutput =
+                                capturedOutput.getCapturedOutputAndFlush();
+                        System.out.println(line2);
+                        releaseLatch(done);
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(initialOutput.getStdOut()).containsExactly(line1);
+                        assertThat(capturedOutput.getStdOut()).containsExactly(line2);
+                        assertThat(initialOutput.out().toString()).isEqualToIgnoringWhitespace(line1);
+                        assertThat(capturedOutput.out().toString()).isEqualToIgnoringWhitespace(line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        final CountDownLatch ready = createLatch();
+                        final CountDownLatch done = createLatch();
+                        final OngoingCapturedOutput capturedOutput =
+                                CaptureOutput.whileDoing(() -> {
+                                    releaseLatch(ready);
+                                    awaitLatch(done);
+                                });
+                        awaitLatch(ready);
+                        //when
+                        System.err.println(line1);
+                        final CapturedOutput initialOutput =
+                                capturedOutput.getCapturedOutputAndFlush();
+                        System.err.println(line2);
+                        releaseLatch(done);
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(initialOutput.getStdErr()).containsExactly(line1);
+                        assertThat(capturedOutput.getStdErr()).containsExactly(line2);
+                        assertThat(initialOutput.err().toString()).isEqualToIgnoringWhitespace(line1);
+                        assertThat(capturedOutput.err().toString()).isEqualToIgnoringWhitespace(line2);
+                    }
+                }
             }
 
             // copyWhileDoing
@@ -1258,6 +1418,59 @@ public class CaptureTest {
                         //then
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
+                    }
+                }
+
+                public class Flush {
+
+                    @Test
+                    public void out() {
+                        //given
+                        final CountDownLatch ready = createLatch();
+                        final CountDownLatch done = createLatch();
+                        final OngoingCapturedOutput capturedOutput =
+                                CaptureOutput.copyWhileDoing(() -> {
+                                    releaseLatch(ready);
+                                    awaitLatch(done);
+                                });
+                        awaitLatch(ready);
+                        //when
+                        System.out.println(line1);
+                        final CapturedOutput initialOutput =
+                                capturedOutput.getCapturedOutputAndFlush();
+                        System.out.println(line2);
+                        releaseLatch(done);
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(initialOutput.getStdOut()).containsExactly(line1);
+                        assertThat(capturedOutput.getStdOut()).containsExactly(line2);
+                        assertThat(initialOutput.out().toString()).isEqualToIgnoringWhitespace(line1);
+                        assertThat(capturedOutput.out().toString()).isEqualToIgnoringWhitespace(line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        final CountDownLatch ready = createLatch();
+                        final CountDownLatch done = createLatch();
+                        final OngoingCapturedOutput capturedOutput =
+                                CaptureOutput.copyWhileDoing(() -> {
+                                    releaseLatch(ready);
+                                    awaitLatch(done);
+                                });
+                        awaitLatch(ready);
+                        //when
+                        System.err.println(line1);
+                        final CapturedOutput initialOutput =
+                                capturedOutput.getCapturedOutputAndFlush();
+                        System.err.println(line2);
+                        releaseLatch(done);
+                        awaitLatch(capturedOutput.getCompletedLatch());
+                        //then
+                        assertThat(initialOutput.getStdErr()).containsExactly(line1);
+                        assertThat(capturedOutput.getStdErr()).containsExactly(line2);
+                        assertThat(initialOutput.err().toString()).isEqualToIgnoringWhitespace(line1);
+                        assertThat(capturedOutput.err().toString()).isEqualToIgnoringWhitespace(line2);
                     }
                 }
             }
