@@ -48,20 +48,6 @@ public interface OngoingCapturedOutput extends CapturedOutput {
     void flush();
 
     /**
-     * Returns true is the thread being captured is still running.
-     *
-     * @return true if the thread is running, otherwise false
-     */
-    boolean isRunning();
-
-    /**
-     * Returns true if the thread being captured has finished.
-     *
-     * @return true if the thread is not running, otherwise false
-     */
-    boolean isShutdown();
-
-    /**
      * Returns an optional containing any exception that was thrown by the captured task.
      *
      * @return an Optional containing an exception, or empty if none was thrown

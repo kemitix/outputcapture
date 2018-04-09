@@ -112,16 +112,6 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     }
 
     @Override
-    public boolean isRunning() {
-        return !isShutdown();
-    }
-
-    @Override
-    public boolean isShutdown() {
-        return completedLatch.getCount() == 0;
-    }
-
-    @Override
     public Optional<Throwable> thrownException() {
         return Optional.ofNullable(thrownException.get());
     }
