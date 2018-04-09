@@ -29,14 +29,14 @@ package net.kemitix.outputcapture;
  *      <tr><th>method</th><th>a/sync</th><th>filtering</th><th>redirect/copy</th></tr>
  *   </thead>
  *   <tbody>
- *     <tr><td>of</td><td>sync</td><td>thread</td><td>redirect</td></tr>
- *     <tr><td>copyOf</td><td>sync</td><td>thread</td><td>copy</td></tr>
- *     <tr><td>ofAll</td><td>sync</td><td>all</td><td>redirect</td></tr>
- *     <tr><td>?</td><td>sync</td><td>all</td><td>copy</td></tr>
- *     <tr><td>ofThread</td><td>async</td><td>thread</td><td>redirect</td></tr>
- *     <tr><td>copyOfThread</td><td>async</td><td>thread</td><td>copy</td></tr>
- *     <tr><td>whileDoing</td><td>async</td><td>all</td><td>redirect</td></tr>
- *     <tr><td>copyWhileDoing</td><td>async</td><td>all</td><td>copy</td></tr>
+ *     <tr><td>{@link #of(ThrowingCallable) of}</td><td>sync</td><td>thread</td><td>redirect</td></tr>
+ *     <tr><td>{@link #copyOf(ThrowingCallable) copyOf}</td><td>sync</td><td>thread</td><td>copy</td></tr>
+ *     <tr><td>{@link #ofAll(ThrowingCallable) ofAll}</td><td>sync</td><td>all</td><td>redirect</td></tr>
+ *     <tr><td>(none)</td><td>sync</td><td>all</td><td>copy</td></tr>
+ *     <tr><td>{@link #ofThread(ThrowingCallable) ofThread}</td><td>async</td><td>thread</td><td>redirect</td></tr>
+ *     <tr><td>{@link #copyOfThread(ThrowingCallable) copyOfThread}</td><td>async</td><td>thread</td><td>copy</td></tr>
+ *     <tr><td>{@link #whileDoing(ThrowingCallable) whileDoing}</td><td>async</td><td>all</td><td>redirect</td></tr>
+ *     <tr><td>{@link #copyWhileDoing(ThrowingCallable) copyWhileDoing}</td><td>async</td><td>all</td><td>copy</td></tr>
  *   </tbody>
  * </table>
  *
