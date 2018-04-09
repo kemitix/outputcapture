@@ -31,25 +31,6 @@ public class OutputCaptureException extends RuntimeException {
     /**
      * Constructor.
      *
-     * @param message The message
-     */
-    public OutputCaptureException(final String message) {
-        super(message);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param message The message
-     * @param cause   The cause
-     */
-    public OutputCaptureException(final String message, final Exception cause) {
-        super(message, cause);
-    }
-
-    /**
-     * Constructor.
-     *
      * @param cause   The cause
      */
     public OutputCaptureException(final Exception cause) {
