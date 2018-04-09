@@ -448,31 +448,6 @@ public class CaptureTest {
         }
     }
 
-    @Test
-    public void canCaptureOutputAndCopyItToNormalOutputs() {
-        //given
-        final AtomicReference<CapturedOutput> inner = new AtomicReference<>();
-        //when
-        final OngoingCapturedOutput capturedEcho = CaptureOutput.copyWhileDoing(() -> {
-            inner.set(CaptureOutput.copyOf(() -> {
-                System.out.println(line1);
-                System.err.println(line2);
-                System.out.write('a');
-            }));
-        });
-        //then
-        awaitLatch(capturedEcho.getCompletedLatch());
-        final CapturedOutput capturedOutput = inner.get();
-        assertThat(capturedOutput.getStdOut()).as("inner std out written")
-                .containsExactly(line1, "a");
-        assertThat(capturedOutput.getStdErr()).as("inner std err written")
-                .containsExactly(line2);
-        assertThat(capturedEcho.getStdOut()).as("outer std out written")
-                .containsExactly(line1, "a");
-        assertThat(capturedEcho.getStdErr()).as("outer std err written")
-                .containsExactly(line2);
-    }
-
     private void awaitLatch(final CountDownLatch latch) {
         try {
             latch.await();
