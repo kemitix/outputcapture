@@ -1,7 +1,6 @@
 package net.kemitix.outputcapture.test;
 
 import de.bechte.junit.runners.context.HierarchicalContextRunner;
-import lombok.SneakyThrows;
 import lombok.val;
 import net.kemitix.conditional.Action;
 import net.kemitix.outputcapture.*;
@@ -440,6 +439,183 @@ public class CaptureTest {
                 }
             }
         }
+
+        public class AllThreads {
+
+            // ofAll
+            public class Redirect {
+
+                public class CaptureSystem {
+
+                    @Test
+                    public void out() {
+                        //when
+                        final CapturedOutput captured = CaptureOutput.ofAll(() -> {
+                            writeOutput(System.out, line1, line2);
+                        });
+                        //then
+                        assertThat(captured.getStdOut()).containsExactly(line1, line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //when
+                        final CapturedOutput captured = CaptureOutput.ofAll(() -> {
+                            writeOutput(System.err, line1, line2);
+                        });
+                        //then
+                        assertThat(captured.getStdErr()).containsExactly(line1, line2);
+                    }
+
+                }
+
+                public class ReplaceSystem {
+
+                    private final AtomicReference<PrintStream> original = new AtomicReference<>();
+                    private final AtomicReference<PrintStream> replacement = new AtomicReference<>();
+
+                    @Test
+                    public void out() {
+                        //given
+                        original.set(System.out);
+                        //when
+                        CaptureOutput.ofAll(() -> replacement.set(System.out));
+                        //then
+                        assertThat(replacement).isNotSameAs(original);
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        original.set(System.err);
+                        //when
+                        CaptureOutput.ofAll(() -> replacement.set(System.err));
+                        //then
+                        assertThat(replacement).isNotSameAs(original);
+                    }
+                }
+
+                public class RestoreSystem {
+
+                    private final AtomicReference<PrintStream> original = new AtomicReference<>();
+
+                    @Test
+                    public void out() {
+                        //given
+                        original.set(System.out);
+                        //when
+                        CaptureOutput.ofAll(() -> {
+                        });
+                        //then
+                        assertThat(System.out).isSameAs(original.get());
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        original.set(System.err);
+                        //when
+                        CaptureOutput.ofAll(() -> {
+                        });
+                        //then
+                        assertThat(System.err).isSameAs(original.get());
+                    }
+                }
+
+                public class ExceptionThrown {
+
+                    private final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
+
+                    @Test
+                    public void wrappedInOutputCaptureException() {
+                        //then
+                        assertThatThrownBy(() -> CaptureOutput.ofAll(() -> {
+                            throw cause;
+                        }))
+                                .isInstanceOf(OutputCaptureException.class)
+                                .hasCause(cause);
+                    }
+                }
+
+                public class CapturesAllThread {
+
+                    @Test
+                    public void out() {
+                        //given
+                        final LatchPair latchPair = whenReleased(() -> System.out.println(line1));
+                        //when
+                        final CapturedOutput captured = CaptureOutput.ofAll(() -> {
+                            latchPair.releaseAndWait();
+                            writeOutput(System.out, line2);
+                        });
+                        //then
+                        assertThat(captured.getStdOut()).containsExactly(line1, line2);
+                    }
+
+                    @Test
+                    public void err() {
+                        //given
+                        final LatchPair latchPair = whenReleased(() -> System.err.println(line1));
+                        //when
+                        final CapturedOutput captured = CaptureOutput.ofAll(() -> {
+                            latchPair.releaseAndWait();
+                            writeOutput(System.err, line2);
+                        });
+                        //then
+                        assertThat(captured.getStdErr()).containsExactly(line1, line2);
+                    }
+                }
+
+                public class RedirectFromOriginal {
+
+                    private final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
+
+                    private final AtomicBoolean finished = new AtomicBoolean(false);
+
+                    @Test
+                    public void out() {
+                        //when
+                        final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
+                            final CapturedOutput copyOf = CaptureOutput.ofAll(() -> {
+                                writeOutput(System.out, line1, line2);
+                                finished.set(true);
+                            });
+                            ref.set(copyOf);
+                        });
+                        //then
+                        assertThat(finished).isTrue();
+                        assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
+                        assertThat(capturedOutput.getStdOut()).isEmpty();
+                    }
+
+                    @Test
+                    public void err() {
+                        //when
+                        final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
+                            final CapturedOutput copyOf = CaptureOutput.ofAll(() -> {
+                                writeOutput(System.err, line1, line2);
+                                finished.set(true);
+                            });
+                            ref.set(copyOf);
+                        });
+                        //then
+                        assertThat(finished).isTrue();
+                        assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
+                        assertThat(capturedOutput.getStdErr()).isEmpty();
+                    }
+                }
+            }
+        }
+    }
+
+    private LatchPair whenReleased(final Runnable callable) {
+        final LatchPair latchPair = new LatchPair();
+        new Thread(() -> {
+            awaitLatch(latchPair.ready);
+            callable.run();
+            releaseLatch(latchPair.done);
+        }).start();
+        return latchPair;
     }
 
     private void writeOutput(final PrintStream out, final String... lines) {
@@ -488,6 +664,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.ThreadFiltered.Redirect
     public void canCaptureOutputAsynchronously() {
         //given
         final PrintStream originalOut = System.out;
@@ -523,6 +700,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.ThreadFiltered.Redirect
     public void canRestoreNormalSystemOutWhenCapturingAsynchronously() {
         //when
         final CapturedOutput outerCaptured = CaptureOutput.of(() -> {
@@ -541,6 +719,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.ThreadFiltered.Redirect
     public void canRestoreNormalSystemErrWhenCapturingAsynchronously() {
         //when
         final CapturedOutput outerCaptured = CaptureOutput.of(() -> {
@@ -559,6 +738,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.*.Copy
     public void canFlushCapturedOutputWhenCapturingAsynchronously() {
         //given
         final CountDownLatch readyToFlush = createLatch();
@@ -581,6 +761,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.*.Redirect
     public void canCapturedOutputAndFlushWhenCapturingAsynchronously() {
         //given
         val readyToFlush = createLatch();
@@ -604,6 +785,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.*.*
     public void canWaitForThreadToComplete() {
         //given
         final CountDownLatch latch = createLatch();
@@ -625,6 +807,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.*.*
     public void exceptionThrownInThreadIsAvailableToOngoingCapturedOutput() {
         //given
         final OutputCaptureException outputCaptureException = new OutputCaptureException("");
@@ -638,6 +821,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.ThreadFiltered.Copy
     public void canCaptureCopyOfThread() {
         //when
         val capturedOutput = CaptureOutput.copyOfThread(() -> {
@@ -650,6 +834,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.All.Copy
     public void canCaptureCopyWhileDoing() {
         //given
         val reference = new AtomicReference<CapturedOutput>();
@@ -672,6 +857,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.All.Redirect
     public void canCaptureWhileDoing() {
         //given
         val reference = new AtomicReference<CapturedOutput>();
@@ -707,6 +893,7 @@ public class CaptureTest {
     }
 
     @Test
+    //Asynchronous.*.Copy
     public void canCaptureOutputAndCopyItToNormalOutputsWhenCapturingAsynchronously() {
         //when
         val outerCaptured = CaptureOutput.copyWhileDoing(() -> {
@@ -729,4 +916,13 @@ public class CaptureTest {
         assertThat(outerCaptured.getStdOut()).as("outer").containsExactly(line1, line2);
     }
 
+    private class LatchPair {
+        private final CountDownLatch ready = new CountDownLatch(1);
+        private final CountDownLatch done = new CountDownLatch(1);
+
+        void releaseAndWait() {
+            ready.countDown();
+            awaitLatch(done);
+        }
+    }
 }
