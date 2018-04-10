@@ -42,6 +42,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     private final SafeLatch completedLatch;
 
     private final AtomicReference<Exception> thrownException;
+
     private final Function<ByteArrayOutputStream, ByteArrayOutputStream> streamCopy = new StreamCopyFunction();
 
     /**
