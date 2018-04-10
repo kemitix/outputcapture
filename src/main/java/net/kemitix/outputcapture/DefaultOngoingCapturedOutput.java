@@ -22,14 +22,12 @@
 package net.kemitix.outputcapture;
 
 import lombok.Getter;
+import lombok.val;
 
 import java.io.ByteArrayOutputStream;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * The captured output being written to System.out and System.err.
@@ -65,36 +63,12 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
 
     @Override
     public CapturedOutput getCapturedOutputAndFlush() {
-        final ByteArrayOutputStream out = copyOutputStream(out());
-        final List<String> collectedOut = asStream(out).collect(Collectors.toList());
-        final ByteArrayOutputStream err = copyOutputStream(err());
-        final List<String> collectedErr = asStream(err).collect(Collectors.toList());
+        val capturedOutput = new DefaultCapturedOutput(copyOf(out()), copyOf(err()), getRouter());
         flush();
-        return new CapturedOutput() {
-
-            @Override
-            public Stream<String> getStdOut() {
-                return collectedOut.stream();
-            }
-
-            @Override
-            public Stream<String> getStdErr() {
-                return collectedErr.stream();
-            }
-
-            @Override
-            public ByteArrayOutputStream out() {
-                return out;
-            }
-
-            @Override
-            public ByteArrayOutputStream err() {
-                return err;
-            }
-        };
+        return capturedOutput;
     }
 
-    private ByteArrayOutputStream copyOutputStream(final ByteArrayOutputStream outputStream) {
+    private ByteArrayOutputStream copyOf(final ByteArrayOutputStream outputStream) {
         return streamCopy.apply(outputStream);
     }
 
