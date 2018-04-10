@@ -21,7 +21,6 @@
 
 package net.kemitix.outputcapture;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

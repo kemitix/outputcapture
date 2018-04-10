@@ -24,7 +24,6 @@ package net.kemitix.outputcapture;
 import lombok.val;
 
 import java.io.ByteArrayOutputStream;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
