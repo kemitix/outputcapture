@@ -40,7 +40,7 @@ class DefaultCapturedOutput extends AbstractCapturedOutput {
     private final ByteArrayOutputStream capturedErr;
 
     @Getter
-    private final Router  router;
+    private final Router router;
 
     @Override
     public Stream<String> getStdOut() {
