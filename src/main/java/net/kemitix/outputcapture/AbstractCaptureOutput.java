@@ -37,11 +37,13 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 abstract class AbstractCaptureOutput implements CaptureOutput {
 
+    private final static Deque<RoutableCapturedOutput> ACTIVE_CAPTURES = new ArrayDeque<>();
+
     @Getter(AccessLevel.PROTECTED)
     private AtomicReference<Exception> thrownExceptionReference = new AtomicReference<>();
 
-    private final static Deque<RoutableCapturedOutput> ACTIVE_CAPTURES = new ArrayDeque<>();
     private static PrintStream savedOut;
+
     private static PrintStream savedErr;
 
     /**
