@@ -7,7 +7,7 @@ class ThreadFilteredRedirectRouter implements RedirectRouter, ThreadFilteredRout
     @Getter
     private final Thread filteringThread;
 
-    public ThreadFilteredRedirectRouter(final RouterParameters routerParameters) {
+    ThreadFilteredRedirectRouter(final RouterParameters routerParameters) {
         filteringThread = routerParameters.getFilteringThread();
     }
 }
