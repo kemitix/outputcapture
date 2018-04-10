@@ -39,12 +39,12 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
 
     private static final Deque<RoutableCapturedOutput> ACTIVE_CAPTURES = new ArrayDeque<>();
 
-    @Getter(AccessLevel.PROTECTED)
-    private AtomicReference<Exception> thrownExceptionReference = new AtomicReference<>();
-
     private static PrintStream savedOut;
 
     private static PrintStream savedErr;
+
+    @Getter(AccessLevel.PROTECTED)
+    private AtomicReference<Exception> thrownExceptionReference = new AtomicReference<>();
 
     /**
      * Invokes the Callable and stores any thrown exception.
