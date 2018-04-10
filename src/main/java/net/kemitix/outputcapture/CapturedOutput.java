@@ -48,7 +48,4 @@ public interface CapturedOutput {
     ByteArrayOutputStream out();
 
     ByteArrayOutputStream err();
-
-    //FIXME: remove from this interface as it is attempting to publicly return a package-private type
-    Router getRouter();
 }

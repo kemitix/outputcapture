@@ -25,7 +25,6 @@ import lombok.val;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,7 +60,7 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
     CapturedOutput capture(final ThrowingCallable callable) {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         val finished = new SafeLatch(1);
-        final AtomicReference<CapturedOutput> capturedOutput = new AtomicReference<>();
+        final AtomicReference<RoutableCapturedOutput> capturedOutput = new AtomicReference<>();
         executor.submit(() -> capturedOutput.set(
                 new DefaultCapturedOutput(
                         new ByteArrayOutputStream(), new ByteArrayOutputStream(),

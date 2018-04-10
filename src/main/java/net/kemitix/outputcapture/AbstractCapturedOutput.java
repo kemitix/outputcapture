@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-abstract class AbstractCapturedOutput implements CapturedOutput {
+abstract class AbstractCapturedOutput implements RoutableCapturedOutput {
 
     /**
      * Converts the output stream into a stream of strings split by the system line separator.

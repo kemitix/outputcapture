@@ -23,14 +23,13 @@ package net.kemitix.outputcapture;
 
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The output that is being written to {@code System.out} and {@code System.err}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-public interface OngoingCapturedOutput extends CapturedOutput {
+public interface OngoingCapturedOutput extends RoutableCapturedOutput {
 
     /**
      * Get the captured output to System.out and System.err collected so far and start again.

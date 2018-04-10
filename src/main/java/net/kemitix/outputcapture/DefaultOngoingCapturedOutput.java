@@ -71,13 +71,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
         final ByteArrayOutputStream err = copyOutputStream(err());
         final List<String> collectedErr = asStream(err).collect(Collectors.toList());
         flush();
-        final Router router = getRouter();
         return new CapturedOutput() {
-
-            @Override
-            public Router getRouter() {
-                return router;
-            }
 
             @Override
             public Stream<String> getStdOut() {

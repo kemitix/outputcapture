@@ -28,7 +28,6 @@ import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -41,7 +40,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
     @Getter(AccessLevel.PROTECTED)
     private AtomicReference<Exception> thrownExceptionReference = new AtomicReference<>();
 
-    private final static Deque<CapturedOutput> ACTIVE_CAPTURES = new ArrayDeque<>();
+    private final static Deque<RoutableCapturedOutput> ACTIVE_CAPTURES = new ArrayDeque<>();
     private static PrintStream savedOut;
     private static PrintStream savedErr;
 
@@ -59,7 +58,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         }
     }
 
-    void enable(final CapturedOutput capturedOutput) {
+    void enable(final RoutableCapturedOutput capturedOutput) {
         synchronized (ACTIVE_CAPTURES) {
             if (ACTIVE_CAPTURES.isEmpty()) {
                 savedOut = System.out;
@@ -71,7 +70,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         }
     }
 
-    void disable(final CapturedOutput capturedOutput) {
+    void disable(final RoutableCapturedOutput capturedOutput) {
         synchronized (ACTIVE_CAPTURES) {
             ACTIVE_CAPTURES.remove(capturedOutput);
             if (ACTIVE_CAPTURES.isEmpty()) {
@@ -83,7 +82,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
 
     private static PrintStreamWrapper.ByteFilter captureSystemErrFilter() {
         return aByte -> {
-            for (CapturedOutput co : ACTIVE_CAPTURES) {
+            for (RoutableCapturedOutput co : ACTIVE_CAPTURES) {
                 final Router router = co.getRouter();
                 if (router.accepts(aByte)) {
                     co.err().write(aByte);
@@ -98,7 +97,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
 
     private static PrintStreamWrapper.ByteFilter captureSystemOutFilter() {
         return aByte -> {
-            for (CapturedOutput co : ACTIVE_CAPTURES) {
+            for (RoutableCapturedOutput co : ACTIVE_CAPTURES) {
                 final Router router = co.getRouter();
                 if (router.accepts(aByte)) {
                     co.out().write(aByte);
