@@ -16,7 +16,7 @@ class SafeLatch extends CountDownLatch {
      *              before threads can pass through {@link #await}
      * @throws IllegalArgumentException if {@code count} is negative
      */
-    SafeLatch(int count) {
+    SafeLatch(final int count) {
         super(count);
     }
 
