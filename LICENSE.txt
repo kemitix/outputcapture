@@ -1,4 +1,3 @@
-//FIXME: Requires version of checkstyle that supports blank lines in header, something after 8.9
 /*
   The MIT License (MIT)
 

@@ -29,7 +29,7 @@
         <lombok.version>1.16.20</lombok.version>
         <tiles-maven-plugin.version>2.11</tiles-maven-plugin.version>
         <kemitix-tiles.version>0.8.1</kemitix-tiles.version>
-        <kemitix-checkstyle.version>4.0.1</kemitix-checkstyle.version>
+        <kemitix-checkstyle.version>4.1.1</kemitix-checkstyle.version>
         <junit-hierarchicalcontextrunner.version>4.12.1</junit-hierarchicalcontextrunner.version>
     </properties>
 
