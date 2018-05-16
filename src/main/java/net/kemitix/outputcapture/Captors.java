@@ -29,7 +29,8 @@ package net.kemitix.outputcapture;
 interface Captors {
 
     /**
-     * Create an {@link CaptureOutput} instance that will intercept and capture output synchronously for a single thread.
+     * Create an {@link CaptureOutput} instance that will intercept and capture output synchronously for a single
+     * thread.
      *
      * @return A redirecting and synchronous CaptureOutput tied to a single thread
      */
@@ -56,7 +57,8 @@ interface Captors {
     }
 
     /**
-     * Create an {@link CaptureOutput} instance that will intercept and capture output asynchronously for a single thread.
+     * Create an {@link CaptureOutput} instance that will intercept and capture output asynchronously for a single
+     * thread.
      *
      * @return A redirecting and asynchronous CaptureOutput tied to a single thread
      */
