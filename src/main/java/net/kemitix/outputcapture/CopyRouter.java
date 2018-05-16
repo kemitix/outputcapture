@@ -21,6 +21,11 @@
 
 package net.kemitix.outputcapture;
 
+/**
+ * Designates a router that passes output through to the wrapped output.
+ *
+ * @author Paul Campbell (pcampbell@kemitix.net)
+ */
 interface CopyRouter extends Router {
 
     @Override

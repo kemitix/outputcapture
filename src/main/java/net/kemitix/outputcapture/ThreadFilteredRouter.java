@@ -21,6 +21,11 @@
 
 package net.kemitix.outputcapture;
 
+/**
+ * A Router that filters to the filtering thread and redirects the output.
+ *
+ * @author Paul Campbell (pcampbell@kemitix.net)
+ */
 interface ThreadFilteredRouter extends Router {
 
     @Override

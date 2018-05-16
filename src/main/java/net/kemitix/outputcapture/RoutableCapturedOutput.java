@@ -21,6 +21,11 @@
 
 package net.kemitix.outputcapture;
 
+/**
+ * {@link CapturedOutput} with a {@link Router}.
+ *
+ * @author Paul Campbell (pcampbell@kemitix.net)
+ */
 interface RoutableCapturedOutput extends CapturedOutput {
 
     Router getRouter();

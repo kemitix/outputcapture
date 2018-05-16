@@ -21,6 +21,11 @@
 
 package net.kemitix.outputcapture;
 
+/**
+ * A Router that captures all output, from all threads.
+ *
+ * @author Paul Campbell (pcampbell@kemitix.net)
+ */
 interface PromiscuousRouter extends Router {
 
     @Override

@@ -24,6 +24,11 @@ package net.kemitix.outputcapture;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Parameters for configuring a Router.
+ *
+ * @author Paul Campbell (pcampbell@kemitix.net)
+ */
 @Getter
 @RequiredArgsConstructor
 class RouterParameters {

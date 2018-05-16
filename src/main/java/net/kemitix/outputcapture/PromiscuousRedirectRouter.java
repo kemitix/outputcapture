@@ -21,6 +21,11 @@
 
 package net.kemitix.outputcapture;
 
+/**
+ * A Router that redirects all output, from all threads.
+ *
+ * @author Paul Campbell (pcampbell@kemitix.net)
+ */
 class PromiscuousRedirectRouter implements PromiscuousRouter, RedirectRouter {
 
     PromiscuousRedirectRouter(final RouterParameters routerParameters) {

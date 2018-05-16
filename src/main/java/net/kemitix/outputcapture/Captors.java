@@ -21,6 +21,11 @@
 
 package net.kemitix.outputcapture;
 
+/**
+ * Factories for creating {@link CaptureOutput} implementations.
+ *
+ * @author Paul Campbell (pcampbell@kemitix.net)
+ */
 interface Captors {
 
     static SynchronousOutputCapturer syncRedirectThread() {

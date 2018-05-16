@@ -26,6 +26,11 @@ import lombok.NonNull;
 import java.io.ByteArrayOutputStream;
 import java.util.function.Function;
 
+/**
+ * A Function to make a copy of a {@link ByteArrayOutputStream}.
+ *
+ * @author Paul Campbell (pcampbell@kemitix.net)
+ */
 class StreamCopyFunction implements Function<ByteArrayOutputStream, ByteArrayOutputStream> {
     @Override
     public ByteArrayOutputStream apply(@NonNull final ByteArrayOutputStream source) {

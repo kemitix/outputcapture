@@ -21,6 +21,11 @@
 
 package net.kemitix.outputcapture;
 
+/**
+ * A Router that copies all output, from all threads.
+ *
+ * @author Paul Campbell (pcampbell@kemitix.net)
+ */
 class PromiscuousCopyRouter implements PromiscuousRouter, CopyRouter {
 
     PromiscuousCopyRouter(final RouterParameters routerParameters) {
