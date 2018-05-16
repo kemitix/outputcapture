@@ -21,14 +21,16 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * A Router that copies all output, from all threads.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
+@RequiredArgsConstructor
 class PromiscuousCopyRouter implements PromiscuousRouter, CopyRouter {
 
-    PromiscuousCopyRouter(final RouterParameters routerParameters) {
-        // ignore parameters
-    }
+    private final RouterParameters routerParameters;
+
 }

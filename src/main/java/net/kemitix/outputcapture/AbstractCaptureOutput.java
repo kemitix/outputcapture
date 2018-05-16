@@ -60,6 +60,11 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         }
     }
 
+    /**
+     * Begin passing output to the {@link CaptureOutput}, before any other captures that may already be in place.
+     *
+     * @param capturedOutput the recipient of any future output
+     */
     void enable(final RoutableCapturedOutput capturedOutput) {
         synchronized (ACTIVE_CAPTURES) {
             if (ACTIVE_CAPTURES.isEmpty()) {
@@ -72,6 +77,11 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         }
     }
 
+    /**
+     * Stop passing output to the {@link CaptureOutput}.
+     *
+     * @param capturedOutput the recipient to remove
+     */
     void disable(final RoutableCapturedOutput capturedOutput) {
         synchronized (ACTIVE_CAPTURES) {
             ACTIVE_CAPTURES.remove(capturedOutput);
@@ -112,6 +122,11 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         };
     }
 
+    /**
+     * The number of active captures in place.
+     *
+     * @return a count the {@code OutputCapturer} instances in effect
+     */
     static int activeCount() {
         return ACTIVE_CAPTURES.size();
     }

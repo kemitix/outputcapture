@@ -35,7 +35,6 @@ class SafeLatch extends CountDownLatch {
      *
      * @param count the number of times {@link #countDown} must be invoked
      *              before threads can pass through {@link #await}
-     * @throws IllegalArgumentException if {@code count} is negative
      */
     SafeLatch(final int count) {
         super(count);
@@ -50,6 +49,12 @@ class SafeLatch extends CountDownLatch {
         }
     }
 
+    /**
+     * Causes the current thread to wait until the latch has counted down to
+     * zero, unless the thread is {@linkplain Thread#interrupt interrupted}.
+     *
+     * @param onCompletion runs when the latch reaches zero
+     */
     void awaitThen(final Runnable onCompletion) {
         try {
             await();

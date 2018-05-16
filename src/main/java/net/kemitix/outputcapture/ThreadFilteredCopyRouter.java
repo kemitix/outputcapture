@@ -21,19 +21,20 @@
 
 package net.kemitix.outputcapture;
 
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
  * A Router that filters to the filtering thread and copies the output.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
+@RequiredArgsConstructor
 class ThreadFilteredCopyRouter implements CopyRouter, ThreadFilteredRouter {
 
-    @Getter
-    private final Thread filteringThread;
+    private final RouterParameters routerParameters;
 
-    ThreadFilteredCopyRouter(final RouterParameters routerParameters) {
-        filteringThread = routerParameters.getFilteringThread();
+    @Override
+    public Thread getFilteringThread() {
+        return routerParameters.getFilteringThread();
     }
 }

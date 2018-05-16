@@ -50,6 +50,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      * @param capturedErr     The captured output written to System.err
      * @param completedLatch  The Latch indicating the thread is still running
      * @param thrownException The reference to any exception thrown
+     * @param router          The router to direct the output
      */
     DefaultOngoingCapturedOutput(
             final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr,

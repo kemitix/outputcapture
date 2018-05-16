@@ -66,6 +66,15 @@ public interface CaptureOutput {
         return Captors.syncCopy().capture(callable);
     }
 
+    /**
+     * Capture all output written while the callable is running.
+     *
+     * <p>This method will also capture any other output from other threads during the time the callable is running.</p>
+     *
+     * @param callable the callable to capture the output of
+     *
+     * @return the instance CapturedOutput
+     */
     static CapturedOutput ofAll(ThrowingCallable callable) {
         return Captors.syncRedirectAll().capture(callable);
     }
@@ -97,7 +106,7 @@ public interface CaptureOutput {
     }
 
     /**
-     * Capture all output written while the callable is running.
+     * Capture all output written while the callable is running asynchronously.
      *
      * <p>This method will also capture any other output from other threads during the time the callable is running.</p>
      *

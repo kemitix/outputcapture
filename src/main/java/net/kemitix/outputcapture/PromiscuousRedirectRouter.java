@@ -21,14 +21,16 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * A Router that redirects all output, from all threads.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
+@RequiredArgsConstructor
 class PromiscuousRedirectRouter implements PromiscuousRouter, RedirectRouter {
 
-    PromiscuousRedirectRouter(final RouterParameters routerParameters) {
-        // ignore parameters
-    }
+    private final RouterParameters routerParameters;
+
 }

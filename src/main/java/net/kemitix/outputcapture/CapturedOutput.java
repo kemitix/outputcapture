@@ -45,7 +45,17 @@ public interface CapturedOutput {
      */
     Stream<String> getStdErr();
 
+    /**
+     * The captured standard output.
+     *
+     * @return an OutputStream
+     */
     ByteArrayOutputStream out();
 
+    /**
+     * The captured standard error.
+     *
+     * @return an OutputStream
+     */
     ByteArrayOutputStream err();
 }

@@ -53,5 +53,10 @@ public interface OngoingCapturedOutput extends RoutableCapturedOutput {
      */
     Optional<Throwable> thrownException();
 
+    /**
+     * The latch that will be released once the thread has finished and the output has stopped capturing.
+     *
+     * @return The latch
+     */
     CountDownLatch getCompletedLatch();
 }

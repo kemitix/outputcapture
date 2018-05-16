@@ -28,5 +28,10 @@ package net.kemitix.outputcapture;
  */
 interface RoutableCapturedOutput extends CapturedOutput {
 
+    /**
+     * The Router.
+     *
+     * @return The Router
+     */
     Router getRouter();
 }

@@ -29,12 +29,17 @@ import lombok.RequiredArgsConstructor;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-@Getter
 @RequiredArgsConstructor
 class RouterParameters {
 
+    @Getter
     private final Thread filteringThread;
 
+    /**
+     * Create the default routing parameters, filtering to the current thread.
+     *
+     * @return new RoutingParameters for filtering to the current thread
+     */
     static RouterParameters createDefault() {
         return new RouterParameters(Thread.currentThread());
     }

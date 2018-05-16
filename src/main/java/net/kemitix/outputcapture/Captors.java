@@ -28,30 +28,65 @@ package net.kemitix.outputcapture;
  */
 interface Captors {
 
+    /**
+     * Create an {@link CaptureOutput} instance that will intercept and capture output synchronously for a single thread.
+     *
+     * @return A redirecting and synchronous CaptureOutput tied to a single thread
+     */
     static SynchronousOutputCapturer syncRedirectThread() {
         return new SynchronousOutputCapturer(ThreadFilteredRedirectRouter::new);
     }
 
+    /**
+     * Create an {@link CaptureOutput} instance that will capture output synchronously for a single thread.
+     *
+     * @return A copying and synchronous CaptureOutput tied to a single thread
+     */
     static SynchronousOutputCapturer syncCopy() {
         return new SynchronousOutputCapturer(ThreadFilteredCopyRouter::new);
     }
 
+    /**
+     * Create an {@link CaptureOutput} instance that will intercept and capture output synchronously from all threads.
+     *
+     * @return A redirecting and synchronous CaptureOutput
+     */
     static SynchronousOutputCapturer syncRedirectAll() {
         return new SynchronousOutputCapturer(PromiscuousRedirectRouter::new);
     }
 
+    /**
+     * Create an {@link CaptureOutput} instance that will intercept and capture output asynchronously for a single thread.
+     *
+     * @return A redirecting and asynchronous CaptureOutput tied to a single thread
+     */
     static AsynchronousOutputCapturer asyncRedirectThread() {
         return new AsynchronousOutputCapturer(ThreadFilteredRedirectRouter::new);
     }
 
+    /**
+     * Create an {@link CaptureOutput} instance that will capture output asynchronously for a single thread.
+     *
+     * @return A copying and asynchronous CaptureOutput tied to a single thread
+     */
     static AsynchronousOutputCapturer asyncCopyThread() {
         return new AsynchronousOutputCapturer(ThreadFilteredCopyRouter::new);
     }
 
+    /**
+     * Create an {@link CaptureOutput} instance that will intercept and capture output asynchronously from all threads.
+     *
+     * @return A redirecting and asynchronous CaptureOutput
+     */
     static AsynchronousOutputCapturer asyncRedirectAll() {
         return new AsynchronousOutputCapturer(PromiscuousRedirectRouter::new);
     }
 
+    /**
+     * Create an {@link CaptureOutput} instance that will capture output asynchronously from all threads.
+     *
+     * @return A copying and asynchronous CaptureOutput
+     */
     static AsynchronousOutputCapturer asyncCopyAll() {
         return new AsynchronousOutputCapturer(PromiscuousCopyRouter::new);
     }
