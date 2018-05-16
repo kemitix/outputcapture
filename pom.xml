@@ -20,10 +20,6 @@
         <assertj.version>3.9.1</assertj.version>
         <mockito.version>2.17.0</mockito.version>
 
-        <pitest.coverage>100</pitest.coverage>
-        <pitest.mutation>100</pitest.mutation>
-        <jacoco-class-line-covered-ratio>1</jacoco-class-line-covered-ratio>
-        <jacoco-class-instruction-covered-ratio>1</jacoco-class-instruction-covered-ratio>
         <print-stream-wrapper.version>0.4.0</print-stream-wrapper.version>
         <conditional.version>0.4.0</conditional.version>
         <lombok.version>1.16.20</lombok.version>
