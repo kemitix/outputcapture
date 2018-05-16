@@ -58,25 +58,33 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
      * @return an instance of OngoingCapturedOutput
      */
     OngoingCapturedOutput capture(final ThrowingCallable callable) {
-        val completedLatch = new SafeLatch(1);
-        val capturedOut = new ByteArrayOutputStream();
-        val capturedErr = new ByteArrayOutputStream();
-        val thrownExceptionReference = getThrownExceptionReference();
-        final AtomicReference<OngoingCapturedOutput> capturedOutput = new AtomicReference<>();
-        val executor = Executors.newSingleThreadExecutor();
+        val capturedOutput = new AtomicReference<OngoingCapturedOutput>();
         val started = new SafeLatch(1);
-        executor.submit(() -> capturedOutput.set(
-                new DefaultOngoingCapturedOutput(
-                        capturedOut, capturedErr, completedLatch, thrownExceptionReference,
-                        routerFactory.apply(RouterParameters.createDefault()))));
+        execute(callable, capturedOutput, started);
+        started.await();
+        return capturedOutput.get();
+    }
+
+    private void execute(
+            final ThrowingCallable callable,
+            final AtomicReference<OngoingCapturedOutput> capturedOutput,
+            final SafeLatch started
+    ) {
+        val completedLatch = new SafeLatch(1);
+        val executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> capturedOutput.set(outputCaptor(completedLatch)));
         executor.submit(started::countDown);
         executor.submit(() -> enable(capturedOutput.get()));
         executor.submit(() -> invokeCallable(callable));
         executor.submit(() -> disable(capturedOutput.get()));
         executor.submit(completedLatch::countDown);
         executor.submit(executor::shutdown);
-        started.await();
-        return capturedOutput.get();
+    }
+
+    private OngoingCapturedOutput outputCaptor(final SafeLatch completedLatch) {
+        return new DefaultOngoingCapturedOutput(
+                new ByteArrayOutputStream(), new ByteArrayOutputStream(), completedLatch, getThrownExceptionReference(),
+                routerFactory.apply(RouterParameters.createDefault()));
     }
 
 }

@@ -25,7 +25,6 @@ import lombok.val;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -58,27 +57,45 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      * @return an instance of CapturedOutput
      */
     CapturedOutput capture(final ThrowingCallable callable) {
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
         val finished = new SafeLatch(1);
-        final AtomicReference<RoutableCapturedOutput> capturedOutput = new AtomicReference<>();
-        executor.submit(() -> capturedOutput.set(
-                new DefaultCapturedOutput(
-                        new ByteArrayOutputStream(), new ByteArrayOutputStream(),
-                        routerFactory.apply(RouterParameters.createDefault()))));
+        val capturedOutput = new AtomicReference<RoutableCapturedOutput>();
+        executeAsync(callable, finished, capturedOutput);
+        finished.awaitThen(() -> disable(capturedOutput.get()));
+        throwAnyExceptions();
+        return capturedOutput.get();
+    }
+
+    private void executeAsync(
+            final ThrowingCallable callable,
+            final SafeLatch finished,
+            final AtomicReference<RoutableCapturedOutput> capturedOutput
+    ) {
+        val executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> capturedOutput.set(outputCaptor()));
         executor.submit(() -> enable(capturedOutput.get()));
         executor.submit(() -> invokeCallable(callable));
         executor.submit(finished::countDown);
         executor.submit(executor::shutdown);
-        try {
-            finished.await();
-        } finally {
-            disable(capturedOutput.get());
-        }
-        Optional.ofNullable(getThrownExceptionReference().get())
+    }
+
+    private void throwAnyExceptions() {
+        val exception = getThrownExceptionReference().get();
+        Optional.ofNullable(exception)
                 .ifPresent(e -> {
                     throw new OutputCaptureException(e);
                 });
-        return capturedOutput.get();
+    }
+
+    private RoutableCapturedOutput outputCaptor() {
+        val capturedOut = new ByteArrayOutputStream();
+        val capturedErr = new ByteArrayOutputStream();
+        val routerParameters = RouterParameters.createDefault();
+        val router = routerFactory.apply(routerParameters);
+        return new DefaultCapturedOutput(
+                capturedOut,
+                capturedErr,
+                router
+        );
     }
 
 }

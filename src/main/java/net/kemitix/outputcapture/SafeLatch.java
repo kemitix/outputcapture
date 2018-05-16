@@ -49,4 +49,12 @@ class SafeLatch extends CountDownLatch {
             throw new OutputCaptureException(e);
         }
     }
+
+    void awaitThen(final Runnable onCompletion) {
+        try {
+            await();
+        } finally {
+            onCompletion.run();
+        }
+    }
 }
