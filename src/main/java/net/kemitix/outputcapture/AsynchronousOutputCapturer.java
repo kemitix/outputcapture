@@ -72,7 +72,7 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
     ) {
         val completedLatch = new SafeLatch(1);
         val executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> capturedOutput.set(outputCaptor(completedLatch)));
+        executor.submit(buildCaptor(capturedOutput, completedLatch));
         executor.submit(started::countDown);
         executor.submit(() -> enable(capturedOutput.get()));
         executor.submit(() -> invokeCallable(callable));
@@ -81,9 +81,18 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
         executor.submit(executor::shutdown);
     }
 
+    private Runnable buildCaptor(
+            final AtomicReference<OngoingCapturedOutput> capturedOutput,
+            final SafeLatch completedLatch
+    ) {
+        return () -> capturedOutput.set(outputCaptor(completedLatch));
+    }
+
     private OngoingCapturedOutput outputCaptor(final SafeLatch completedLatch) {
+        val capturedOut = new ByteArrayOutputStream();
+        val capturedErr = new ByteArrayOutputStream();
         return new DefaultOngoingCapturedOutput(
-                new ByteArrayOutputStream(), new ByteArrayOutputStream(), completedLatch, getThrownExceptionReference(),
+                capturedOut, capturedErr, completedLatch, getThrownExceptionReference(),
                 routerFactory.apply(RouterParameters.createDefault()));
     }
 
