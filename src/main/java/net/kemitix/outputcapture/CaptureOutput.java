@@ -142,4 +142,8 @@ public interface CaptureOutput {
     static int activeCount() {
         return AbstractCaptureOutput.activeCount();
     }
+
+    static void removeAllInterceptors() {
+        AbstractCaptureOutput.removeAllInterceptors();
+    }
 }

@@ -130,4 +130,10 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
     static int activeCount() {
         return ACTIVE_CAPTURES.size();
     }
+
+    static void removeAllInterceptors() {
+        while (!ACTIVE_CAPTURES.isEmpty()) {
+            ACTIVE_CAPTURES.poll();
+        }
+    }
 }

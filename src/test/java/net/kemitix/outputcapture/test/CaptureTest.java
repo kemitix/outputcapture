@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @RunWith(HierarchicalContextRunner.class)
@@ -36,14 +35,23 @@ public class CaptureTest {
     @Rule
     public Timeout globalTimeout = Timeout.seconds(100L);
 
+    private PrintStream savedOut;
+    private PrintStream savedErr;
+
     @Before
     public void setUp() {
         assertThat(CaptureOutput.activeCount()).as("No existing captures").isZero();
+        savedOut = System.out;
+        savedErr = System.err;
     }
 
     @After
     public void tearDown() {
-        assertThat(CaptureOutput.activeCount()).as("All captures removed").isZero();
+        System.setOut(savedOut);
+        System.setErr(savedErr);
+        final int activeCount = CaptureOutput.activeCount();
+        CaptureOutput.removeAllInterceptors();
+        assertThat(activeCount).as("All captures removed").isZero();
     }
 
     public class Synchronous {
