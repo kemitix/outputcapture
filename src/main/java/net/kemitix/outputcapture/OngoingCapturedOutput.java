@@ -22,7 +22,6 @@
 package net.kemitix.outputcapture;
 
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * The output that is being written to {@code System.out} and {@code System.err}.
@@ -58,5 +57,5 @@ public interface OngoingCapturedOutput extends RoutableCapturedOutput {
      *
      * @return The latch
      */
-    CountDownLatch getCompletedLatch();
+    SafeLatch getCompletedLatch();
 }

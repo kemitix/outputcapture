@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-class SafeLatch extends CountDownLatch {
+public class SafeLatch extends CountDownLatch {
 
     private final Long maxAwaitMilliseconds;
 
@@ -40,11 +40,16 @@ class SafeLatch extends CountDownLatch {
      *                             through {@link #await}
      * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the latch to complete
      */
-    SafeLatch(final int count, final Long maxAwaitMilliseconds) {
+    public SafeLatch(final int count, final Long maxAwaitMilliseconds) {
         super(count);
         this.maxAwaitMilliseconds = maxAwaitMilliseconds;
     }
 
+    /**
+     * Blocks the thread and waits for the latch to finish counting down before returning.
+     *
+     * <p>This implementation wraps any InterruptedException thrown in an OutputCaptureException.</p>
+     */
     @Override
     public void await() {
         try {

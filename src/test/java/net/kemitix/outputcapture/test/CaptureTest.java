@@ -152,9 +152,9 @@ public class CaptureTest {
                     private final ExecutorService catchMe = Executors.newSingleThreadExecutor();
                     private final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
                     private final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
-                    private final CountDownLatch ready = createLatch();
-                    private final CountDownLatch done = createLatch();
-                    private final CountDownLatch finished = createLatch();
+                    private final SafeLatch ready = createLatch();
+                    private final SafeLatch done = createLatch();
+                    private final SafeLatch finished = createLatch();
 
                     @Test
                     public void out() {
@@ -179,10 +179,10 @@ public class CaptureTest {
                     }
 
                     private void captureThis(
-                            final CountDownLatch ready,
-                            final CountDownLatch done,
+                            final SafeLatch ready,
+                            final SafeLatch done,
                             final AtomicReference<CapturedOutput> reference,
-                            final CountDownLatch finished,
+                            final SafeLatch finished,
                             final ExecutorService catchMe
                     ) {
                         final CapturedOutput capturedOutput =
@@ -193,8 +193,8 @@ public class CaptureTest {
                     }
 
                     private void ignoreThis(
-                            final CountDownLatch ready,
-                            final CountDownLatch done,
+                            final SafeLatch ready,
+                            final SafeLatch done,
                             final ExecutorService ignoreMe
                     ) {
                         awaitLatch(ready);
@@ -743,8 +743,8 @@ public class CaptureTest {
                     @Test
                     public void out() {
                         //given
-                        final CountDownLatch ready = createLatch();
-                        final CountDownLatch done = createLatch();
+                        final SafeLatch ready = createLatch();
+                        final SafeLatch done = createLatch();
                         final OngoingCapturedOutput capturedOutput =
                                 CaptureOutput.ofThread(() -> {
                                     System.out.println(line1);
@@ -768,8 +768,8 @@ public class CaptureTest {
                     @Test
                     public void err() {
                         //given
-                        final CountDownLatch ready = createLatch();
-                        final CountDownLatch done = createLatch();
+                        final SafeLatch ready = createLatch();
+                        final SafeLatch done = createLatch();
                         final OngoingCapturedOutput capturedOutput =
                                 CaptureOutput.ofThread(() -> {
                                     System.err.println(line1);
@@ -970,8 +970,8 @@ public class CaptureTest {
                     @Test
                     public void out() {
                         //given
-                        final CountDownLatch ready = createLatch();
-                        final CountDownLatch done = createLatch();
+                        final SafeLatch ready = createLatch();
+                        final SafeLatch done = createLatch();
                         final OngoingCapturedOutput capturedOutput =
                                 CaptureOutput.copyOfThread(() -> {
                                     System.out.println(line1);
@@ -995,8 +995,8 @@ public class CaptureTest {
                     @Test
                     public void err() {
                         //given
-                        final CountDownLatch ready = createLatch();
-                        final CountDownLatch done = createLatch();
+                        final SafeLatch ready = createLatch();
+                        final SafeLatch done = createLatch();
                         final OngoingCapturedOutput capturedOutput =
                                 CaptureOutput.copyOfThread(() -> {
                                     System.err.println(line1);
@@ -1201,8 +1201,8 @@ public class CaptureTest {
                     @Test
                     public void out() {
                         //given
-                        final CountDownLatch ready = createLatch();
-                        final CountDownLatch done = createLatch();
+                        final SafeLatch ready = createLatch();
+                        final SafeLatch done = createLatch();
                         final OngoingCapturedOutput capturedOutput =
                                 CaptureOutput.whileDoing(() -> {
                                     releaseLatch(ready);
@@ -1226,8 +1226,8 @@ public class CaptureTest {
                     @Test
                     public void err() {
                         //given
-                        final CountDownLatch ready = createLatch();
-                        final CountDownLatch done = createLatch();
+                        final SafeLatch ready = createLatch();
+                        final SafeLatch done = createLatch();
                         final OngoingCapturedOutput capturedOutput =
                                 CaptureOutput.whileDoing(() -> {
                                     releaseLatch(ready);
@@ -1428,8 +1428,8 @@ public class CaptureTest {
                     @Test
                     public void out() {
                         //given
-                        final CountDownLatch ready = createLatch();
-                        final CountDownLatch done = createLatch();
+                        final SafeLatch ready = createLatch();
+                        final SafeLatch done = createLatch();
                         final OngoingCapturedOutput capturedOutput =
                                 CaptureOutput.copyWhileDoing(() -> {
                                     releaseLatch(ready);
@@ -1453,8 +1453,8 @@ public class CaptureTest {
                     @Test
                     public void err() {
                         //given
-                        final CountDownLatch ready = createLatch();
-                        final CountDownLatch done = createLatch();
+                        final SafeLatch ready = createLatch();
+                        final SafeLatch done = createLatch();
                         final OngoingCapturedOutput capturedOutput =
                                 CaptureOutput.copyWhileDoing(() -> {
                                     releaseLatch(ready);
@@ -1495,12 +1495,8 @@ public class CaptureTest {
         }
     }
 
-    private void awaitLatch(final CountDownLatch latch) {
-        try {
+    private void awaitLatch(final SafeLatch latch) {
             latch.await();
-        } catch (InterruptedException e) {
-            throw new OutputCaptureException(e);
-        }
     }
 
     @Test
@@ -1508,9 +1504,9 @@ public class CaptureTest {
         //given
         final PrintStream originalOut = System.out;
         final PrintStream originalErr = System.err;
-        final CountDownLatch latch1 = createLatch();
-        final CountDownLatch latch2 = createLatch();
-        final CountDownLatch latch3 = createLatch();
+        final SafeLatch latch1 = createLatch();
+        final SafeLatch latch2 = createLatch();
+        final SafeLatch latch3 = createLatch();
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
             awaitLatch(latch1);
@@ -1526,15 +1522,15 @@ public class CaptureTest {
         assertThat(System.err).isSameAs(originalErr);
     }
 
-    private void releaseLatch(final CountDownLatch latch) {
+    private void releaseLatch(final SafeLatch latch) {
         latch.countDown();
     }
 
-    private CountDownLatch createLatch() {
-        return new CountDownLatch(1);
+    private SafeLatch createLatch() {
+        return new SafeLatch(1, 1000L);
     }
 
-    private void asyncWithInterrupt(final CountDownLatch ready, final CountDownLatch done) {
+    private void asyncWithInterrupt(final SafeLatch ready, final SafeLatch done) {
         System.out.println(STARTING_OUT);
         System.err.println(STARTING_ERR);
         releaseLatch(ready);
@@ -1543,7 +1539,7 @@ public class CaptureTest {
         System.err.println(FINISHED_ERR);
     }
 
-    private ThrowingCallable waitAndContinue(final CountDownLatch ready, final CountDownLatch done) {
+    private ThrowingCallable waitAndContinue(final SafeLatch ready, final SafeLatch done) {
         return () -> {
             releaseLatch(ready);
             awaitLatch(done);
@@ -1551,8 +1547,8 @@ public class CaptureTest {
     }
 
     private class LatchPair {
-        private final CountDownLatch ready = new CountDownLatch(1);
-        private final CountDownLatch done = new CountDownLatch(1);
+        private final SafeLatch ready = new SafeLatch(1, 1000L);
+        private final SafeLatch done = new SafeLatch(1, 1000L);
 
         void releaseAndWait() {
             ready.countDown();
