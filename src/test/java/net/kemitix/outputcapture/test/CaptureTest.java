@@ -2,7 +2,6 @@ package net.kemitix.outputcapture.test;
 
 import de.bechte.junit.runners.context.HierarchicalContextRunner;
 import net.kemitix.outputcapture.*;
-import org.assertj.core.api.Assumptions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,13 +27,14 @@ public class CaptureTest {
     private static final String FINISHED_OUT = "finished out";
     private static final String FINISHED_ERR = "finished err";
 
-    private String line1 = "1:" + UUID.randomUUID().toString();
-
-    private String line2 = "2:" + UUID.randomUUID().toString();
+    private final Long maxAwaitMilliseconds = 100L;
+    private final String line1 = "1:" + UUID.randomUUID().toString();
+    private final String line2 = "2:" + UUID.randomUUID().toString();
     //</editor-fold>
 
     @Rule
     public Timeout globalTimeout = Timeout.seconds(100L);
+
 
     @Before
     public void setUp() {
@@ -62,7 +62,7 @@ public class CaptureTest {
                         //when
                         final CapturedOutput captured = CaptureOutput.of(() -> {
                             writeOutput(System.out, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(captured.getStdOut()).containsExactly(line1, line2);
                     }
@@ -72,7 +72,7 @@ public class CaptureTest {
                         //when
                         final CapturedOutput captured = CaptureOutput.of(() -> {
                             writeOutput(System.err, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(captured.getStdErr()).containsExactly(line1, line2);
                     }
@@ -89,7 +89,7 @@ public class CaptureTest {
                         //given
                         original.set(System.out);
                         //when
-                        CaptureOutput.of(() -> replacement.set(System.out));
+                        CaptureOutput.of(() -> replacement.set(System.out), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
                     }
@@ -99,7 +99,7 @@ public class CaptureTest {
                         //given
                         original.set(System.err);
                         //when
-                        CaptureOutput.of(() -> replacement.set(System.err));
+                        CaptureOutput.of(() -> replacement.set(System.err), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
                     }
@@ -115,7 +115,7 @@ public class CaptureTest {
                         original.set(System.out);
                         //when
                         CaptureOutput.of(() -> {
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(System.out).isSameAs(original.get());
                     }
@@ -126,7 +126,7 @@ public class CaptureTest {
                         original.set(System.err);
                         //when
                         CaptureOutput.of(() -> {
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(System.err).isSameAs(original.get());
                     }
@@ -141,7 +141,7 @@ public class CaptureTest {
                         //then
                         assertThatThrownBy(() -> CaptureOutput.of(() -> {
                             throw cause;
-                        }))
+                        }, maxAwaitMilliseconds))
                                 .isInstanceOf(OutputCaptureException.class)
                                 .hasCause(cause);
                     }
@@ -186,7 +186,7 @@ public class CaptureTest {
                             final ExecutorService catchMe
                     ) {
                         final CapturedOutput capturedOutput =
-                                CaptureOutput.of(() -> asyncWithInterrupt(ready, done));
+                                CaptureOutput.of(() -> asyncWithInterrupt(ready, done), maxAwaitMilliseconds);
                         reference.set(capturedOutput);
                         releaseLatch(finished);
                         catchMe.shutdown();
@@ -214,9 +214,9 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final CapturedOutput copyOf = CaptureOutput.of(() -> {
                                 writeOutput(System.out, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdOut()).isEmpty();
@@ -228,9 +228,9 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final CapturedOutput copyOf = CaptureOutput.of(() -> {
                                 writeOutput(System.err, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdErr()).isEmpty();
@@ -248,7 +248,7 @@ public class CaptureTest {
                         //when
                         final CapturedOutput captured = CaptureOutput.copyOf(() -> {
                             writeOutput(System.out, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(captured.getStdOut()).containsExactly(line1, line2);
                     }
@@ -258,7 +258,7 @@ public class CaptureTest {
                         //when
                         final CapturedOutput captured = CaptureOutput.copyOf(() -> {
                             writeOutput(System.err, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(captured.getStdErr()).containsExactly(line1, line2);
                     }
@@ -275,7 +275,7 @@ public class CaptureTest {
                         //given
                         original.set(System.out);
                         //when
-                        CaptureOutput.copyOf(() -> replacement.set(System.out));
+                        CaptureOutput.copyOf(() -> replacement.set(System.out), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
                     }
@@ -285,7 +285,7 @@ public class CaptureTest {
                         //given
                         original.set(System.err);
                         //when
-                        CaptureOutput.copyOf(() -> replacement.set(System.err));
+                        CaptureOutput.copyOf(() -> replacement.set(System.err), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
                     }
@@ -301,7 +301,7 @@ public class CaptureTest {
                         original.set(System.out);
                         //when
                         CaptureOutput.copyOf(() -> {
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(System.out).isSameAs(original.get());
                     }
@@ -312,7 +312,7 @@ public class CaptureTest {
                         original.set(System.err);
                         //when
                         CaptureOutput.copyOf(() -> {
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(System.err).isSameAs(original.get());
                     }
@@ -327,7 +327,7 @@ public class CaptureTest {
                         //then
                         assertThatThrownBy(() -> CaptureOutput.copyOf(() -> {
                             throw cause;
-                        }))
+                        }, maxAwaitMilliseconds))
                                 .isInstanceOf(OutputCaptureException.class)
                                 .hasCause(cause);
                     }
@@ -343,7 +343,7 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.copyOf(() -> {
                             latchPair.releaseAndWait();
                             System.out.println(line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(capturedOutput.getStdOut()).containsExactly(line2);
                     }
@@ -356,7 +356,7 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.copyOf(() -> {
                             latchPair.releaseAndWait();
                             System.err.println(line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(capturedOutput.getStdErr()).containsExactly(line2);
                     }
@@ -373,9 +373,9 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final CapturedOutput copyOf = CaptureOutput.copyOf(() -> {
                                 writeOutput(System.out, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
@@ -387,9 +387,9 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final CapturedOutput copyOf = CaptureOutput.copyOf(() -> {
                                 writeOutput(System.err, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
@@ -410,7 +410,7 @@ public class CaptureTest {
                         //when
                         final CapturedOutput captured = CaptureOutput.ofAll(() -> {
                             writeOutput(System.out, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(captured.getStdOut()).containsExactly(line1, line2);
                     }
@@ -420,7 +420,7 @@ public class CaptureTest {
                         //when
                         final CapturedOutput captured = CaptureOutput.ofAll(() -> {
                             writeOutput(System.err, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(captured.getStdErr()).containsExactly(line1, line2);
                     }
@@ -437,7 +437,7 @@ public class CaptureTest {
                         //given
                         original.set(System.out);
                         //when
-                        CaptureOutput.ofAll(() -> replacement.set(System.out));
+                        CaptureOutput.ofAll(() -> replacement.set(System.out), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
                     }
@@ -447,7 +447,7 @@ public class CaptureTest {
                         //given
                         original.set(System.err);
                         //when
-                        CaptureOutput.ofAll(() -> replacement.set(System.err));
+                        CaptureOutput.ofAll(() -> replacement.set(System.err), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
                     }
@@ -463,7 +463,7 @@ public class CaptureTest {
                         original.set(System.out);
                         //when
                         CaptureOutput.ofAll(() -> {
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(System.out).isSameAs(original.get());
                     }
@@ -474,7 +474,7 @@ public class CaptureTest {
                         original.set(System.err);
                         //when
                         CaptureOutput.ofAll(() -> {
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(System.err).isSameAs(original.get());
                     }
@@ -489,7 +489,7 @@ public class CaptureTest {
                         //then
                         assertThatThrownBy(() -> CaptureOutput.ofAll(() -> {
                             throw cause;
-                        }))
+                        }, maxAwaitMilliseconds))
                                 .isInstanceOf(OutputCaptureException.class)
                                 .hasCause(cause);
                     }
@@ -505,7 +505,7 @@ public class CaptureTest {
                         final CapturedOutput captured = CaptureOutput.ofAll(() -> {
                             latchPair.releaseAndWait();
                             writeOutput(System.out, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(captured.getStdOut()).containsExactly(line1, line2);
                     }
@@ -518,7 +518,7 @@ public class CaptureTest {
                         final CapturedOutput captured = CaptureOutput.ofAll(() -> {
                             latchPair.releaseAndWait();
                             writeOutput(System.err, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(captured.getStdErr()).containsExactly(line1, line2);
                     }
@@ -537,9 +537,9 @@ public class CaptureTest {
                             final CapturedOutput copyOf = CaptureOutput.ofAll(() -> {
                                 writeOutput(System.out, line1, line2);
                                 finished.set(true);
-                            });
+                            }, maxAwaitMilliseconds);
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(finished).isTrue();
                         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
@@ -553,9 +553,9 @@ public class CaptureTest {
                             final CapturedOutput copyOf = CaptureOutput.ofAll(() -> {
                                 writeOutput(System.err, line1, line2);
                                 finished.set(true);
-                            });
+                            }, maxAwaitMilliseconds);
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(finished).isTrue();
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
@@ -580,7 +580,7 @@ public class CaptureTest {
                         //when
                         final OngoingCapturedOutput captured = CaptureOutput.ofThread(() -> {
                             writeOutput(System.out, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(captured.getCompletedLatch());
                         //then
                         assertThat(captured.getStdOut()).containsExactly(line1, line2);
@@ -591,7 +591,7 @@ public class CaptureTest {
                         //when
                         OngoingCapturedOutput captured = CaptureOutput.ofThread(() -> {
                             writeOutput(System.err, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(captured.getCompletedLatch());
                         //then
                         assertThat(captured.getStdErr()).containsExactly(line1, line2);
@@ -609,7 +609,7 @@ public class CaptureTest {
                         //given
                         original.set(System.out);
                         //when
-                        CaptureOutput.ofThread(() -> replacement.set(System.out));
+                        CaptureOutput.ofThread(() -> replacement.set(System.out), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
                     }
@@ -619,7 +619,7 @@ public class CaptureTest {
                         //given
                         original.set(System.err);
                         //when
-                        CaptureOutput.ofThread(() -> replacement.set(System.err));
+                        CaptureOutput.ofThread(() -> replacement.set(System.err), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
                     }
@@ -636,7 +636,7 @@ public class CaptureTest {
                         //when
                         awaitLatch(
                                 CaptureOutput.ofThread(() -> {
-                                })
+                                }, maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(System.out).isSameAs(original.get());
@@ -649,7 +649,7 @@ public class CaptureTest {
                         //when
                         awaitLatch(
                                 CaptureOutput.ofThread(() -> {
-                                })
+                                }, maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(System.err).isSameAs(original.get());
@@ -665,7 +665,7 @@ public class CaptureTest {
                         //when
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.ofThread(() -> {
                             throw cause;
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         assertThat(capturedOutput.thrownException()).contains(cause);
                     }
@@ -681,7 +681,7 @@ public class CaptureTest {
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.ofThread(() -> {
                             latchPair.releaseAndWait();
                             System.out.println(line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         //then
                         assertThat(capturedOutput.getStdOut()).containsExactly(line2);
@@ -695,7 +695,7 @@ public class CaptureTest {
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.ofThread(() -> {
                             latchPair.releaseAndWait();
                             System.err.println(line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         //then
                         assertThat(capturedOutput.getStdErr()).containsExactly(line2);
@@ -713,10 +713,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final OngoingCapturedOutput copyOf = CaptureOutput.ofThread(() -> {
                                 writeOutput(System.out, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             awaitLatch(copyOf.getCompletedLatch());
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdOut()).isEmpty();
@@ -728,10 +728,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final OngoingCapturedOutput copyOf = CaptureOutput.ofThread(() -> {
                                 writeOutput(System.err, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             awaitLatch(copyOf.getCompletedLatch());
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdErr()).isEmpty();
@@ -751,7 +751,7 @@ public class CaptureTest {
                                     releaseLatch(ready);
                                     awaitLatch(done);
                                     System.out.println(line2);
-                                });
+                                }, maxAwaitMilliseconds);
                         awaitLatch(ready);
                         //when
                         final CapturedOutput initialOutput =
@@ -776,7 +776,7 @@ public class CaptureTest {
                                     releaseLatch(ready);
                                     awaitLatch(done);
                                     System.err.println(line2);
-                                });
+                                }, maxAwaitMilliseconds);
                         awaitLatch(ready);
                         //when
                         final CapturedOutput initialOutput =
@@ -802,7 +802,7 @@ public class CaptureTest {
                         //when
                         final OngoingCapturedOutput captured = CaptureOutput.copyOfThread(() -> {
                             writeOutput(System.out, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(captured.getCompletedLatch());
                         //then
                         assertThat(captured.getStdOut()).containsExactly(line1, line2);
@@ -813,7 +813,7 @@ public class CaptureTest {
                         //when
                         final OngoingCapturedOutput captured = CaptureOutput.copyOfThread(() -> {
                             writeOutput(System.err, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(captured.getCompletedLatch());
                         //then
                         assertThat(captured.getStdErr()).containsExactly(line1, line2);
@@ -832,7 +832,7 @@ public class CaptureTest {
                         original.set(System.out);
                         //when
                         awaitLatch(
-                                CaptureOutput.copyOfThread(() -> replacement.set(System.out))
+                                CaptureOutput.copyOfThread(() -> replacement.set(System.out), maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(replacement).isNotSameAs(original);
@@ -844,7 +844,7 @@ public class CaptureTest {
                         original.set(System.err);
                         //when
                         awaitLatch(
-                                CaptureOutput.copyOfThread(() -> replacement.set(System.err))
+                                CaptureOutput.copyOfThread(() -> replacement.set(System.err), maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(replacement).isNotSameAs(original);
@@ -862,7 +862,7 @@ public class CaptureTest {
                         //when
                         awaitLatch(
                                 CaptureOutput.copyOfThread(() -> {
-                                })
+                                }, maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(System.out).isSameAs(original.get());
@@ -875,7 +875,7 @@ public class CaptureTest {
                         //when
                         awaitLatch(
                                 CaptureOutput.copyOfThread(() -> {
-                                })
+                                }, maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(System.err).isSameAs(original.get());
@@ -891,7 +891,7 @@ public class CaptureTest {
                         //when
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.copyOfThread(() -> {
                             throw cause;
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         //then
                         assertThat(capturedOutput.thrownException()).contains(cause);
@@ -908,7 +908,7 @@ public class CaptureTest {
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.copyOfThread(() -> {
                             latchPair.releaseAndWait();
                             System.out.println(line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         //then
                         assertThat(capturedOutput.getStdOut()).containsExactly(line2);
@@ -922,7 +922,7 @@ public class CaptureTest {
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.copyOfThread(() -> {
                             latchPair.releaseAndWait();
                             System.err.println(line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         //then
                         assertThat(capturedOutput.getStdErr()).containsExactly(line2);
@@ -940,10 +940,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final OngoingCapturedOutput copyOf = CaptureOutput.copyOfThread(() -> {
                                 writeOutput(System.out, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             awaitLatch(copyOf.getCompletedLatch());
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
@@ -955,10 +955,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final OngoingCapturedOutput copyOf = CaptureOutput.copyOfThread(() -> {
                                 writeOutput(System.err, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             awaitLatch(copyOf.getCompletedLatch());
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
@@ -978,7 +978,7 @@ public class CaptureTest {
                                     releaseLatch(ready);
                                     awaitLatch(done);
                                     System.out.println(line2);
-                                });
+                                }, maxAwaitMilliseconds);
                         awaitLatch(ready);
                         //when
                         final CapturedOutput initialOutput =
@@ -1003,7 +1003,7 @@ public class CaptureTest {
                                     releaseLatch(ready);
                                     awaitLatch(done);
                                     System.err.println(line2);
-                                });
+                                }, maxAwaitMilliseconds);
                         awaitLatch(ready);
                         //when
                         final CapturedOutput initialOutput =
@@ -1035,7 +1035,7 @@ public class CaptureTest {
                         final OngoingCapturedOutput captured = CaptureOutput.whileDoing(() -> {
                             latchPair.releaseAndWait();
                             writeOutput(System.out, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(captured.getCompletedLatch());
                         //then
                         assertThat(captured.getStdOut()).containsExactly(line1, line2);
@@ -1049,7 +1049,7 @@ public class CaptureTest {
                         OngoingCapturedOutput captured = CaptureOutput.whileDoing(() -> {
                             latchPair.releaseAndWait();
                             writeOutput(System.err, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(captured.getCompletedLatch());
                         //then
                         assertThat(captured.getStdErr()).containsExactly(line1, line2);
@@ -1067,7 +1067,7 @@ public class CaptureTest {
                         //given
                         original.set(System.out);
                         //when
-                        CaptureOutput.whileDoing(() -> replacement.set(System.out));
+                        CaptureOutput.whileDoing(() -> replacement.set(System.out), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
                     }
@@ -1077,7 +1077,7 @@ public class CaptureTest {
                         //given
                         original.set(System.err);
                         //when
-                        CaptureOutput.whileDoing(() -> replacement.set(System.err));
+                        CaptureOutput.whileDoing(() -> replacement.set(System.err), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
                     }
@@ -1094,7 +1094,7 @@ public class CaptureTest {
                         //when
                         awaitLatch(
                                 CaptureOutput.whileDoing(() -> {
-                                })
+                                }, maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(System.out).isSameAs(original.get());
@@ -1107,7 +1107,7 @@ public class CaptureTest {
                         //when
                         awaitLatch(
                                 CaptureOutput.whileDoing(() -> {
-                                })
+                                }, maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(System.err).isSameAs(original.get());
@@ -1123,7 +1123,7 @@ public class CaptureTest {
                         //when
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.whileDoing(() -> {
                             throw cause;
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         assertThat(capturedOutput.thrownException()).contains(cause);
                     }
@@ -1139,7 +1139,7 @@ public class CaptureTest {
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.whileDoing(() -> {
                             latchPair.releaseAndWait();
                             System.out.println(line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         //then
                         assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
@@ -1153,7 +1153,7 @@ public class CaptureTest {
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.whileDoing(() -> {
                             latchPair.releaseAndWait();
                             System.err.println(line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         //then
                         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
@@ -1171,10 +1171,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final OngoingCapturedOutput copyOf = CaptureOutput.whileDoing(() -> {
                                 writeOutput(System.out, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             awaitLatch(copyOf.getCompletedLatch());
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdOut()).isEmpty();
@@ -1186,10 +1186,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final OngoingCapturedOutput copyOf = CaptureOutput.whileDoing(() -> {
                                 writeOutput(System.err, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             awaitLatch(copyOf.getCompletedLatch());
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdErr()).isEmpty();
@@ -1207,7 +1207,7 @@ public class CaptureTest {
                                 CaptureOutput.whileDoing(() -> {
                                     releaseLatch(ready);
                                     awaitLatch(done);
-                                });
+                                }, maxAwaitMilliseconds);
                         awaitLatch(ready);
                         //when
                         System.out.println(line1);
@@ -1232,7 +1232,7 @@ public class CaptureTest {
                                 CaptureOutput.whileDoing(() -> {
                                     releaseLatch(ready);
                                     awaitLatch(done);
-                                });
+                                }, maxAwaitMilliseconds);
                         awaitLatch(ready);
                         //when
                         System.err.println(line1);
@@ -1260,7 +1260,7 @@ public class CaptureTest {
                         //when
                         final OngoingCapturedOutput captured = CaptureOutput.copyWhileDoing(() -> {
                             writeOutput(System.out, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(captured.getCompletedLatch());
                         //then
                         assertThat(captured.getStdOut()).containsExactly(line1, line2);
@@ -1271,7 +1271,7 @@ public class CaptureTest {
                         //when
                         final OngoingCapturedOutput captured = CaptureOutput.copyWhileDoing(() -> {
                             writeOutput(System.err, line1, line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(captured.getCompletedLatch());
                         //then
                         assertThat(captured.getStdErr()).containsExactly(line1, line2);
@@ -1290,7 +1290,7 @@ public class CaptureTest {
                         original.set(System.out);
                         //when
                         awaitLatch(
-                                CaptureOutput.copyWhileDoing(() -> replacement.set(System.out))
+                                CaptureOutput.copyWhileDoing(() -> replacement.set(System.out), maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(replacement).isNotSameAs(original);
@@ -1302,7 +1302,7 @@ public class CaptureTest {
                         original.set(System.err);
                         //when
                         awaitLatch(
-                                CaptureOutput.copyWhileDoing(() -> replacement.set(System.err))
+                                CaptureOutput.copyWhileDoing(() -> replacement.set(System.err), maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(replacement).isNotSameAs(original);
@@ -1320,7 +1320,7 @@ public class CaptureTest {
                         //when
                         awaitLatch(
                                 CaptureOutput.copyWhileDoing(() -> {
-                                })
+                                }, maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(System.out).isSameAs(original.get());
@@ -1333,7 +1333,7 @@ public class CaptureTest {
                         //when
                         awaitLatch(
                                 CaptureOutput.copyWhileDoing(() -> {
-                                })
+                                }, maxAwaitMilliseconds)
                                         .getCompletedLatch());
                         //then
                         assertThat(System.err).isSameAs(original.get());
@@ -1349,7 +1349,7 @@ public class CaptureTest {
                         //when
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.copyWhileDoing(() -> {
                             throw cause;
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         //then
                         assertThat(capturedOutput.thrownException()).contains(cause);
@@ -1366,7 +1366,7 @@ public class CaptureTest {
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.copyWhileDoing(() -> {
                             latchPair.releaseAndWait();
                             System.out.println(line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         //then
                         assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
@@ -1380,7 +1380,7 @@ public class CaptureTest {
                         final OngoingCapturedOutput capturedOutput = CaptureOutput.copyWhileDoing(() -> {
                             latchPair.releaseAndWait();
                             System.err.println(line2);
-                        });
+                        }, maxAwaitMilliseconds);
                         awaitLatch(capturedOutput.getCompletedLatch());
                         //then
                         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
@@ -1398,10 +1398,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final OngoingCapturedOutput copyOf = CaptureOutput.copyWhileDoing(() -> {
                                 writeOutput(System.out, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             awaitLatch(copyOf.getCompletedLatch());
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
@@ -1413,10 +1413,10 @@ public class CaptureTest {
                         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
                             final OngoingCapturedOutput copyOf = CaptureOutput.copyWhileDoing(() -> {
                                 writeOutput(System.err, line1, line2);
-                            });
+                            }, maxAwaitMilliseconds);
                             awaitLatch(copyOf.getCompletedLatch());
                             ref.set(copyOf);
-                        });
+                        }, maxAwaitMilliseconds);
                         //then
                         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
                         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
@@ -1434,7 +1434,7 @@ public class CaptureTest {
                                 CaptureOutput.copyWhileDoing(() -> {
                                     releaseLatch(ready);
                                     awaitLatch(done);
-                                });
+                                }, maxAwaitMilliseconds);
                         awaitLatch(ready);
                         //when
                         System.out.println(line1);
@@ -1459,7 +1459,7 @@ public class CaptureTest {
                                 CaptureOutput.copyWhileDoing(() -> {
                                     releaseLatch(ready);
                                     awaitLatch(done);
-                                });
+                                }, maxAwaitMilliseconds);
                         awaitLatch(ready);
                         //when
                         System.err.println(line1);
@@ -1514,11 +1514,11 @@ public class CaptureTest {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
             awaitLatch(latch1);
-            CaptureOutput.of(waitAndContinue(latch2, latch3));
+            CaptureOutput.of(waitAndContinue(latch2, latch3), maxAwaitMilliseconds);
         });
         executor.submit(executor::shutdown);
         //when
-        CaptureOutput.of(waitAndContinue(latch1, latch2));
+        CaptureOutput.of(waitAndContinue(latch1, latch2), maxAwaitMilliseconds);
         releaseLatch(latch3);
         executor.awaitTermination(100L, TimeUnit.MILLISECONDS);
         //then

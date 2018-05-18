@@ -38,14 +38,20 @@ import java.util.function.Function;
 class AsynchronousOutputCapturer extends AbstractCaptureOutput {
 
     private final Function<RouterParameters, Router> routerFactory;
+    private final Long maxAwaitMilliseconds;
 
     /**
      * Constructor.
      *
-     * @param routerFactory The Router to direct where written output is sent
+     * @param routerFactory        The Router to direct where written output is sent
+     * @param maxAwaitMilliseconds The maximum number of milliseconds to await for the capture to complete
      */
-    AsynchronousOutputCapturer(final Function<RouterParameters, Router> routerFactory) {
+    AsynchronousOutputCapturer(
+            final Function<RouterParameters, Router> routerFactory,
+            final Long maxAwaitMilliseconds
+    ) {
         this.routerFactory = routerFactory;
+        this.maxAwaitMilliseconds = maxAwaitMilliseconds;
     }
 
     /**
@@ -59,7 +65,7 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
      */
     OngoingCapturedOutput capture(final ThrowingCallable callable) {
         val capturedOutput = new AtomicReference<OngoingCapturedOutput>();
-        val started = new SafeLatch(1);
+        val started = new SafeLatch(1, maxAwaitMilliseconds);
         execute(callable, capturedOutput, started);
         started.await();
         return capturedOutput.get();
@@ -70,7 +76,7 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
             final AtomicReference<OngoingCapturedOutput> capturedOutput,
             final SafeLatch started
     ) {
-        val completedLatch = new SafeLatch(1);
+        val completedLatch = new SafeLatch(1, maxAwaitMilliseconds);
         val executor = Executors.newSingleThreadExecutor();
         executor.submit(buildCaptor(capturedOutput, completedLatch));
         executor.submit(started::countDown);

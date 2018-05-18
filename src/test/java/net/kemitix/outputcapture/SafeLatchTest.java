@@ -11,10 +11,11 @@ public class SafeLatchTest {
     public void whenInterruptedThenWrapException() {
         //given
         final Thread mainThread = Thread.currentThread();
+        final Long maxAwaitMilliseconds = 100L;
         //when
         waitThen(10L, mainThread::interrupt);
         //then
-        assertThatThrownBy(() -> new SafeLatch(1).await())
+        assertThatThrownBy(() -> new SafeLatch(1, maxAwaitMilliseconds).await())
                 .isInstanceOf(OutputCaptureException.class);
     }
 

@@ -22,6 +22,7 @@
 package net.kemitix.outputcapture;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * CountDownLatch that, when an {@link InterruptedException} is thrown, wraps it in a {@link OutputCaptureException}.
@@ -30,20 +31,24 @@ import java.util.concurrent.CountDownLatch;
  */
 class SafeLatch extends CountDownLatch {
 
+    private final Long maxAwaitMilliseconds;
+
     /**
      * Constructs a {@code CountDownLatch} initialized with the given count.
      *
-     * @param count the number of times {@link #countDown} must be invoked
-     *              before threads can pass through {@link #await}
+     * @param count                the number of times {@link #countDown} must be invoke before threads can pass
+     *                             through {@link #await}
+     * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the latch to complete
      */
-    SafeLatch(final int count) {
+    SafeLatch(final int count, final Long maxAwaitMilliseconds) {
         super(count);
+        this.maxAwaitMilliseconds = maxAwaitMilliseconds;
     }
 
     @Override
     public void await() {
         try {
-            super.await();
+            super.await(maxAwaitMilliseconds, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new OutputCaptureException(e);
         }

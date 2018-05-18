@@ -60,36 +60,40 @@ interface Captors {
      * Create an {@link CaptureOutput} instance that will intercept and capture output asynchronously for a single
      * thread.
      *
+     * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
      * @return A redirecting and asynchronous CaptureOutput tied to a single thread
      */
-    static AsynchronousOutputCapturer asyncRedirectThread() {
-        return new AsynchronousOutputCapturer(ThreadFilteredRedirectRouter::new);
+    static AsynchronousOutputCapturer asyncRedirectThread(Long maxAwaitMilliseconds) {
+        return new AsynchronousOutputCapturer(ThreadFilteredRedirectRouter::new, maxAwaitMilliseconds);
     }
 
     /**
      * Create an {@link CaptureOutput} instance that will capture output asynchronously for a single thread.
      *
+     * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
      * @return A copying and asynchronous CaptureOutput tied to a single thread
      */
-    static AsynchronousOutputCapturer asyncCopyThread() {
-        return new AsynchronousOutputCapturer(ThreadFilteredCopyRouter::new);
+    static AsynchronousOutputCapturer asyncCopyThread(Long maxAwaitMilliseconds) {
+        return new AsynchronousOutputCapturer(ThreadFilteredCopyRouter::new, maxAwaitMilliseconds);
     }
 
     /**
      * Create an {@link CaptureOutput} instance that will intercept and capture output asynchronously from all threads.
      *
+     * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
      * @return A redirecting and asynchronous CaptureOutput
      */
-    static AsynchronousOutputCapturer asyncRedirectAll() {
-        return new AsynchronousOutputCapturer(PromiscuousRedirectRouter::new);
+    static AsynchronousOutputCapturer asyncRedirectAll(Long maxAwaitMilliseconds) {
+        return new AsynchronousOutputCapturer(PromiscuousRedirectRouter::new, maxAwaitMilliseconds);
     }
 
     /**
      * Create an {@link CaptureOutput} instance that will capture output asynchronously from all threads.
      *
+     * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
      * @return A copying and asynchronous CaptureOutput
      */
-    static AsynchronousOutputCapturer asyncCopyAll() {
-        return new AsynchronousOutputCapturer(PromiscuousCopyRouter::new);
+    static AsynchronousOutputCapturer asyncCopyAll(Long maxAwaitMilliseconds) {
+        return new AsynchronousOutputCapturer(PromiscuousCopyRouter::new, maxAwaitMilliseconds);
     }
 }

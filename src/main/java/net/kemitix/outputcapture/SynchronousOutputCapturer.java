@@ -53,11 +53,12 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      * Captures the output of the callable then returns.
      *
      * @param callable The callable to capture the output of
+     * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
      *
      * @return an instance of CapturedOutput
      */
-    CapturedOutput capture(final ThrowingCallable callable) {
-        val finished = new SafeLatch(1);
+    CapturedOutput capture(final ThrowingCallable callable, final Long maxAwaitMilliseconds) {
+        val finished = new SafeLatch(1, maxAwaitMilliseconds);
         val capturedOutput = new AtomicReference<RoutableCapturedOutput>();
         executeAsync(callable, finished, capturedOutput);
         finished.awaitThen(() -> disable(capturedOutput.get()));

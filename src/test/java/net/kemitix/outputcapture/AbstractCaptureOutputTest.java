@@ -9,6 +9,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class AbstractCaptureOutputTest {
 
+    private final Long maxAwaitMilliseconds = 100L;
+
     @Test
     public void givenNoInteceptorsWhenRemoveAllThenNoneLeft() {
         //given
@@ -52,7 +54,7 @@ public class AbstractCaptureOutputTest {
 
         MyAsyncCapture() throws InterruptedException {
             final CountDownLatch started = new SimpleLatch();
-            capture = Captors.asyncCopyAll().capture(() -> {
+            capture = Captors.asyncCopyAll(maxAwaitMilliseconds).capture(() -> {
                 release(started);
                 await(finished);
             });
