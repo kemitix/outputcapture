@@ -2,6 +2,7 @@ package net.kemitix.outputcapture.test;
 
 import de.bechte.junit.runners.context.HierarchicalContextRunner;
 import net.kemitix.outputcapture.*;
+import org.assertj.core.api.Assumptions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,20 +36,13 @@ public class CaptureTest {
     @Rule
     public Timeout globalTimeout = Timeout.seconds(100L);
 
-    private PrintStream savedOut;
-    private PrintStream savedErr;
-
     @Before
     public void setUp() {
         assertThat(CaptureOutput.activeCount()).as("No existing captures").isZero();
-        savedOut = System.out;
-        savedErr = System.err;
     }
 
     @After
     public void tearDown() {
-        System.setOut(savedOut);
-        System.setErr(savedErr);
         final int activeCount = CaptureOutput.activeCount();
         CaptureOutput.removeAllInterceptors();
         assertThat(activeCount).as("All captures removed").isZero();

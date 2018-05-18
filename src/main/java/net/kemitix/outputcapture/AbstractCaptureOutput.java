@@ -131,9 +131,14 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
         return ACTIVE_CAPTURES.size();
     }
 
-    static void removeAllInterceptors() {
+    /**
+     * Remove any active captures.
+     */
+    static void removeAllActiveCaptures() {
         while (!ACTIVE_CAPTURES.isEmpty()) {
             ACTIVE_CAPTURES.poll();
         }
+        System.setOut(savedOut);
+        System.setErr(savedErr);
     }
 }

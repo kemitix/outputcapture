@@ -13,7 +13,7 @@ public class AbstractCaptureOutputTest {
     public void givenNoInteceptorsWhenRemoveAllThenNoneLeft() {
         //given
         //when
-        AbstractCaptureOutput.removeAllInterceptors();
+        AbstractCaptureOutput.removeAllActiveCaptures();
         //then
         assertThat(AbstractCaptureOutput.activeCount()).isZero();
     }
@@ -24,7 +24,7 @@ public class AbstractCaptureOutputTest {
         final MyAsyncCapture capture = new MyAsyncCapture();
         assertThat(AbstractCaptureOutput.activeCount()).isNotZero();
         //when
-        AbstractCaptureOutput.removeAllInterceptors();
+        AbstractCaptureOutput.removeAllActiveCaptures();
         //then
         capture.remove();
         assertThat(AbstractCaptureOutput.activeCount()).isZero();
@@ -37,7 +37,7 @@ public class AbstractCaptureOutputTest {
         final MyAsyncCapture capture2 = new MyAsyncCapture();
         assertThat(AbstractCaptureOutput.activeCount()).isNotZero();
         //when
-        AbstractCaptureOutput.removeAllInterceptors();
+        AbstractCaptureOutput.removeAllActiveCaptures();
         //then
         capture1.remove();
         capture2.remove();

@@ -143,7 +143,10 @@ public interface CaptureOutput {
         return AbstractCaptureOutput.activeCount();
     }
 
+    /**
+     * Remove any active captures.
+     */
     static void removeAllInterceptors() {
-        AbstractCaptureOutput.removeAllInterceptors();
+        AbstractCaptureOutput.removeAllActiveCaptures();
     }
 }

@@ -48,7 +48,7 @@ public class AbstractCapturedOutputTest {
     }
 
     @Test
-    public void whenOutputStreamHasNowLinesThenReturnEmptyStream() {
+    public void whenOutputStreamHasNoLinesThenReturnEmptyStream() {
         //given
         final OutputStream outputStream = new ByteArrayOutputStream();
         final MyCapturedOutput capturedOutput = new MyCapturedOutput();
