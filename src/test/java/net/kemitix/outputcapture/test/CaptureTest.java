@@ -2,10 +2,7 @@ package net.kemitix.outputcapture.test;
 
 import de.bechte.junit.runners.context.HierarchicalContextRunner;
 import net.kemitix.outputcapture.*;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 
@@ -609,9 +606,10 @@ public class CaptureTest {
                         //given
                         original.set(System.out);
                         //when
-                        CaptureOutput.ofThread(() -> replacement.set(System.out), maxAwaitMilliseconds);
+                        final OngoingCapturedOutput output = CaptureOutput.ofThread(() -> replacement.set(System.out), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
+                        awaitLatch(output.getCompletedLatch());
                     }
 
                     @Test
@@ -619,9 +617,10 @@ public class CaptureTest {
                         //given
                         original.set(System.err);
                         //when
-                        CaptureOutput.ofThread(() -> replacement.set(System.err), maxAwaitMilliseconds);
+                        final OngoingCapturedOutput output = CaptureOutput.ofThread(() -> replacement.set(System.err), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
+                        awaitLatch(output.getCompletedLatch());
                     }
                 }
 
@@ -1067,9 +1066,10 @@ public class CaptureTest {
                         //given
                         original.set(System.out);
                         //when
-                        CaptureOutput.whileDoing(() -> replacement.set(System.out), maxAwaitMilliseconds);
+                        final OngoingCapturedOutput output = CaptureOutput.whileDoing(() -> replacement.set(System.out), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
+                        awaitLatch(output.getCompletedLatch());
                     }
 
                     @Test
@@ -1077,9 +1077,10 @@ public class CaptureTest {
                         //given
                         original.set(System.err);
                         //when
-                        CaptureOutput.whileDoing(() -> replacement.set(System.err), maxAwaitMilliseconds);
+                        final OngoingCapturedOutput output = CaptureOutput.whileDoing(() -> replacement.set(System.err), maxAwaitMilliseconds);
                         //then
                         assertThat(replacement).isNotSameAs(original);
+                        awaitLatch(output.getCompletedLatch());
                     }
                 }
 
@@ -1506,17 +1507,14 @@ public class CaptureTest {
         final PrintStream originalErr = System.err;
         final SafeLatch latch1 = createLatch();
         final SafeLatch latch2 = createLatch();
-        final SafeLatch latch3 = createLatch();
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
-            awaitLatch(latch1);
-            CaptureOutput.of(waitAndContinue(latch2, latch3), maxAwaitMilliseconds);
-        });
-        executor.submit(executor::shutdown);
         //when
-        CaptureOutput.of(waitAndContinue(latch1, latch2), maxAwaitMilliseconds);
-        releaseLatch(latch3);
-        executor.awaitTermination(100L, TimeUnit.MILLISECONDS);
+        CaptureOutput.of(() ->
+                CaptureOutput.of(
+                        waitAndContinue(latch1, latch2),
+                        maxAwaitMilliseconds),
+                maxAwaitMilliseconds);
+        releaseLatch(latch1);
+        awaitLatch(latch2);
         //then
         assertThat(System.out).isSameAs(originalOut);
         assertThat(System.err).isSameAs(originalErr);
