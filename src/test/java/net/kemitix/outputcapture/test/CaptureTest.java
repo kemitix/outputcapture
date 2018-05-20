@@ -14,7 +14,7 @@ public class CaptureTest {
     private final Long maxAwaitMilliseconds = 100L;
 
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(100L);
+    public Timeout globalTimeout = Timeout.seconds(maxAwaitMilliseconds);
 
     @Before
     public void setUp() {

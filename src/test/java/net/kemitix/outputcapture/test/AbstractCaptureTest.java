@@ -5,8 +5,6 @@ import net.kemitix.outputcapture.SafeLatch;
 import net.kemitix.outputcapture.ThrowingCallable;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
 
 import java.io.PrintStream;
 import java.util.UUID;
@@ -16,25 +14,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 abstract class AbstractCaptureTest {
 
     //<editor-fold desc="fields">
-    public static final String STARTING_OUT = "starting out";
-    public static final String STARTING_ERR = "starting err";
-    public static final String FINISHED_OUT = "finished out";
-    public static final String FINISHED_ERR = "finished err";
+    protected static final long MAX_TIMEOUT = 100L;
+    protected static final String STARTING_OUT = "starting out";
+    protected static final String STARTING_ERR = "starting err";
+    protected static final String FINISHED_OUT = "finished out";
+    protected static final String FINISHED_ERR = "finished err";
 
-    public final Long maxAwaitMilliseconds = 100L;
-    public final String line1 = "1:" + UUID.randomUUID().toString();
-    public final String line2 = "2:" + UUID.randomUUID().toString();
+    protected final Long maxAwaitMilliseconds = 100L;
+    protected final String line1 = "1:" + UUID.randomUUID().toString();
+    protected final String line2 = "2:" + UUID.randomUUID().toString();
     //</editor-fold>
 
     @Before
     public void setUp() {
-        System.out.println("AbstractCaptureTest.setUp");
         assertThat(CaptureOutput.activeCount()).as("No existing captures").isZero();
     }
 
     @After
     public void tearDown() {
-        System.out.println("AbstractCaptureTest.tearDown");
         final int activeCount = CaptureOutput.activeCount();
         CaptureOutput.removeAllInterceptors();
         assertThat(activeCount).as("All captures removed").isZero();

@@ -4,6 +4,7 @@ import net.kemitix.outputcapture.CaptureOutput;
 import net.kemitix.outputcapture.CapturedOutput;
 import net.kemitix.outputcapture.OutputCaptureException;
 import net.kemitix.outputcapture.SafeLatch;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -20,18 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class SynchronousFilteredRedirect extends AbstractCaptureTest {
 
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(100L);
-
-    private final AtomicReference<PrintStream> original = new AtomicReference<>();
-    private final AtomicReference<PrintStream> replacement = new AtomicReference<>();
-    private final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
-    private final ExecutorService catchMe = Executors.newSingleThreadExecutor();
-    private final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
-    private final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
-    private final SafeLatch ready = createLatch();
-    private final SafeLatch done = createLatch();
-    private final SafeLatch finished = createLatch();
-    private final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
+    public Timeout globalTimeout = Timeout.seconds(MAX_TIMEOUT);
 
     @Test
     public void captureSystemOut() {
@@ -56,6 +46,8 @@ public class SynchronousFilteredRedirect extends AbstractCaptureTest {
     @Test
     public void replaceSystemOut() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
+        final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.out);
         //when
         CaptureOutput.of(() -> replacement.set(System.out), maxAwaitMilliseconds);
@@ -66,6 +58,8 @@ public class SynchronousFilteredRedirect extends AbstractCaptureTest {
     @Test
     public void replaceSystemErr() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
+        final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.err);
         //when
         CaptureOutput.of(() -> replacement.set(System.err), maxAwaitMilliseconds);
@@ -76,6 +70,8 @@ public class SynchronousFilteredRedirect extends AbstractCaptureTest {
     @Test
     public void restoreSystemOut() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
+        final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.out);
         //when
         CaptureOutput.of(() -> {
@@ -87,6 +83,8 @@ public class SynchronousFilteredRedirect extends AbstractCaptureTest {
     @Test
     public void restoreSystemErr() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
+        final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.err);
         //when
         CaptureOutput.of(() -> {
@@ -97,6 +95,13 @@ public class SynchronousFilteredRedirect extends AbstractCaptureTest {
 
     @Test
     public void filtersToTargetThreadOut() {
+        //given
+        final ExecutorService catchMe = Executors.newSingleThreadExecutor();
+        final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
+        final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
+        final SafeLatch ready = createLatch();
+        final SafeLatch done = createLatch();
+        final SafeLatch finished = createLatch();
         //when
         catchMe.submit(() -> captureThis(ready, done, reference, finished, catchMe));
         ignoreMe.submit(() -> ignoreThis(ready, done, ignoreMe));
@@ -108,6 +113,13 @@ public class SynchronousFilteredRedirect extends AbstractCaptureTest {
 
     @Test
     public void filtersToTargetThreadErr() {
+        //given
+        final ExecutorService catchMe = Executors.newSingleThreadExecutor();
+        final ExecutorService ignoreMe = Executors.newSingleThreadExecutor();
+        final AtomicReference<CapturedOutput> reference = new AtomicReference<>();
+        final SafeLatch ready = createLatch();
+        final SafeLatch done = createLatch();
+        final SafeLatch finished = createLatch();
         //when
         catchMe.submit(() -> captureThis(ready, done, reference, finished, catchMe));
         ignoreMe.submit(() -> ignoreThis(ready, done, ignoreMe));
@@ -119,6 +131,8 @@ public class SynchronousFilteredRedirect extends AbstractCaptureTest {
 
     @Test
     public void redirectFromOriginalOut() {
+        //given
+        final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
             final CapturedOutput copyOf = CaptureOutput.of(() -> {
@@ -133,6 +147,8 @@ public class SynchronousFilteredRedirect extends AbstractCaptureTest {
 
     @Test
     public void redirectFromOriginalErr() {
+        //given
+        final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
             final CapturedOutput copyOf = CaptureOutput.of(() -> {
@@ -147,6 +163,8 @@ public class SynchronousFilteredRedirect extends AbstractCaptureTest {
 
     @Test
     public void wrappedInOutputCaptureException() {
+        //given
+        final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
         //then
         assertThatThrownBy(() -> CaptureOutput.of(() -> {
             throw cause;

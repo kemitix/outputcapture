@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AsynchronousFilteredCopy extends AbstractCaptureTest {
 
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(100L);
+    public Timeout globalTimeout = Timeout.seconds(MAX_TIMEOUT);
 
     private final AtomicReference<PrintStream> original = new AtomicReference<>();
     private final AtomicReference<PrintStream> replacement = new AtomicReference<>();

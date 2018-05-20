@@ -3,10 +3,7 @@ package net.kemitix.outputcapture.test;
 import net.kemitix.outputcapture.CaptureOutput;
 import net.kemitix.outputcapture.CapturedOutput;
 import net.kemitix.outputcapture.OutputCaptureException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.Timeout;
 
 import java.io.PrintStream;
@@ -20,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class SynchronousFilteredCopy extends AbstractCaptureTest {
 
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(100L);
+    public Timeout globalTimeout = Timeout.seconds(MAX_TIMEOUT);
 
     private final AtomicReference<PrintStream> original = new AtomicReference<>();
     private final AtomicReference<PrintStream> replacement = new AtomicReference<>();
