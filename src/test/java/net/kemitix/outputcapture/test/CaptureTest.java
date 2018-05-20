@@ -5,6 +5,7 @@ import org.junit.*;
 import org.junit.rules.Timeout;
 
 import java.io.PrintStream;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,43 +28,27 @@ public class CaptureTest {
         assertThat(activeCount).as("All captures removed").isZero();
     }
 
-    private void awaitLatch(final SafeLatch latch) {
-            latch.await();
-    }
-
     @Test
     public void canRestoreSystemOutAndErrWhenMultipleOutputCapturesOverlap() {
         //given
         final PrintStream originalOut = System.out;
         final PrintStream originalErr = System.err;
-        final SafeLatch latch1 = createLatch();
-        final SafeLatch latch2 = createLatch();
+        final SafeLatch latch1 = new SafeLatch(1, 1000L);
+        final SafeLatch latch2 = new SafeLatch(1, 1000L);
         //when
-        CaptureOutput.of(() ->
-                CaptureOutput.of(
-                        waitAndContinue(latch1, latch2),
-                        maxAwaitMilliseconds),
-                maxAwaitMilliseconds);
-        releaseLatch(latch1);
-        awaitLatch(latch2);
+        final OngoingCapturedOutput output1 = CaptureOutput.ofThread(() -> waitUntilReleased(latch1), maxAwaitMilliseconds);
+        final OngoingCapturedOutput output2 = CaptureOutput.ofThread(() -> waitUntilReleased(latch2), maxAwaitMilliseconds);
+        latch1.countDown();
+        latch2.countDown();
+        output1.getCompletedLatch().await();
+        output2.getCompletedLatch().await();
         //then
         assertThat(System.out).isSameAs(originalOut);
         assertThat(System.err).isSameAs(originalErr);
     }
 
-    private void releaseLatch(final SafeLatch latch) {
-        latch.countDown();
-    }
-
-    private SafeLatch createLatch() {
-        return new SafeLatch(1, 1000L);
-    }
-
-    private ThrowingCallable waitAndContinue(final SafeLatch ready, final SafeLatch done) {
-        return () -> {
-            releaseLatch(ready);
-            awaitLatch(done);
-        };
+    private void waitUntilReleased(final SafeLatch latch) {
+        latch.await();
     }
 
 }
