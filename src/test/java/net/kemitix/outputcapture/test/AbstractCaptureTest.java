@@ -20,7 +20,6 @@ abstract class AbstractCaptureTest {
     protected static final String FINISHED_OUT = "finished out";
     protected static final String FINISHED_ERR = "finished err";
 
-    protected final Long maxAwaitMilliseconds = 100L;
     protected final String line1 = "1:" + UUID.randomUUID().toString();
     protected final String line2 = "2:" + UUID.randomUUID().toString();
     //</editor-fold>
@@ -62,7 +61,7 @@ abstract class AbstractCaptureTest {
     }
 
     protected SafeLatch createLatch() {
-        return new SafeLatch(1, 1000L);
+        return new SafeLatch(1, MAX_TIMEOUT);
     }
 
     protected void asyncWithInterrupt(final SafeLatch ready, final SafeLatch done) {
@@ -79,6 +78,10 @@ abstract class AbstractCaptureTest {
             releaseLatch(ready);
             awaitLatch(done);
         };
+    }
+
+    protected void doNothing() {
+
     }
 
     protected class LatchPair {

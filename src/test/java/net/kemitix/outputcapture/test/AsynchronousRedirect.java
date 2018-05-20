@@ -22,11 +22,6 @@ public class AsynchronousRedirect extends AbstractCaptureTest {
     @Rule
     public Timeout globalTimeout = Timeout.seconds(MAX_TIMEOUT);
 
-    private final AtomicReference<PrintStream> original = new AtomicReference<>();
-    private final AtomicReference<PrintStream> replacement = new AtomicReference<>();
-    private final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
-    private final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
-
     @Test
     public void captureSystemOut() {
         //given
@@ -35,7 +30,7 @@ public class AsynchronousRedirect extends AbstractCaptureTest {
         final OngoingCapturedOutput captured = CaptureOutput.whileDoing(() -> {
             latchPair.releaseAndWait();
             writeOutput(System.out, line2);
-        }, maxAwaitMilliseconds);
+        }, MAX_TIMEOUT);
         awaitLatch(captured.getCompletedLatch());
         //then
         assertThat(captured.getStdOut()).containsExactly(line1, line2);
@@ -49,7 +44,7 @@ public class AsynchronousRedirect extends AbstractCaptureTest {
         OngoingCapturedOutput captured = CaptureOutput.whileDoing(() -> {
             latchPair.releaseAndWait();
             writeOutput(System.err, line2);
-        }, maxAwaitMilliseconds);
+        }, MAX_TIMEOUT);
         awaitLatch(captured.getCompletedLatch());
         //then
         assertThat(captured.getStdErr()).containsExactly(line1, line2);
@@ -58,34 +53,37 @@ public class AsynchronousRedirect extends AbstractCaptureTest {
     @Test
     public void replaceSystemOut() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
+        final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.out);
         //when
-        final OngoingCapturedOutput output = CaptureOutput.whileDoing(() -> replacement.set(System.out), maxAwaitMilliseconds);
+        final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(() -> replacement.set(System.out), MAX_TIMEOUT);
         //then
         assertThat(replacement).isNotSameAs(original);
-        awaitLatch(output.getCompletedLatch());
+        awaitLatch(ongoing.getCompletedLatch());
     }
 
     @Test
     public void replaceSystemErr() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
+        final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.err);
         //when
-        final OngoingCapturedOutput output = CaptureOutput.whileDoing(() -> replacement.set(System.err), maxAwaitMilliseconds);
+        final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(() -> replacement.set(System.err), MAX_TIMEOUT);
         //then
         assertThat(replacement).isNotSameAs(original);
-        awaitLatch(output.getCompletedLatch());
+        awaitLatch(ongoing.getCompletedLatch());
     }
 
     @Test
     public void restoreSystemOut() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.out);
         //when
-        awaitLatch(
-                CaptureOutput.whileDoing(() -> {
-                }, maxAwaitMilliseconds)
-                        .getCompletedLatch());
+        final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(this::doNothing, MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
         //then
         assertThat(System.out).isSameAs(original.get());
     }
@@ -93,24 +91,25 @@ public class AsynchronousRedirect extends AbstractCaptureTest {
     @Test
     public void restoreSystemErr() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.err);
         //when
-        awaitLatch(
-                CaptureOutput.whileDoing(() -> {
-                }, maxAwaitMilliseconds)
-                        .getCompletedLatch());
+        final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(this::doNothing, MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
         //then
         assertThat(System.err).isSameAs(original.get());
     }
 
     @Test
     public void exceptionThrownIsAvailable() {
-        //when
-        final OngoingCapturedOutput capturedOutput = CaptureOutput.whileDoing(() -> {
+        //given
+        final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
+        // when
+        final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(() -> {
             throw cause;
-        }, maxAwaitMilliseconds);
-        awaitLatch(capturedOutput.getCompletedLatch());
-        assertThat(capturedOutput.thrownException()).contains(cause);
+        }, MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
+        assertThat(ongoing.thrownException()).contains(cause);
     }
 
     @Test
@@ -118,13 +117,13 @@ public class AsynchronousRedirect extends AbstractCaptureTest {
         //given
         final LatchPair latchPair = whenReleased(() -> System.out.println(line1));
         //when
-        final OngoingCapturedOutput capturedOutput = CaptureOutput.whileDoing(() -> {
+        final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(() -> {
             latchPair.releaseAndWait();
             System.out.println(line2);
-        }, maxAwaitMilliseconds);
-        awaitLatch(capturedOutput.getCompletedLatch());
+        }, MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
         //then
-        assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
+        assertThat(ongoing.getStdOut()).containsExactly(line1, line2);
     }
 
     @Test
@@ -132,25 +131,26 @@ public class AsynchronousRedirect extends AbstractCaptureTest {
         //given
         final LatchPair latchPair = whenReleased(() -> System.err.println(line1));
         //when
-        final OngoingCapturedOutput capturedOutput = CaptureOutput.whileDoing(() -> {
+        final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(() -> {
             latchPair.releaseAndWait();
             System.err.println(line2);
-        }, maxAwaitMilliseconds);
-        awaitLatch(capturedOutput.getCompletedLatch());
+        }, MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
         //then
-        assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
+        assertThat(ongoing.getStdErr()).containsExactly(line1, line2);
     }
 
     @Test
     public void redirectFromOriginalOut() {
+        //given
+        final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
-            final OngoingCapturedOutput copyOf = CaptureOutput.whileDoing(() -> {
-                writeOutput(System.out, line1, line2);
-            }, maxAwaitMilliseconds);
-            awaitLatch(copyOf.getCompletedLatch());
-            ref.set(copyOf);
-        }, maxAwaitMilliseconds);
+            final OngoingCapturedOutput ongoing =
+                    CaptureOutput.whileDoing(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
+            awaitLatch(ongoing.getCompletedLatch());
+            ref.set(ongoing);
+        }, MAX_TIMEOUT);
         //then
         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
         assertThat(capturedOutput.getStdOut()).isEmpty();
@@ -158,14 +158,15 @@ public class AsynchronousRedirect extends AbstractCaptureTest {
 
     @Test
     public void redirectFromOriginalErr() {
+        //given
+        final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
-            final OngoingCapturedOutput copyOf = CaptureOutput.whileDoing(() -> {
-                writeOutput(System.err, line1, line2);
-            }, maxAwaitMilliseconds);
-            awaitLatch(copyOf.getCompletedLatch());
-            ref.set(copyOf);
-        }, maxAwaitMilliseconds);
+            final OngoingCapturedOutput ongoing =
+                    CaptureOutput.whileDoing(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
+            awaitLatch(ongoing.getCompletedLatch());
+            ref.set(ongoing);
+        }, MAX_TIMEOUT);
         //then
         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
         assertThat(capturedOutput.getStdErr()).isEmpty();
@@ -176,24 +177,23 @@ public class AsynchronousRedirect extends AbstractCaptureTest {
         //given
         final SafeLatch ready = createLatch();
         final SafeLatch done = createLatch();
-        final OngoingCapturedOutput capturedOutput =
+        final OngoingCapturedOutput ongoing =
                 CaptureOutput.whileDoing(() -> {
                     releaseLatch(ready);
                     awaitLatch(done);
-                }, maxAwaitMilliseconds);
+                }, MAX_TIMEOUT);
         awaitLatch(ready);
         //when
         System.out.println(line1);
-        final CapturedOutput initialOutput =
-                capturedOutput.getCapturedOutputAndFlush();
+        final CapturedOutput initialOutput = ongoing.getCapturedOutputAndFlush();
         System.out.println(line2);
         releaseLatch(done);
-        awaitLatch(capturedOutput.getCompletedLatch());
+        awaitLatch(ongoing.getCompletedLatch());
         //then
         assertThat(initialOutput.getStdOut()).containsExactly(line1);
-        assertThat(capturedOutput.getStdOut()).containsExactly(line2);
+        assertThat(ongoing.getStdOut()).containsExactly(line2);
         assertThat(initialOutput.out().toString()).isEqualToIgnoringWhitespace(line1);
-        assertThat(capturedOutput.out().toString()).isEqualToIgnoringWhitespace(line2);
+        assertThat(ongoing.out().toString()).isEqualToIgnoringWhitespace(line2);
     }
 
     @Test
@@ -201,24 +201,23 @@ public class AsynchronousRedirect extends AbstractCaptureTest {
         //given
         final SafeLatch ready = createLatch();
         final SafeLatch done = createLatch();
-        final OngoingCapturedOutput capturedOutput =
+        final OngoingCapturedOutput ongoing =
                 CaptureOutput.whileDoing(() -> {
                     releaseLatch(ready);
                     awaitLatch(done);
-                }, maxAwaitMilliseconds);
+                }, MAX_TIMEOUT);
         awaitLatch(ready);
         //when
         System.err.println(line1);
-        final CapturedOutput initialOutput =
-                capturedOutput.getCapturedOutputAndFlush();
+        final CapturedOutput initialOutput = ongoing.getCapturedOutputAndFlush();
         System.err.println(line2);
         releaseLatch(done);
-        awaitLatch(capturedOutput.getCompletedLatch());
+        awaitLatch(ongoing.getCompletedLatch());
         //then
         assertThat(initialOutput.getStdErr()).containsExactly(line1);
-        assertThat(capturedOutput.getStdErr()).containsExactly(line2);
+        assertThat(ongoing.getStdErr()).containsExactly(line2);
         assertThat(initialOutput.err().toString()).isEqualToIgnoringWhitespace(line1);
-        assertThat(capturedOutput.err().toString()).isEqualToIgnoringWhitespace(line2);
+        assertThat(ongoing.err().toString()).isEqualToIgnoringWhitespace(line2);
     }
 
 }

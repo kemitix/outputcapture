@@ -33,8 +33,8 @@ public class CaptureTest {
         //given
         final PrintStream originalOut = System.out;
         final PrintStream originalErr = System.err;
-        final SafeLatch latch1 = new SafeLatch(1, 1000L);
-        final SafeLatch latch2 = new SafeLatch(1, 1000L);
+        final SafeLatch latch1 = new SafeLatch(1, maxAwaitMilliseconds);
+        final SafeLatch latch2 = new SafeLatch(1, maxAwaitMilliseconds);
         //when
         final OngoingCapturedOutput output1 = CaptureOutput.ofThread(() -> waitUntilReleased(latch1), maxAwaitMilliseconds);
         final OngoingCapturedOutput output2 = CaptureOutput.ofThread(() -> waitUntilReleased(latch2), maxAwaitMilliseconds);

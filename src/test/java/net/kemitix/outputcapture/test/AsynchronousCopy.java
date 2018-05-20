@@ -21,17 +21,12 @@ public class AsynchronousCopy extends AbstractCaptureTest {
     @Rule
     public Timeout globalTimeout = Timeout.seconds(MAX_TIMEOUT);
 
-    private final AtomicReference<PrintStream> original = new AtomicReference<>();
-    private final AtomicReference<PrintStream> replacement = new AtomicReference<>();
-    private final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
-    private final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
-
     @Test
     public void captureSystemOut() {
         //when
         final OngoingCapturedOutput captured = CaptureOutput.copyWhileDoing(() -> {
             writeOutput(System.out, line1, line2);
-        }, maxAwaitMilliseconds);
+        }, MAX_TIMEOUT);
         awaitLatch(captured.getCompletedLatch());
         //then
         assertThat(captured.getStdOut()).containsExactly(line1, line2);
@@ -42,7 +37,7 @@ public class AsynchronousCopy extends AbstractCaptureTest {
         //when
         final OngoingCapturedOutput captured = CaptureOutput.copyWhileDoing(() -> {
             writeOutput(System.err, line1, line2);
-        }, maxAwaitMilliseconds);
+        }, MAX_TIMEOUT);
         awaitLatch(captured.getCompletedLatch());
         //then
         assertThat(captured.getStdErr()).containsExactly(line1, line2);
@@ -51,10 +46,12 @@ public class AsynchronousCopy extends AbstractCaptureTest {
     @Test
     public void replaceSystemOut() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
+        final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.out);
         //when
         awaitLatch(
-                CaptureOutput.copyWhileDoing(() -> replacement.set(System.out), maxAwaitMilliseconds)
+                CaptureOutput.copyWhileDoing(() -> replacement.set(System.out), MAX_TIMEOUT)
                         .getCompletedLatch());
         //then
         assertThat(replacement).isNotSameAs(original);
@@ -63,10 +60,12 @@ public class AsynchronousCopy extends AbstractCaptureTest {
     @Test
     public void replaceSystemErr() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
+        final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.err);
         //when
         awaitLatch(
-                CaptureOutput.copyWhileDoing(() -> replacement.set(System.err), maxAwaitMilliseconds)
+                CaptureOutput.copyWhileDoing(() -> replacement.set(System.err), MAX_TIMEOUT)
                         .getCompletedLatch());
         //then
         assertThat(replacement).isNotSameAs(original);
@@ -75,11 +74,12 @@ public class AsynchronousCopy extends AbstractCaptureTest {
     @Test
     public void restoreSystemOut() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.out);
         //when
         awaitLatch(
                 CaptureOutput.copyWhileDoing(() -> {
-                }, maxAwaitMilliseconds)
+                }, MAX_TIMEOUT)
                         .getCompletedLatch());
         //then
         assertThat(System.out).isSameAs(original.get());
@@ -88,11 +88,12 @@ public class AsynchronousCopy extends AbstractCaptureTest {
     @Test
     public void restoreSystemErr() {
         //given
+        final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.err);
         //when
         awaitLatch(
                 CaptureOutput.copyWhileDoing(() -> {
-                }, maxAwaitMilliseconds)
+                }, MAX_TIMEOUT)
                         .getCompletedLatch());
         //then
         assertThat(System.err).isSameAs(original.get());
@@ -100,10 +101,12 @@ public class AsynchronousCopy extends AbstractCaptureTest {
 
     @Test
     public void exceptionThrownIsAvailable() {
+        //given
+        final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
         //when
         final OngoingCapturedOutput capturedOutput = CaptureOutput.copyWhileDoing(() -> {
             throw cause;
-        }, maxAwaitMilliseconds);
+        }, MAX_TIMEOUT);
         awaitLatch(capturedOutput.getCompletedLatch());
         //then
         assertThat(capturedOutput.thrownException()).contains(cause);
@@ -117,7 +120,7 @@ public class AsynchronousCopy extends AbstractCaptureTest {
         final OngoingCapturedOutput capturedOutput = CaptureOutput.copyWhileDoing(() -> {
             latchPair.releaseAndWait();
             System.out.println(line2);
-        }, maxAwaitMilliseconds);
+        }, MAX_TIMEOUT);
         awaitLatch(capturedOutput.getCompletedLatch());
         //then
         assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
@@ -131,7 +134,7 @@ public class AsynchronousCopy extends AbstractCaptureTest {
         final OngoingCapturedOutput capturedOutput = CaptureOutput.copyWhileDoing(() -> {
             latchPair.releaseAndWait();
             System.err.println(line2);
-        }, maxAwaitMilliseconds);
+        }, MAX_TIMEOUT);
         awaitLatch(capturedOutput.getCompletedLatch());
         //then
         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
@@ -139,14 +142,16 @@ public class AsynchronousCopy extends AbstractCaptureTest {
 
     @Test
     public void copyToOriginalOut() {
+        //given
+        final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
             final OngoingCapturedOutput copyOf = CaptureOutput.copyWhileDoing(() -> {
                 writeOutput(System.out, line1, line2);
-            }, maxAwaitMilliseconds);
+            }, MAX_TIMEOUT);
             awaitLatch(copyOf.getCompletedLatch());
             ref.set(copyOf);
-        }, maxAwaitMilliseconds);
+        }, MAX_TIMEOUT);
         //then
         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
         assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
@@ -154,14 +159,16 @@ public class AsynchronousCopy extends AbstractCaptureTest {
 
     @Test
     public void copyToOriginalErr() {
+        //given
+        final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
             final OngoingCapturedOutput copyOf = CaptureOutput.copyWhileDoing(() -> {
                 writeOutput(System.err, line1, line2);
-            }, maxAwaitMilliseconds);
+            }, MAX_TIMEOUT);
             awaitLatch(copyOf.getCompletedLatch());
             ref.set(copyOf);
-        }, maxAwaitMilliseconds);
+        }, MAX_TIMEOUT);
         //then
         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
@@ -176,7 +183,7 @@ public class AsynchronousCopy extends AbstractCaptureTest {
                 CaptureOutput.copyWhileDoing(() -> {
                     releaseLatch(ready);
                     awaitLatch(done);
-                }, maxAwaitMilliseconds);
+                }, MAX_TIMEOUT);
         awaitLatch(ready);
         //when
         System.out.println(line1);
@@ -201,7 +208,7 @@ public class AsynchronousCopy extends AbstractCaptureTest {
                 CaptureOutput.copyWhileDoing(() -> {
                     releaseLatch(ready);
                     awaitLatch(done);
-                }, maxAwaitMilliseconds);
+                }, MAX_TIMEOUT);
         awaitLatch(ready);
         //when
         System.err.println(line1);
