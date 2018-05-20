@@ -26,7 +26,6 @@
         <tiles-maven-plugin.version>2.11</tiles-maven-plugin.version>
         <kemitix-tiles.version>0.8.1</kemitix-tiles.version>
         <kemitix-checkstyle.version>4.1.1</kemitix-checkstyle.version>
-        <junit-hierarchicalcontextrunner.version>4.12.1</junit-hierarchicalcontextrunner.version>
         <pitest-maven-plugin.version>1.4.0</pitest-maven-plugin.version>
     </properties>
 
@@ -63,12 +62,6 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.bechte.junit</groupId>
-            <artifactId>junit-hierarchicalcontextrunner</artifactId>
-            <version>${junit-hierarchicalcontextrunner.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
