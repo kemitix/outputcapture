@@ -21,6 +21,8 @@
 
 package net.kemitix.outputcapture;
 
+import java.util.concurrent.Executors;
+
 /**
  * Factories for creating {@link CaptureOutput} implementations.
  *
@@ -64,7 +66,8 @@ interface Captors {
      * @return A redirecting and asynchronous CaptureOutput tied to a single thread
      */
     static AsynchronousOutputCapturer asyncRedirectThread(Long maxAwaitMilliseconds) {
-        return new AsynchronousOutputCapturer(ThreadFilteredRedirectRouter::new, maxAwaitMilliseconds);
+        return new AsynchronousOutputCapturer(ThreadFilteredRedirectRouter::new, maxAwaitMilliseconds,
+                Executors.newSingleThreadExecutor());
     }
 
     /**
@@ -74,7 +77,8 @@ interface Captors {
      * @return A copying and asynchronous CaptureOutput tied to a single thread
      */
     static AsynchronousOutputCapturer asyncCopyThread(Long maxAwaitMilliseconds) {
-        return new AsynchronousOutputCapturer(ThreadFilteredCopyRouter::new, maxAwaitMilliseconds);
+        return new AsynchronousOutputCapturer(ThreadFilteredCopyRouter::new, maxAwaitMilliseconds,
+                Executors.newSingleThreadExecutor());
     }
 
     /**
@@ -84,7 +88,8 @@ interface Captors {
      * @return A redirecting and asynchronous CaptureOutput
      */
     static AsynchronousOutputCapturer asyncRedirectAll(Long maxAwaitMilliseconds) {
-        return new AsynchronousOutputCapturer(PromiscuousRedirectRouter::new, maxAwaitMilliseconds);
+        return new AsynchronousOutputCapturer(PromiscuousRedirectRouter::new, maxAwaitMilliseconds,
+                Executors.newSingleThreadExecutor());
     }
 
     /**
@@ -94,6 +99,7 @@ interface Captors {
      * @return A copying and asynchronous CaptureOutput
      */
     static AsynchronousOutputCapturer asyncCopyAll(Long maxAwaitMilliseconds) {
-        return new AsynchronousOutputCapturer(PromiscuousCopyRouter::new, maxAwaitMilliseconds);
+        return new AsynchronousOutputCapturer(PromiscuousCopyRouter::new, maxAwaitMilliseconds,
+                Executors.newSingleThreadExecutor());
     }
 }

@@ -26,6 +26,7 @@ import lombok.val;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -40,6 +41,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     private final SafeLatch completedLatch;
 
     private final AtomicReference<Exception> thrownException;
+    private final ExecutorService executor;
 
     private final Function<ByteArrayOutputStream, ByteArrayOutputStream> streamCopy = new StreamCopyFunction();
 
@@ -51,15 +53,19 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      * @param completedLatch  The Latch indicating the thread is still running
      * @param thrownException The reference to any exception thrown
      * @param router          The router to direct the output
+     * @param executor        The executor service
      */
     DefaultOngoingCapturedOutput(
-            final ByteArrayOutputStream capturedOut, final ByteArrayOutputStream capturedErr,
-            final SafeLatch completedLatch, final AtomicReference<Exception> thrownException,
-            final Router router
-    ) {
+            final ByteArrayOutputStream capturedOut,
+            final ByteArrayOutputStream capturedErr,
+            final SafeLatch completedLatch,
+            final AtomicReference<Exception> thrownException,
+            final Router router,
+            final ExecutorService executor) {
         super(capturedOut, capturedErr, router);
         this.completedLatch = completedLatch;
         this.thrownException = thrownException;
+        this.executor = executor;
     }
 
     @Override
@@ -82,5 +88,10 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     @Override
     public Optional<Throwable> thrownException() {
         return Optional.ofNullable(thrownException.get());
+    }
+
+    @Override
+    public boolean executorIsShutdown() {
+        return executor.isShutdown();
     }
 }

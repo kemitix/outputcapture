@@ -1,5 +1,7 @@
 package net.kemitix.outputcapture;
 
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Assumptions;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -30,6 +32,7 @@ public class AbstractCaptureOutputTest {
         //then
         capture.remove();
         assertThat(AbstractCaptureOutput.activeCount()).isZero();
+        assertThat(capture.isComplete()).isTrue();
     }
 
     @Test
@@ -44,6 +47,8 @@ public class AbstractCaptureOutputTest {
         capture1.remove();
         capture2.remove();
         assertThat(AbstractCaptureOutput.activeCount()).isZero();
+        assertThat(capture1.isComplete()).isTrue();
+        assertThat(capture2.isComplete()).isTrue();
     }
 
     private class MyAsyncCapture {
@@ -65,6 +70,11 @@ public class AbstractCaptureOutputTest {
         void remove() throws InterruptedException {
             finished.countDown();
             await(completed);
+            assertThat(capture.executorIsShutdown()).isTrue();
+        }
+
+        boolean isComplete() {
+            return capture.executorIsShutdown();
         }
     }
 

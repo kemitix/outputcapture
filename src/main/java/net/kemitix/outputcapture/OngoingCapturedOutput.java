@@ -58,4 +58,11 @@ public interface OngoingCapturedOutput extends RoutableCapturedOutput {
      * @return The latch
      */
     SafeLatch getCompletedLatch();
+
+    /**
+     * Checks if the ExecutorService has been shutdown yet.
+     *
+     * @return true if the ExecutorService has been shutdown.
+     */
+    boolean executorIsShutdown();
 }

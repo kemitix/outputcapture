@@ -24,23 +24,23 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
     @Test
     public void captureSystemOut() {
         //when
-        final OngoingCapturedOutput captured = CaptureOutput.copyWhileDoing(() -> {
-            writeOutput(System.out, line1, line2);
-        }, MAX_TIMEOUT);
-        awaitLatch(captured.getCompletedLatch());
+        final OngoingCapturedOutput ongoing =
+                CaptureOutput.copyWhileDoing(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
         //then
-        assertThat(captured.getStdOut()).containsExactly(line1, line2);
+        assertThat(ongoing.getStdOut()).containsExactly(line1, line2);
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
     @Test
     public void captureSystemErr() {
         //when
-        final OngoingCapturedOutput captured = CaptureOutput.copyWhileDoing(() -> {
-            writeOutput(System.err, line1, line2);
-        }, MAX_TIMEOUT);
-        awaitLatch(captured.getCompletedLatch());
+        final OngoingCapturedOutput ongoing =
+                CaptureOutput.copyWhileDoing(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
         //then
-        assertThat(captured.getStdErr()).containsExactly(line1, line2);
+        assertThat(ongoing.getStdErr()).containsExactly(line1, line2);
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
     @Test
@@ -50,11 +50,12 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.out);
         //when
-        awaitLatch(
-                CaptureOutput.copyWhileDoing(() -> replacement.set(System.out), MAX_TIMEOUT)
-                        .getCompletedLatch());
+        final OngoingCapturedOutput ongoing =
+                CaptureOutput.copyWhileDoing(() -> replacement.set(System.out), MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
         //then
         assertThat(replacement).isNotSameAs(original);
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
     @Test
@@ -64,11 +65,12 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.err);
         //when
-        awaitLatch(
-                CaptureOutput.copyWhileDoing(() -> replacement.set(System.err), MAX_TIMEOUT)
-                        .getCompletedLatch());
+        final OngoingCapturedOutput ongoing =
+                CaptureOutput.copyWhileDoing(() -> replacement.set(System.err), MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
         //then
         assertThat(replacement).isNotSameAs(original);
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
     @Test
@@ -77,12 +79,11 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.out);
         //when
-        awaitLatch(
-                CaptureOutput.copyWhileDoing(() -> {
-                }, MAX_TIMEOUT)
-                        .getCompletedLatch());
+        final OngoingCapturedOutput ongoing = CaptureOutput.copyWhileDoing(this::doNothing, MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
         //then
         assertThat(System.out).isSameAs(original.get());
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
     @Test
@@ -91,12 +92,11 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.err);
         //when
-        awaitLatch(
-                CaptureOutput.copyWhileDoing(() -> {
-                }, MAX_TIMEOUT)
-                        .getCompletedLatch());
+        final OngoingCapturedOutput ongoing = CaptureOutput.copyWhileDoing(this::doNothing, MAX_TIMEOUT);
+        awaitLatch(ongoing.getCompletedLatch());
         //then
         assertThat(System.err).isSameAs(original.get());
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
     @Test
@@ -104,12 +104,13 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         //given
         final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
         //when
-        final OngoingCapturedOutput capturedOutput = CaptureOutput.copyWhileDoing(() -> {
+        final OngoingCapturedOutput ongoing = CaptureOutput.copyWhileDoing(() -> {
             throw cause;
         }, MAX_TIMEOUT);
-        awaitLatch(capturedOutput.getCompletedLatch());
+        awaitLatch(ongoing.getCompletedLatch());
         //then
-        assertThat(capturedOutput.thrownException()).contains(cause);
+        assertThat(ongoing.thrownException()).contains(cause);
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
     @Test
@@ -117,13 +118,14 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         //given
         final LatchPair latchPair = whenReleased(() -> System.out.println(line1));
         //when
-        final OngoingCapturedOutput capturedOutput = CaptureOutput.copyWhileDoing(() -> {
+        final OngoingCapturedOutput ongoing = CaptureOutput.copyWhileDoing(() -> {
             latchPair.releaseAndWait();
             System.out.println(line2);
         }, MAX_TIMEOUT);
-        awaitLatch(capturedOutput.getCompletedLatch());
+        awaitLatch(ongoing.getCompletedLatch());
         //then
-        assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
+        assertThat(ongoing.getStdOut()).containsExactly(line1, line2);
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
     @Test
@@ -131,47 +133,49 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         //given
         final LatchPair latchPair = whenReleased(() -> System.err.println(line1));
         //when
-        final OngoingCapturedOutput capturedOutput = CaptureOutput.copyWhileDoing(() -> {
+        final OngoingCapturedOutput ongoing = CaptureOutput.copyWhileDoing(() -> {
             latchPair.releaseAndWait();
             System.err.println(line2);
         }, MAX_TIMEOUT);
-        awaitLatch(capturedOutput.getCompletedLatch());
+        awaitLatch(ongoing.getCompletedLatch());
         //then
-        assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
+        assertThat(ongoing.getStdErr()).containsExactly(line1, line2);
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
     @Test
     public void copyToOriginalOut() {
         //given
-        final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
+        final AtomicReference<OngoingCapturedOutput> ref = new AtomicReference<>();
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
-            final OngoingCapturedOutput copyOf = CaptureOutput.copyWhileDoing(() -> {
-                writeOutput(System.out, line1, line2);
-            }, MAX_TIMEOUT);
-            awaitLatch(copyOf.getCompletedLatch());
-            ref.set(copyOf);
+            final OngoingCapturedOutput ongoing =
+                    CaptureOutput.copyWhileDoing(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
+            awaitLatch(ongoing.getCompletedLatch());
+            ref.set(ongoing);
         }, MAX_TIMEOUT);
         //then
         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
         assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
+        assertThat(ref.get().executorIsShutdown()).isTrue();
     }
 
     @Test
     public void copyToOriginalErr() {
         //given
-        final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
+        final AtomicReference<OngoingCapturedOutput> ref = new AtomicReference<>();
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
-            final OngoingCapturedOutput copyOf = CaptureOutput.copyWhileDoing(() -> {
+            final OngoingCapturedOutput ongoing = CaptureOutput.copyWhileDoing(() -> {
                 writeOutput(System.err, line1, line2);
             }, MAX_TIMEOUT);
-            awaitLatch(copyOf.getCompletedLatch());
-            ref.set(copyOf);
+            awaitLatch(ongoing.getCompletedLatch());
+            ref.set(ongoing);
         }, MAX_TIMEOUT);
         //then
         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
+        assertThat(ref.get().executorIsShutdown()).isTrue();
     }
 
     @Test
@@ -179,7 +183,7 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         //given
         final SafeLatch ready = createLatch();
         final SafeLatch done = createLatch();
-        final OngoingCapturedOutput capturedOutput =
+        final OngoingCapturedOutput ongoing =
                 CaptureOutput.copyWhileDoing(() -> {
                     releaseLatch(ready);
                     awaitLatch(done);
@@ -188,15 +192,16 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         //when
         System.out.println(line1);
         final CapturedOutput initialOutput =
-                capturedOutput.getCapturedOutputAndFlush();
+                ongoing.getCapturedOutputAndFlush();
         System.out.println(line2);
         releaseLatch(done);
-        awaitLatch(capturedOutput.getCompletedLatch());
+        awaitLatch(ongoing.getCompletedLatch());
         //then
         assertThat(initialOutput.getStdOut()).containsExactly(line1);
-        assertThat(capturedOutput.getStdOut()).containsExactly(line2);
+        assertThat(ongoing.getStdOut()).containsExactly(line2);
         assertThat(initialOutput.out().toString()).isEqualToIgnoringWhitespace(line1);
-        assertThat(capturedOutput.out().toString()).isEqualToIgnoringWhitespace(line2);
+        assertThat(ongoing.out().toString()).isEqualToIgnoringWhitespace(line2);
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
     @Test
@@ -204,7 +209,7 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         //given
         final SafeLatch ready = createLatch();
         final SafeLatch done = createLatch();
-        final OngoingCapturedOutput capturedOutput =
+        final OngoingCapturedOutput ongoing =
                 CaptureOutput.copyWhileDoing(() -> {
                     releaseLatch(ready);
                     awaitLatch(done);
@@ -213,15 +218,16 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
         //when
         System.err.println(line1);
         final CapturedOutput initialOutput =
-                capturedOutput.getCapturedOutputAndFlush();
+                ongoing.getCapturedOutputAndFlush();
         System.err.println(line2);
         releaseLatch(done);
-        awaitLatch(capturedOutput.getCompletedLatch());
+        awaitLatch(ongoing.getCompletedLatch());
         //then
         assertThat(initialOutput.getStdErr()).containsExactly(line1);
-        assertThat(capturedOutput.getStdErr()).containsExactly(line2);
+        assertThat(ongoing.getStdErr()).containsExactly(line2);
         assertThat(initialOutput.err().toString()).isEqualToIgnoringWhitespace(line1);
-        assertThat(capturedOutput.err().toString()).isEqualToIgnoringWhitespace(line2);
+        assertThat(ongoing.err().toString()).isEqualToIgnoringWhitespace(line2);
+        assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
 }

@@ -24,7 +24,7 @@ package net.kemitix.outputcapture;
 import lombok.val;
 
 import java.io.ByteArrayOutputStream;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -39,19 +39,21 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
 
     private final Function<RouterParameters, Router> routerFactory;
     private final Long maxAwaitMilliseconds;
+    private final ExecutorService executor;
 
     /**
      * Constructor.
-     *
      * @param routerFactory        The Router to direct where written output is sent
      * @param maxAwaitMilliseconds The maximum number of milliseconds to await for the capture to complete
+     * @param executor             The executor service
      */
     AsynchronousOutputCapturer(
             final Function<RouterParameters, Router> routerFactory,
-            final Long maxAwaitMilliseconds
-    ) {
+            final Long maxAwaitMilliseconds,
+            final ExecutorService executor) {
         this.routerFactory = routerFactory;
         this.maxAwaitMilliseconds = maxAwaitMilliseconds;
+        this.executor = executor;
     }
 
     /**
@@ -77,14 +79,15 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
             final SafeLatch started
     ) {
         val completedLatch = new SafeLatch(1, maxAwaitMilliseconds);
-        val executor = Executors.newSingleThreadExecutor();
         executor.submit(buildCaptor(capturedOutput, completedLatch));
         executor.submit(started::countDown);
         executor.submit(() -> enable(capturedOutput.get()));
         executor.submit(() -> invokeCallable(callable));
         executor.submit(() -> disable(capturedOutput.get()));
-        executor.submit(completedLatch::countDown);
-        executor.submit(executor::shutdown);
+        executor.submit(() -> {
+            executor.shutdown();
+            completedLatch.countDown();
+        });
     }
 
     private Runnable buildCaptor(
@@ -99,7 +102,7 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
         val capturedErr = new ByteArrayOutputStream();
         return new DefaultOngoingCapturedOutput(
                 capturedOut, capturedErr, completedLatch, getThrownExceptionReference(),
-                routerFactory.apply(RouterParameters.createDefault()));
+                routerFactory.apply(RouterParameters.createDefault()), executor);
     }
 
 }
