@@ -73,13 +73,6 @@ abstract class AbstractCaptureTest {
         System.err.println(FINISHED_ERR);
     }
 
-    protected ThrowingCallable waitAndContinue(final SafeLatch ready, final SafeLatch done) {
-        return () -> {
-            releaseLatch(ready);
-            awaitLatch(done);
-        };
-    }
-
     protected void doNothing() {
 
     }
