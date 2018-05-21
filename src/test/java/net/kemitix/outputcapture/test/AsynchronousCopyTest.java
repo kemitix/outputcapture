@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AsynchronousCopy extends AbstractCaptureTest {
+public class AsynchronousCopyTest extends AbstractCaptureTest {
 
     @Rule
     public Timeout globalTimeout = Timeout.seconds(MAX_TIMEOUT);

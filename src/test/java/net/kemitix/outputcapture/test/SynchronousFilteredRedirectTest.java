@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 // CaptureOutput.of(...)
-public class SynchronousFilteredRedirect extends AbstractCaptureTest {
+public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
 
     @Rule
     public Timeout globalTimeout = Timeout.seconds(MAX_TIMEOUT);

@@ -3,18 +3,22 @@ package net.kemitix.outputcapture.test;
 import net.kemitix.outputcapture.CaptureOutput;
 import net.kemitix.outputcapture.CapturedOutput;
 import net.kemitix.outputcapture.OutputCaptureException;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.Timeout;
 
 import java.io.PrintStream;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-// CaptureOutput.copyOf(...)
-public class SynchronousFilteredCopy extends AbstractCaptureTest {
+// CaptureOutput.ofAll(...)
+public class SynchronousRedirectTest extends AbstractCaptureTest {
 
     @Rule
     public Timeout globalTimeout = Timeout.seconds(MAX_TIMEOUT);
@@ -22,7 +26,7 @@ public class SynchronousFilteredCopy extends AbstractCaptureTest {
     @Test
     public void captureSystemOut() {
         //when
-        final CapturedOutput captured = CaptureOutput.copyOf(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
+        final CapturedOutput captured = CaptureOutput.ofAll(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
         //then
         assertThat(captured.getStdOut()).containsExactly(line1, line2);
     }
@@ -30,7 +34,7 @@ public class SynchronousFilteredCopy extends AbstractCaptureTest {
     @Test
     public void captureSystemErr() {
         //when
-        final CapturedOutput captured = CaptureOutput.copyOf(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
+        final CapturedOutput captured = CaptureOutput.ofAll(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
         //then
         assertThat(captured.getStdErr()).containsExactly(line1, line2);
     }
@@ -42,7 +46,7 @@ public class SynchronousFilteredCopy extends AbstractCaptureTest {
         final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.out);
         //when
-        CaptureOutput.copyOf(() -> replacement.set(System.out), MAX_TIMEOUT);
+        CaptureOutput.ofAll(() -> replacement.set(System.out), MAX_TIMEOUT);
         //then
         assertThat(replacement).isNotSameAs(original);
     }
@@ -54,7 +58,7 @@ public class SynchronousFilteredCopy extends AbstractCaptureTest {
         final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.err);
         //when
-        CaptureOutput.copyOf(() -> replacement.set(System.err), MAX_TIMEOUT);
+        CaptureOutput.ofAll(() -> replacement.set(System.err), MAX_TIMEOUT);
         //then
         assertThat(replacement).isNotSameAs(original);
     }
@@ -65,7 +69,7 @@ public class SynchronousFilteredCopy extends AbstractCaptureTest {
         final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.out);
         //when
-        CaptureOutput.copyOf(this::doNothing, MAX_TIMEOUT);
+        CaptureOutput.ofAll(this::doNothing, MAX_TIMEOUT);
         //then
         assertThat(System.out).isSameAs(original.get());
     }
@@ -76,7 +80,7 @@ public class SynchronousFilteredCopy extends AbstractCaptureTest {
         final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.err);
         //when
-        CaptureOutput.copyOf(this::doNothing, MAX_TIMEOUT);
+        CaptureOutput.ofAll(this::doNothing, MAX_TIMEOUT);
         //then
         assertThat(System.err).isSameAs(original.get());
     }
@@ -86,7 +90,7 @@ public class SynchronousFilteredCopy extends AbstractCaptureTest {
         //given
         final UnsupportedOperationException cause = new UnsupportedOperationException(line1);
         //then
-        assertThatThrownBy(() -> CaptureOutput.copyOf(() -> {
+        assertThatThrownBy(() -> CaptureOutput.ofAll(() -> {
             throw cause;
         }, MAX_TIMEOUT))
                 .isInstanceOf(OutputCaptureException.class)
@@ -94,59 +98,67 @@ public class SynchronousFilteredCopy extends AbstractCaptureTest {
     }
 
     @Test
-    public void filtersToTargetThreadOut() {
+    public void capturesAllThreadsOut() {
         //given
         final LatchPair latchPair = whenReleased(() -> System.out.println(line1));
         //when
-        final CapturedOutput capturedOutput = CaptureOutput.copyOf(() -> {
+        final CapturedOutput captured = CaptureOutput.ofAll(() -> {
             latchPair.releaseAndWait();
-            System.out.println(line2);
+            writeOutput(System.out, line2);
         }, MAX_TIMEOUT);
         //then
-        assertThat(capturedOutput.getStdOut()).containsExactly(line2);
+        assertThat(captured.getStdOut()).containsExactly(line1, line2);
     }
 
     @Test
-    public void filtersToTargetThreadErr() {
+    public void capturesAllThreadsErr() {
         //given
         final LatchPair latchPair = whenReleased(() -> System.err.println(line1));
         //when
-        final CapturedOutput capturedOutput = CaptureOutput.copyOf(() -> {
+        final CapturedOutput captured = CaptureOutput.ofAll(() -> {
             latchPair.releaseAndWait();
-            System.err.println(line2);
+            writeOutput(System.err, line2);
         }, MAX_TIMEOUT);
         //then
-        assertThat(capturedOutput.getStdErr()).containsExactly(line2);
+        assertThat(captured.getStdErr()).containsExactly(line1, line2);
     }
 
     @Test
-    public void copyToOriginalOut() {
+    public void redirectFromOriginalOut() {
         //given
         final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
+        final AtomicBoolean finished = new AtomicBoolean(false);
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
-            final CapturedOutput copyOf =
-                    CaptureOutput.copyOf(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
+            final CapturedOutput copyOf = CaptureOutput.ofAll(() -> {
+                writeOutput(System.out, line1, line2);
+                finished.set(true);
+            }, MAX_TIMEOUT);
             ref.set(copyOf);
         }, MAX_TIMEOUT);
         //then
+        assertThat(finished).isTrue();
         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
-        assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
+        assertThat(capturedOutput.getStdOut()).isEmpty();
     }
 
     @Test
-    public void copyToOriginalErr() {
+    public void redirectFromOriginalErr() {
         //given
         final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
+        final AtomicBoolean finished = new AtomicBoolean(false);
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
-            final CapturedOutput copyOf =
-                    CaptureOutput.copyOf(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
+            final CapturedOutput copyOf = CaptureOutput.ofAll(() -> {
+                writeOutput(System.err, line1, line2);
+                finished.set(true);
+            }, MAX_TIMEOUT);
             ref.set(copyOf);
         }, MAX_TIMEOUT);
         //then
+        assertThat(finished).isTrue();
         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
-        assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);
+        assertThat(capturedOutput.getStdErr()).isEmpty();
     }
 
 }
