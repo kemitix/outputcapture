@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 abstract class AbstractCaptureTest {
 
     //<editor-fold desc="fields">
-    protected static final long MAX_TIMEOUT = 15L;
+    protected static final long MAX_TIMEOUT = 100L;
     protected static final String STARTING_OUT = "starting out";
     protected static final String STARTING_ERR = "starting err";
     protected static final String FINISHED_OUT = "finished out";
