@@ -98,11 +98,14 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
     }
 
     private OngoingCapturedOutput outputCaptor(final SafeLatch completedLatch) {
-        val capturedOut = new ByteArrayOutputStream();
-        val capturedErr = new ByteArrayOutputStream();
-        return new DefaultOngoingCapturedOutput(
-                capturedOut, capturedErr, completedLatch, getThrownExceptionReference(),
-                routerFactory.apply(RouterParameters.createDefault()), executor);
+        return DefaultOngoingCapturedOutput.builder()
+                .capturedOut(new ByteArrayOutputStream())
+                .capturedErr(new ByteArrayOutputStream())
+                .completedLatch(completedLatch)
+                .thrownException(getThrownExceptionReference())
+                .router(routerFactory.apply(RouterParameters.createDefault()))
+                .executor(executor)
+                .build();
     }
 
 }

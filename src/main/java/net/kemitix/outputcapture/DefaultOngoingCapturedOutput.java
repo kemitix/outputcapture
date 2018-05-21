@@ -21,6 +21,7 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.val;
 
@@ -55,6 +56,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      * @param router          The router to direct the output
      * @param executor        The executor service
      */
+    @Builder
     DefaultOngoingCapturedOutput(
             final ByteArrayOutputStream capturedOut,
             final ByteArrayOutputStream capturedErr,
