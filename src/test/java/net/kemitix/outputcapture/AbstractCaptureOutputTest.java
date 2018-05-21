@@ -1,11 +1,6 @@
 package net.kemitix.outputcapture;
 
-import org.assertj.core.api.Assertions;
-import org.assertj.core.api.Assumptions;
 import org.junit.Test;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,7 +18,7 @@ public class AbstractCaptureOutputTest {
     }
 
     @Test
-    public void givenOneInterceptorWhenRemoveAllThenNoneLeft() throws InterruptedException {
+    public void givenOneInterceptorWhenRemoveAllThenNoneLeft() {
         //given
         final MyAsyncCapture capture = new MyAsyncCapture();
         assertThat(AbstractCaptureOutput.activeCount()).isNotZero();
@@ -36,7 +31,7 @@ public class AbstractCaptureOutputTest {
     }
 
     @Test
-    public void givenTwoInterceptorsWhenRemoveAllThenNoneLeft() throws InterruptedException {
+    public void givenTwoInterceptorsWhenRemoveAllThenNoneLeft() {
         //given
         final MyAsyncCapture capture1 = new MyAsyncCapture();
         final MyAsyncCapture capture2 = new MyAsyncCapture();
@@ -54,22 +49,22 @@ public class AbstractCaptureOutputTest {
     private class MyAsyncCapture {
 
         private SimpleLatch finished = new SimpleLatch();
-        private CountDownLatch completed;
+        private SafeLatch completed;
         private OngoingCapturedOutput capture;
 
-        MyAsyncCapture() throws InterruptedException {
-            final CountDownLatch started = new SimpleLatch();
+        MyAsyncCapture() {
+            final SimpleLatch started = new SimpleLatch();
             capture = Captors.asyncCopyAll(maxAwaitMilliseconds).capture(() -> {
-                release(started);
-                await(finished);
+                started.countDown();
+                finished.await();
             });
-            await(started);
+            started.await();
             completed = capture.getCompletedLatch();
         }
 
-        void remove() throws InterruptedException {
+        void remove() {
             finished.countDown();
-            await(completed);
+            completed.await();
             assertThat(capture.executorIsShutdown()).isTrue();
         }
 
@@ -78,17 +73,9 @@ public class AbstractCaptureOutputTest {
         }
     }
 
-    private void release(final CountDownLatch latch) {
-        latch.countDown();
-    }
-
-    private void await(final CountDownLatch latch) throws InterruptedException {
-        latch.await(1, TimeUnit.SECONDS);
-    }
-
-    private class SimpleLatch extends CountDownLatch {
+    private class SimpleLatch extends SafeLatch {
         SimpleLatch() {
-            super(1);
+            super(1, maxAwaitMilliseconds);
         }
     }
 }
