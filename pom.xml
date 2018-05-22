@@ -26,7 +26,7 @@
         <tiles-maven-plugin.version>2.11</tiles-maven-plugin.version>
         <kemitix-tiles.version>0.8.1</kemitix-tiles.version>
         <kemitix-checkstyle.version>4.1.1</kemitix-checkstyle.version>
-        <pitest-maven-plugin.version>1.4.0</pitest-maven-plugin.version>
+        <pitest.skip>true</pitest.skip>
     </properties>
 
     <dependencies>
