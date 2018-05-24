@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 public class SafeLatch extends CountDownLatch {
 
     private final Long maxAwaitMilliseconds;
+    private final Runnable interruptHandler;
 
     /**
      * Constructs a {@code CountDownLatch} initialized with the given count.
@@ -39,10 +40,12 @@ public class SafeLatch extends CountDownLatch {
      * @param count                the number of times {@link #countDown} must be invoke before threads can pass
      *                             through {@link #await}
      * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the latch to complete
+     * @param interruptHandler     the Runnable to execute if the await() methods are interrupted
      */
-    public SafeLatch(final int count, final Long maxAwaitMilliseconds) {
+    public SafeLatch(final int count, final Long maxAwaitMilliseconds, final Runnable interruptHandler) {
         super(count);
         this.maxAwaitMilliseconds = maxAwaitMilliseconds;
+        this.interruptHandler = interruptHandler;
     }
 
     /**
@@ -55,7 +58,7 @@ public class SafeLatch extends CountDownLatch {
         try {
             super.await(maxAwaitMilliseconds, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            throw new OutputCaptureException(e);
+            interruptHandler.run();
         }
     }
 

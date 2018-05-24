@@ -75,7 +75,7 @@ public class AbstractCaptureOutputTest {
 
     private class SimpleLatch extends SafeLatch {
         SimpleLatch() {
-            super(1, maxAwaitMilliseconds);
+            super(1, maxAwaitMilliseconds, () -> {});
         }
     }
 }

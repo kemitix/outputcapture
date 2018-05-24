@@ -67,7 +67,7 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
      */
     OngoingCapturedOutput capture(final ThrowingCallable callable) {
         val capturedOutput = new AtomicReference<OngoingCapturedOutput>();
-        val started = new SafeLatch(1, maxAwaitMilliseconds);
+        val started = new SafeLatch(1, maxAwaitMilliseconds, executor::shutdown);
         execute(callable, capturedOutput, started);
         started.await();
         return capturedOutput.get();
@@ -78,7 +78,7 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
             final AtomicReference<OngoingCapturedOutput> capturedOutput,
             final SafeLatch started
     ) {
-        val completedLatch = new SafeLatch(1, maxAwaitMilliseconds);
+        val completedLatch = new SafeLatch(1, maxAwaitMilliseconds, executor::shutdown);
         executor.submit(buildCaptor(capturedOutput, completedLatch));
         executor.submit(started::countDown);
         executor.submit(() -> enable(capturedOutput.get()));

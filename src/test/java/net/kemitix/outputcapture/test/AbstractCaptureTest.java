@@ -60,7 +60,7 @@ abstract class AbstractCaptureTest {
     }
 
     protected SafeLatch createLatch() {
-        return new SafeLatch(1, MAX_TIMEOUT);
+        return new SafeLatch(1, MAX_TIMEOUT, () -> {});
     }
 
     protected void asyncWithInterrupt(final SafeLatch ready, final SafeLatch done) {
@@ -77,8 +77,8 @@ abstract class AbstractCaptureTest {
     }
 
     protected class LatchPair {
-        private final SafeLatch ready = new SafeLatch(1, 1000L);
-        private final SafeLatch done = new SafeLatch(1, 1000L);
+        private final SafeLatch ready = createLatch();
+        private final SafeLatch done = createLatch();
 
         void releaseAndWait() {
             ready.countDown();

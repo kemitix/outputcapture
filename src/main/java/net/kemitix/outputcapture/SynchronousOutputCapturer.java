@@ -25,6 +25,7 @@ import lombok.val;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -58,20 +59,21 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
      * @return an instance of CapturedOutput
      */
     CapturedOutput capture(final ThrowingCallable callable, final Long maxAwaitMilliseconds) {
-        val finished = new SafeLatch(1, maxAwaitMilliseconds);
+        val executor = Executors.newSingleThreadExecutor();
+        val finished = new SafeLatch(1, maxAwaitMilliseconds, executor::shutdown);
         val capturedOutput = new AtomicReference<RoutableCapturedOutput>();
-        executeAsync(callable, finished, capturedOutput);
+        executeAsync(executor, callable, finished, capturedOutput);
         finished.awaitThen(() -> disable(capturedOutput.get()));
         throwAnyExceptions();
         return capturedOutput.get();
     }
 
     private void executeAsync(
+            final ExecutorService executor,
             final ThrowingCallable callable,
             final SafeLatch finished,
             final AtomicReference<RoutableCapturedOutput> capturedOutput
     ) {
-        val executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> capturedOutput.set(outputCaptor()));
         executor.submit(() -> enable(capturedOutput.get()));
         executor.submit(() -> invokeCallable(callable));
