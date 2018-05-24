@@ -58,6 +58,7 @@ public class SafeLatch extends CountDownLatch {
         try {
             super.await(maxAwaitMilliseconds, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             interruptHandler.run();
         }
     }
