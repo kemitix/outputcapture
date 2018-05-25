@@ -21,6 +21,8 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.Getter;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +35,9 @@ public class SafeLatch extends CountDownLatch {
 
     private final Long maxAwaitMilliseconds;
     private final Runnable interruptHandler;
+
+    @Getter
+    private boolean timedout = false;
 
     /**
      * Constructs a {@code CountDownLatch} initialized with the given count.
@@ -56,7 +61,7 @@ public class SafeLatch extends CountDownLatch {
     @Override
     public void await() {
         try {
-            super.await(maxAwaitMilliseconds, TimeUnit.MILLISECONDS);
+            timedout = !super.await(maxAwaitMilliseconds, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             interruptHandler.run();

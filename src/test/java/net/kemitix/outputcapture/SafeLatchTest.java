@@ -48,4 +48,29 @@ public class SafeLatchTest {
         });
     }
 
+    @Test
+    public void whenTimesOutThenIsTimedOut() {
+        //given
+        final Long shortWait = 50L;
+        final SafeLatch latch = new SafeLatch(1, shortWait, () -> {
+        });
+        //when
+        latch.await();
+        //then
+        assertThat(latch.isTimedout()).isTrue();
+    }
+
+    @Test
+    public void whenNotTimedOutThenIsNotTimedOut() {
+        //given
+        final Long shortWait = 50L;
+        final SafeLatch latch = new SafeLatch(1, shortWait, () -> {
+        });
+        latch.countDown();
+        //when
+        latch.await();
+        //then
+        assertThat(latch.isTimedout()).isFalse();
+    }
+
 }
