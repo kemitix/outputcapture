@@ -33,7 +33,7 @@ import java.util.stream.Stream;
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
 @RequiredArgsConstructor
-class DefaultCapturedOutput extends AbstractCapturedOutput {
+class DefaultCapturedOutput implements StreamableCapturedOutput, RoutableCapturedOutput {
 
     private final ByteArrayOutputStream capturedOut;
 

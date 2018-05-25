@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AbstractCapturedOutputTest {
+public class StreamableCapturedOutputTest {
 
     @Test
     public void whenOutputStreamHasLinesThenReturnLines() {
@@ -58,30 +58,6 @@ public class AbstractCapturedOutputTest {
         assertThat(result).isEmpty();
     }
 
-    private class MyCapturedOutput extends AbstractCapturedOutput {
-        @Override
-        public Stream<String> getStdOut() {
-            return null;
-        }
-
-        @Override
-        public Stream<String> getStdErr() {
-            return null;
-        }
-
-        @Override
-        public ByteArrayOutputStream out() {
-            return null;
-        }
-
-        @Override
-        public ByteArrayOutputStream err() {
-            return null;
-        }
-
-        @Override
-        public Router getRouter() {
-            return null;
-        }
+    private class MyCapturedOutput implements StreamableCapturedOutput {
     }
 }
