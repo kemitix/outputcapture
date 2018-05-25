@@ -10,32 +10,42 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SafeLatchTest {
 
-    @Test
-    public void whenInterruptedThenInterruptHandlerIsCalled() {
+    @Test(timeout = 300L)
+    public void whenInterruptedThenInterruptHandlerIsCalled() throws InterruptedException {
         //given
-        final Long maxAwaitMilliseconds = 100L;
+        final Long longWait = 100L;
+        final Long shortWait = 50L;
         final AtomicBoolean interrupted = new AtomicBoolean(false);
-        final SafeLatch safeLatch = new SafeLatch(1, maxAwaitMilliseconds, () -> interrupted.set(true));
-        final CountDownLatch latch = new CountDownLatch(1);
+        final SafeLatch latchToBeInterrupted = new SafeLatch(1, longWait, () -> interrupted.set(true));
+        final CountDownLatch testThreadFinished = new CountDownLatch(1);
         //when
-        new Thread(() -> {
-            final Thread thread = Thread.currentThread();
-            waitThenInterrupt(thread, maxAwaitMilliseconds, latch);
-            latch.countDown();
-            safeLatch.await();
-        }).start();
+        final Thread testThread = new Thread(() -> {
+            // this it the thread that will experience an interruption
+            final Thread currentThread = Thread.currentThread();
+            // start another thread that will interrupt the current thread after a short wait
+            final Thread interruptThread = waitThenInterruptThread(shortWait, currentThread);
+            interruptThread.start();
+            latchToBeInterrupted.await();
+            testThreadFinished.countDown();
+        });
+        testThread.start();
         //then
+        testThreadFinished.await();
         assertThat(interrupted).isTrue();
     }
 
-    private void waitThenInterrupt(final Thread thread, final long millis, final CountDownLatch latch) {
-        new Thread(() -> {
+    private Thread waitThenInterruptThread(
+            final Long timeToWait,
+            final Thread thread
+    ) {
+        return new Thread(() -> {
             try {
-                latch.await(millis, TimeUnit.MILLISECONDS);
+                new CountDownLatch(1).await(timeToWait, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 // ignore
             }
             thread.interrupt();
-        }).start();
+        });
     }
+
 }
