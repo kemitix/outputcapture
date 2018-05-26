@@ -3,11 +3,11 @@ package net.kemitix.outputcapture.test;
 import net.kemitix.outputcapture.CaptureOutput;
 import net.kemitix.outputcapture.CapturedOutput;
 import net.kemitix.outputcapture.OutputCaptureException;
-import org.junit.*;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.Timeout;
 
 import java.io.PrintStream;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;

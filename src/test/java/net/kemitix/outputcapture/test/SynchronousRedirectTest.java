@@ -3,14 +3,11 @@ package net.kemitix.outputcapture.test;
 import net.kemitix.outputcapture.CaptureOutput;
 import net.kemitix.outputcapture.CapturedOutput;
 import net.kemitix.outputcapture.OutputCaptureException;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
 import java.io.PrintStream;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 

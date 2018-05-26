@@ -1,6 +1,5 @@
 package net.kemitix.outputcapture;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;

@@ -4,7 +4,6 @@ import net.kemitix.outputcapture.CaptureOutput;
 import net.kemitix.outputcapture.CapturedOutput;
 import net.kemitix.outputcapture.OutputCaptureException;
 import net.kemitix.outputcapture.SafeLatch;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;

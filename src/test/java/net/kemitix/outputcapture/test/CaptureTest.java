@@ -1,11 +1,15 @@
 package net.kemitix.outputcapture.test;
 
-import net.kemitix.outputcapture.*;
-import org.junit.*;
+import net.kemitix.outputcapture.CaptureOutput;
+import net.kemitix.outputcapture.OngoingCapturedOutput;
+import net.kemitix.outputcapture.SafeLatch;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.Timeout;
 
 import java.io.PrintStream;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
