@@ -21,20 +21,30 @@
 
 package net.kemitix.outputcapture;
 
-import lombok.RequiredArgsConstructor;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
- * A Router that filters to the filtering thread and redirects the output.
+ * Base for holding captured output.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-@RequiredArgsConstructor
-class ThreadFilteredRedirectRouter implements RedirectRouter, ThreadFilteredRouter {
+interface StreamableCapturedOutput {
 
-    private final RouterParameters routerParameters;
-
-    @Override
-    public Thread getFilteringThread() {
-        return routerParameters.getFilteringThread();
+    /**
+     * Converts the output stream into a stream of strings split by the system line separator.
+     *
+     * @param outputStream The output stream
+     *
+     * @return a Stream of Strings
+     */
+    default Stream<String> asStream(final OutputStream outputStream) {
+        final String string = outputStream.toString();
+        if (string.length() == 0) {
+            return Stream.empty();
+        }
+        return Arrays.stream(string.split(System.lineSeparator()));
     }
+
 }

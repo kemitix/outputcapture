@@ -1,76 +1,50 @@
-/**
- * The MIT License (MIT)
- *
- * Copyright (c) 2017 Paul Campbell
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
- * and associated documentation files (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies
- * or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
- * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+/*
+  The MIT License (MIT)
+
+  Copyright (c) 2018 Paul Campbell
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+  and associated documentation files (the "Software"), to deal in the Software without restriction,
+  including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+  and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+  subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+  AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 package net.kemitix.outputcapture;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import net.kemitix.wrapper.Wrapper;
+import net.kemitix.wrapper.printstream.PrintStreamWrapper;
 
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.concurrent.CountDownLatch;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 /**
  * Base for capturing output written to {@code System::out} and {@code System::err} as a {@link CapturedOutput}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-abstract class AbstractCaptureOutput {
+abstract class AbstractCaptureOutput implements CaptureOutput {
+
+    private static final Deque<RoutableCapturedOutput> ACTIVE_CAPTURES = new ArrayDeque<>();
+
+    private static PrintStream savedOut;
+
+    private static PrintStream savedErr;
 
     @Getter(AccessLevel.PROTECTED)
-    private CapturedPrintStream capturedOut;
-
-    @Getter(AccessLevel.PROTECTED)
-    private CapturedPrintStream capturedErr;
-
-    @Getter(AccessLevel.PROTECTED)
-    private AtomicReference<Exception> thrownException = new AtomicReference<>();
-
-    /**
-     * Get the backing byte array from the CapturedPrintStream.
-     *
-     * @param capturedPrintStream The CapturedPrintStream containing the backing byte array
-     *
-     * @return the backing byte array
-     */
-    protected ByteArrayOutputStream capturedTo(final CapturedPrintStream capturedPrintStream) {
-        return capturedPrintStream.getCapturedTo();
-    }
-
-    /**
-     * Restore the original PrintStreams for System.out and System.err.
-     *
-     * @param out            The CapturedPrintStream containing the original System.out
-     * @param err            The CapturedPrintStream containing the original System.err
-     * @param completedLatch The latch to release once the PrintStreams are restored
-     */
-    protected void shutdownAsyncCapture(
-            final CapturedPrintStream out, final CapturedPrintStream err, final CountDownLatch completedLatch
-                                       ) {
-        stop(out, err);
-        completedLatch.countDown();
-    }
+    private AtomicReference<Exception> thrownExceptionReference = new AtomicReference<>();
 
     /**
      * Invokes the Callable and stores any thrown exception.
@@ -78,72 +52,93 @@ abstract class AbstractCaptureOutput {
      * @param callable The callable to invoke
      */
     @SuppressWarnings("illegalcatch")
-    protected void invokeCallable(final ThrowingCallable callable) {
+    void invokeCallable(final ThrowingCallable callable) {
         try {
             callable.call();
         } catch (Exception e) {
-            thrownException.set(e);
+            thrownExceptionReference.set(e);
         }
     }
 
     /**
-     * Captures the System.out and System.err PrintStreams.
+     * Begin passing output to the {@link CaptureOutput}, before any other captures that may already be in place.
      *
-     * @param router       The Router
-     * @param targetThread The target thread to filter by
+     * @param capturedOutput the recipient of any future output
      */
-    protected void initiateCapture(final Router router, final Thread targetThread) {
-        capturedOut = capturePrintStream(System.out, router, System::setOut, targetThread);
-        capturedErr = capturePrintStream(System.err, router, System::setErr, targetThread);
-    }
-
-    /**
-     * Wait for the CountDownLatch to count down to 0.
-     *
-     * <p>Any {@link InterruptedException} that is thrown will be wrapped in an {@link OutputCaptureException}.</p>
-     *
-     * @param countDownLatch The latch to wait on
-     */
-    protected void awaitLatch(final CountDownLatch countDownLatch) {
-        try {
-            countDownLatch.await();
-        } catch (InterruptedException e) {
-            throw new OutputCaptureException("Error awaiting latch", e);
+    void enable(final RoutableCapturedOutput capturedOutput) {
+        synchronized (ACTIVE_CAPTURES) {
+            if (ACTIVE_CAPTURES.isEmpty()) {
+                savedOut = System.out;
+                savedErr = System.err;
+                System.setOut(PrintStreamWrapper.filter(savedOut, captureSystemOutFilter()));
+                System.setErr(PrintStreamWrapper.filter(savedErr, captureSystemErrFilter()));
+            }
+            ACTIVE_CAPTURES.addFirst(capturedOutput);
         }
     }
 
-    private CapturedPrintStream capturePrintStream(
-            final PrintStream originalStream, final Router router, final Consumer<PrintStream> setStream,
-            final Thread targetThread
-                                                  ) {
-        final CapturedPrintStream capturedPrintStream = new CapturedPrintStream(originalStream, router, targetThread);
-        final Wrapper<PrintStream> replacementStream = capturedPrintStream.getReplacementStream();
-        setStream.accept(replacementStream.asCore());
-        return capturedPrintStream;
+    /**
+     * Stop passing output to the {@link CaptureOutput}.
+     *
+     * @param capturedOutput the recipient to remove
+     */
+    void disable(final RoutableCapturedOutput capturedOutput) {
+        synchronized (ACTIVE_CAPTURES) {
+            ACTIVE_CAPTURES.remove(capturedOutput);
+            if (ACTIVE_CAPTURES.isEmpty()) {
+                System.setOut(savedOut);
+                System.setErr(savedErr);
+            }
+        }
+    }
+
+    private static PrintStreamWrapper.ByteFilter captureSystemErrFilter() {
+        return aByte -> {
+            for (RoutableCapturedOutput co : ACTIVE_CAPTURES) {
+                final Router router = co.getRouter();
+                if (router.accepts(aByte)) {
+                    co.err().write(aByte);
+                    if (router.isBlocking()) {
+                        break;
+                    }
+                }
+            }
+            return true;
+        };
+    }
+
+    private static PrintStreamWrapper.ByteFilter captureSystemOutFilter() {
+        return aByte -> {
+            for (RoutableCapturedOutput co : ACTIVE_CAPTURES) {
+                final Router router = co.getRouter();
+                if (router.accepts(aByte)) {
+                    co.out().write(aByte);
+                    if (router.isBlocking()) {
+                        break;
+                    }
+                }
+            }
+            return true;
+        };
     }
 
     /**
-     * Stop capturing the System PrintStreams {@code out} and {@code err}.
+     * The number of active captures in place.
      *
-     * @param capturedPrintStreamOut The {@code System.out} captured PrintStream
-     * @param capturedPrintStreamErr The {@code System.err} captured PrintStream
+     * @return a count the {@code OutputCapturer} instances in effect
      */
-    protected void stop(
-            final CapturedPrintStream capturedPrintStreamOut, final CapturedPrintStream capturedPrintStreamErr
-                       ) {
-        stopCapturing(System.out, System::setOut, capturedPrintStreamOut);
-        stopCapturing(System.err, System::setErr, capturedPrintStreamErr);
+    static int activeCount() {
+        return ACTIVE_CAPTURES.size();
     }
 
-    @SuppressWarnings("unchecked")
-    private void stopCapturing(
-            final PrintStream current, final Consumer<PrintStream> setPrintStream, final CapturedPrintStream captured
-                              ) {
-        final AtomicReference<PrintStream> head = new AtomicReference<>(current);
-        captured.getWrappers()
-                .forEach(wrapperToRemove -> Wrapper.asWrapper(head.get())
-                                                   .ifPresent(wrapper -> head.set(
-                                                           wrapper.removeWrapper(wrapperToRemove))));
-        setPrintStream.accept(head.get());
+    /**
+     * Remove any active captures.
+     */
+    static void removeAllActiveCaptures() {
+        while (!ACTIVE_CAPTURES.isEmpty()) {
+            ACTIVE_CAPTURES.poll();
+        }
+        System.setOut(savedOut);
+        System.setErr(savedErr);
     }
 }

@@ -21,20 +21,22 @@
 
 package net.kemitix.outputcapture;
 
-import lombok.RequiredArgsConstructor;
+import lombok.NonNull;
+
+import java.io.ByteArrayOutputStream;
+import java.util.function.Function;
 
 /**
- * A Router that filters to the filtering thread and redirects the output.
+ * A Function to make a copy of a {@link ByteArrayOutputStream}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-@RequiredArgsConstructor
-class ThreadFilteredRedirectRouter implements RedirectRouter, ThreadFilteredRouter {
-
-    private final RouterParameters routerParameters;
-
+class StreamCopyFunction implements Function<ByteArrayOutputStream, ByteArrayOutputStream> {
     @Override
-    public Thread getFilteringThread() {
-        return routerParameters.getFilteringThread();
+    public ByteArrayOutputStream apply(@NonNull final ByteArrayOutputStream source) {
+        final ByteArrayOutputStream result = new ByteArrayOutputStream(source.size());
+        result.write(source.toByteArray(), 0, source.size());
+        return result;
+
     }
 }

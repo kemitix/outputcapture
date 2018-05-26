@@ -21,20 +21,22 @@
 
 package net.kemitix.outputcapture;
 
-import lombok.RequiredArgsConstructor;
-
 /**
  * A Router that filters to the filtering thread and redirects the output.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-@RequiredArgsConstructor
-class ThreadFilteredRedirectRouter implements RedirectRouter, ThreadFilteredRouter {
-
-    private final RouterParameters routerParameters;
+interface ThreadFilteredRouter extends Router {
 
     @Override
-    public Thread getFilteringThread() {
-        return routerParameters.getFilteringThread();
+    default boolean accepts(Byte aByte) {
+        return Thread.currentThread().equals(getFilteringThread());
     }
+
+    /**
+     * The thread to filter on.
+     *
+     * @return a Thread
+     */
+    Thread getFilteringThread();
 }
