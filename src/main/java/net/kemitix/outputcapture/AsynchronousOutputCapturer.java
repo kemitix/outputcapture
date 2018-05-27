@@ -50,7 +50,8 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
     AsynchronousOutputCapturer(
             final Function<RouterParameters, Router> routerFactory,
             final Long maxAwaitMilliseconds,
-            final ExecutorService executor) {
+            final ExecutorService executor
+    ) {
         this.routerFactory = routerFactory;
         this.maxAwaitMilliseconds = maxAwaitMilliseconds;
         this.executor = executor;
@@ -100,9 +101,17 @@ class AsynchronousOutputCapturer extends AbstractCaptureOutput {
     private OngoingCapturedOutput outputCaptor(final SafeLatch completedLatch) {
         val capturedOut = new ByteArrayOutputStream();
         val capturedErr = new ByteArrayOutputStream();
+        val router = routerFactory.apply(RouterParameters.createDefault());
+        val capturedLines = router.getCapturedLines();
         return new DefaultOngoingCapturedOutput(
-                capturedOut, capturedErr, completedLatch, getThrownExceptionReference(),
-                routerFactory.apply(RouterParameters.createDefault()), executor);
+                capturedOut,
+                capturedErr,
+                completedLatch,
+                getThrownExceptionReference(),
+                router,
+                executor,
+                capturedLines
+        );
     }
 
 }

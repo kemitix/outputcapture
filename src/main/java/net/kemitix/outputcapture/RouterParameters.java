@@ -34,6 +34,8 @@ class RouterParameters {
 
     @Getter
     private final Thread filteringThread;
+    @Getter
+    private final CapturedLines capturedLines;
 
     /**
      * Create the default routing parameters, filtering to the current thread.
@@ -41,6 +43,6 @@ class RouterParameters {
      * @return new RoutingParameters for filtering to the current thread
      */
     static RouterParameters createDefault() {
-        return new RouterParameters(Thread.currentThread());
+        return new RouterParameters(Thread.currentThread(), new DefaultCapturedLines(System.lineSeparator()));
     }
 }

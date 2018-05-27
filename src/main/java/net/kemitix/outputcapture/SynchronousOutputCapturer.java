@@ -73,10 +73,12 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
         val capturedErr = new ByteArrayOutputStream();
         val routerParameters = RouterParameters.createDefault();
         val router = routerFactory.apply(routerParameters);
+        val capturedLines = routerParameters.getCapturedLines();
         return new DefaultCapturedOutput(
                 capturedOut,
                 capturedErr,
-                router
+                router,
+                capturedLines
         );
     }
 

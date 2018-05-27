@@ -38,9 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
 abstract class AbstractCaptureOutput implements CaptureOutput {
 
     private static final Deque<RoutableCapturedOutput> ACTIVE_CAPTURES = new ArrayDeque<>();
-
     private static PrintStream savedOut;
-
     private static PrintStream savedErr;
 
     @Getter(AccessLevel.PROTECTED)
@@ -97,6 +95,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
             for (RoutableCapturedOutput co : ACTIVE_CAPTURES) {
                 final Router router = co.getRouter();
                 if (router.accepts(aByte)) {
+                    router.writeErr(aByte);
                     co.err().write(aByte);
                     if (router.isBlocking()) {
                         break;
@@ -112,6 +111,7 @@ abstract class AbstractCaptureOutput implements CaptureOutput {
             for (RoutableCapturedOutput co : ACTIVE_CAPTURES) {
                 final Router router = co.getRouter();
                 if (router.accepts(aByte)) {
+                    router.writeOut(aByte);
                     co.out().write(aByte);
                     if (router.isBlocking()) {
                         break;

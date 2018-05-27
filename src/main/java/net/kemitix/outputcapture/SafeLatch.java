@@ -68,17 +68,4 @@ public class SafeLatch extends CountDownLatch {
         }
     }
 
-    /**
-     * Causes the current thread to wait until the latch has counted down to
-     * zero, unless the thread is {@linkplain Thread#interrupt interrupted}.
-     *
-     * @param onCompletion runs when the latch reaches zero
-     */
-    void awaitThen(final Runnable onCompletion) {
-        try {
-            await();
-        } finally {
-            onCompletion.run();
-        }
-    }
 }
