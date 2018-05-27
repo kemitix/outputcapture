@@ -25,16 +25,12 @@ import lombok.val;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
  * Capture the output of a callable, then return the captured output.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
- *
  * @see AsynchronousOutputCapturer
  */
 class SynchronousOutputCapturer extends AbstractCaptureOutput {
@@ -44,7 +40,7 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
     /**
      * Constructor.
      *
-     * @param routerFactory   The Router to direct where written output is sent
+     * @param routerFactory The Router to direct where written output is sent
      */
     SynchronousOutputCapturer(final Function<RouterParameters, Router> routerFactory) {
         this.routerFactory = routerFactory;
@@ -53,37 +49,20 @@ class SynchronousOutputCapturer extends AbstractCaptureOutput {
     /**
      * Captures the output of the callable then returns.
      *
-     * @param callable The callable to capture the output of
-     * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
-     *
+     * @param callable             The callable to capture the output of
      * @return an instance of CapturedOutput
      */
-    CapturedOutput capture(final ThrowingCallable callable, final Long maxAwaitMilliseconds) {
-        val executor = Executors.newSingleThreadExecutor();
-        val finished = new SafeLatch(1, maxAwaitMilliseconds, executor::shutdown);
-        val capturedOutput = new AtomicReference<RoutableCapturedOutput>();
-        executeAsync(executor, callable, finished, capturedOutput);
-        finished.awaitThen(() -> disable(capturedOutput.get()));
+    CapturedOutput capture(final ThrowingCallable callable) {
+        val capturedOutput = outputCaptor();
+        enable(capturedOutput);
+        invokeCallable(callable);
+        disable(capturedOutput);
         throwAnyExceptions();
-        return capturedOutput.get();
-    }
-
-    private void executeAsync(
-            final ExecutorService executor,
-            final ThrowingCallable callable,
-            final SafeLatch finished,
-            final AtomicReference<RoutableCapturedOutput> capturedOutput
-    ) {
-        executor.submit(() -> capturedOutput.set(outputCaptor()));
-        executor.submit(() -> enable(capturedOutput.get()));
-        executor.submit(() -> invokeCallable(callable));
-        executor.submit(finished::countDown);
-        executor.submit(executor::shutdown);
+        return capturedOutput;
     }
 
     private void throwAnyExceptions() {
-        val exception = getThrownExceptionReference().get();
-        Optional.ofNullable(exception)
+        Optional.ofNullable(getThrownExceptionReference().get())
                 .ifPresent(e -> {
                     throw new OutputCaptureException(e);
                 });

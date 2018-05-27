@@ -150,7 +150,7 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
                     CaptureOutput.copyWhileDoing(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
             awaitLatch(ongoing.getCompletedLatch());
             ref.set(ongoing);
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(ref.get().executorIsShutdown()).isTrue();
         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
@@ -168,7 +168,7 @@ public class AsynchronousCopyTest extends AbstractCaptureTest {
             }, MAX_TIMEOUT);
             awaitLatch(ongoing.getCompletedLatch());
             ref.set(ongoing);
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(ref.get().executorIsShutdown()).isTrue();
         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
