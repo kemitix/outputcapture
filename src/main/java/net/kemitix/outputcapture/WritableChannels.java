@@ -22,14 +22,24 @@
 package net.kemitix.outputcapture;
 
 /**
- * Router that redirects output away from the original output stream to the capturing stream.
+ * Represents a pair of channels, for standard out and error, that can be written to, a byte at a time.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-interface RedirectRouter extends Router {
+interface WritableChannels {
 
-    @Override
-    default boolean isBlocking() {
-        return true;
-    }
+    /**
+     * Write the byte to the standard output channel.
+     *
+     * @param aByte the byte to write
+     */
+    void writeOut(Byte aByte);
+
+    /**
+     * Write the byte to the standard error channel.
+     *
+     * @param aByte the byte to write
+     */
+    void writeErr(Byte aByte);
+
 }

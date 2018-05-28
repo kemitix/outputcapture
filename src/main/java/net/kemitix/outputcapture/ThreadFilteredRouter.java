@@ -22,14 +22,21 @@
 package net.kemitix.outputcapture;
 
 /**
- * Router that redirects output away from the original output stream to the capturing stream.
+ * A Router that filters to the filtering thread and redirects the output.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-interface RedirectRouter extends Router {
+interface ThreadFilteredRouter extends Router {
 
     @Override
-    default boolean isBlocking() {
-        return true;
+    default boolean accepts(Byte aByte) {
+        return Thread.currentThread().equals(getFilteringThread());
     }
+
+    /**
+     * The thread to filter on.
+     *
+     * @return a Thread
+     */
+    Thread getFilteringThread();
 }

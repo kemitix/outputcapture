@@ -6,87 +6,94 @@ Capture output written to `System.out` and `System.err`.
 
 ### Synchronous
 
-* `CapturedOutput of(ThrowingCallable)`
-* `CapturedOutput copyOf(ThrowingCallable)`
+* `CaptureOutput.of(ThrowingCallable)`
+* `CaptureOutput.copyOf(ThrowingCallable)`
+* `CaptureOutput.ofAll(ThrowingCallable)`
 
-With this usage, the `runnable` is executed and completes before the
+With this usage, the callable is executed and completes before the
 `capturedOutput` is returned.
 
 The `of` variant prevents output withing the callable from being written
 to the original `System.out` and `System.err`, while `copyOf` does not.
 
 ```java
-CaptureOutput captureOutput = new CaptureOutput();
 ThrowingCallable callable = () -> {
                                    System.out.println(line1);
                                    System.out.println(line2);
                                    System.err.println(line3);
                                   };
-CapturedOutput capturedOutput = captureOutput.of(runnable);
+CapturedOutput capturedOutput = CaptureOutput.of(callable);
 assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
 assertThat(capturedOutput.getStdErr()).containsExactly(line3);
 ```
 
 ### Asynchronous
 
-* `OngoingCapturedOutput ofThread(ThrowingCallable)`
-* `OngoingCapturedOutput copyOfThread(ThrowingCallable)`
+* `OngoingCapturedOutput.ofThread(ThrowingCallable, maxAwaitMilliseconds)`
+* `OngoingCapturedOutput.copyOfThread(ThrowingCallable, maxAwaitMilliseconds)`
+* `OngoingCapturedOutput.whileDoing(ThrowingCallable, maxAwaitMilliseconds)`
+* `OngoingCapturedOutput.copyWhileDoing(ThrowingCallable, maxAwaitMilliseconds)`
 
-With this usage, the `runnable` is started and the `ongoingCapturedOutput` is
+With this usage, the callable is started and an`ongoingCapturedOutput` is
 returned immediately.
 
 ```java
-CaptureOutput captureOutput = new CaptureOutput();
+//given
+final String line1 = "line 1";
+final String line2 = "line 2";
 ThrowingCallable runnable = () -> {
-                                   System.out.println(line1);
-
-                                   //time passes
-
-                                   System.out.println(line2);
-
-                                   //more time passes
-
-                                   System.out.println(line3);
-
-                                   //still more time passes
-
-                                   System.out.println(line4);
-                                  };
-OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
-
-assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line1);
-
-//time passes
-
+    System.out.println(line1);
+    System.out.println(line2);
+};
+//when
+final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.ofThread(runnable, 100L);
+//then
+// do other things
+ongoingCapturedOutput.join();
 assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line1, line2);
-
-ongoingCapturedOutput.flush();
-
-//more time passes
-
-assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line3);
-
-CapturedOutput capturedOutput = ongoingCapturedOutput.getCapturedOutputAndFlush();
-assertThat(capturedOutput.getStdOut()).containsExactly(line3);
-
-//still more time passes
-
-assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line4);
-assertThat(capturedOutput.getStdOut()).containsExactly(line3);
-
-ongoingCapturedOutput.await(1000L, TimeUnit.MILLISECONDS);
-assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line4);
-assertThat(capturedOutput.getStdOut()).containsExactly(line3);
 ```
 
-## Important
+### Stream API
 
-Because the `System.out` and `System.err` are implemented as
-singleton's within the JVM, the capturing is not thread-safe. If two
-instances of `CaptureOutput` are in effect at the same time and are
-not strictly nested (i.e. A starts, B starts, B finishes, A finishes)
-then `System.out` and `System.err` will not be restored properly once
-capturing is finished and a `OutputCaptureException` will be thrown.
+CapturedOutput provides a `stream()` method which returns `Stream<CapturedOutputLine>`. e.g.
+
+#### Synchronous
+
+```java
+final List<String> stdOut =
+        CaptureOutput.of(() -> {
+                        System.out.println(line1Out);
+                        System.err.println(line1Err);
+                        System.out.println(line2Out);
+                        System.err.println(line2Err);
+        })
+                .stream()
+                .filter(CapturedOutputLine::isOut)
+                .map(CapturedOutputLine::asString)
+                .collect(Collectors.toList());
+assertThat(stdOut).containsExactly(line1Out, line2Out);
+```
+
+#### Asynchronous
+
+```java
+final List<String> stdErr =
+        CaptureOutput.ofThread(() -> {
+                       System.out.println(line1Out);
+                       System.err.println(line1Err);
+                       System.out.println(line2Out);
+                       System.err.println(line2Err);
+        }, timeoutMilliseconds)
+                .stream()
+                .filter(CapturedOutputLine::isErr)
+                .map(CapturedOutputLine::asString)
+                .collect(Collectors.toList());
+assertThat(stdErr).containsExactly(line1Err, line2Err);
+```
+
+With asyncronous, the `stream()` method will bock until the thread completes, or the timeout elapses before returning.
+
+## Important
 
 Output is only captured if it on the main thread the submitted
 `ThrowningCallable` is running on. If a new thread is created within the

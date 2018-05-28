@@ -21,15 +21,19 @@
 
 package net.kemitix.outputcapture;
 
+import java.util.stream.Stream;
+
 /**
- * Router that redirects output away from the original output stream to the capturing stream.
+ * Represents the captured output as lines.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-interface RedirectRouter extends Router {
+public interface CapturedLines extends WritableChannels {
 
-    @Override
-    default boolean isBlocking() {
-        return true;
-    }
+    /**
+     * Fetch all the captured lines as a stream.
+     *
+     * @return a Stream of CapturedOutputLines
+     */
+    Stream<CapturedOutputLine> stream();
 }

@@ -21,15 +21,17 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 /**
- * Router that redirects output away from the original output stream to the capturing stream.
+ * A Router that copies all output, from all threads.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-interface RedirectRouter extends Router {
+@RequiredArgsConstructor
+class PromiscuousCopyRouter implements PromiscuousRouter, CopyRouter, CapturingRouter {
 
-    @Override
-    default boolean isBlocking() {
-        return true;
-    }
+    @Getter
+    private final CapturedLines capturedLines;
 }

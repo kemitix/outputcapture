@@ -21,15 +21,28 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 /**
- * Router that redirects output away from the original output stream to the capturing stream.
+ * Parameters for configuring a Router.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-interface RedirectRouter extends Router {
+@RequiredArgsConstructor
+class RouterParameters {
 
-    @Override
-    default boolean isBlocking() {
-        return true;
+    @Getter
+    private final Thread filteringThread;
+    @Getter
+    private final CapturedLines capturedLines;
+
+    /**
+     * Create the default routing parameters, filtering to the current thread.
+     *
+     * @return new RoutingParameters for filtering to the current thread
+     */
+    static RouterParameters createDefault() {
+        return new RouterParameters(Thread.currentThread(), new DefaultCapturedLines(System.lineSeparator()));
     }
 }

@@ -22,14 +22,14 @@
 package net.kemitix.outputcapture;
 
 /**
- * Router that redirects output away from the original output stream to the capturing stream.
+ * A Router that captures all output, from all threads.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-interface RedirectRouter extends Router {
+interface PromiscuousRouter extends Router {
 
     @Override
-    default boolean isBlocking() {
+    default boolean accepts(final Byte aByte) {
         return true;
     }
 }

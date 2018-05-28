@@ -21,15 +21,22 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.NonNull;
+
+import java.io.ByteArrayOutputStream;
+import java.util.function.Function;
+
 /**
- * Router that redirects output away from the original output stream to the capturing stream.
+ * A Function to make a copy of a {@link ByteArrayOutputStream}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-interface RedirectRouter extends Router {
-
+class StreamCopyFunction implements Function<ByteArrayOutputStream, ByteArrayOutputStream> {
     @Override
-    default boolean isBlocking() {
-        return true;
+    public ByteArrayOutputStream apply(@NonNull final ByteArrayOutputStream source) {
+        final ByteArrayOutputStream result = new ByteArrayOutputStream(source.size());
+        result.write(source.toByteArray(), 0, source.size());
+        return result;
+
     }
 }

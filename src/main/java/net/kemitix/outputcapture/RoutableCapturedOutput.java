@@ -22,14 +22,16 @@
 package net.kemitix.outputcapture;
 
 /**
- * Router that redirects output away from the original output stream to the capturing stream.
+ * {@link CapturedOutput} with a {@link Router}.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-interface RedirectRouter extends Router {
+interface RoutableCapturedOutput extends CapturedOutput {
 
-    @Override
-    default boolean isBlocking() {
-        return true;
-    }
+    /**
+     * The Router.
+     *
+     * @return The Router
+     */
+    Router getRouter();
 }

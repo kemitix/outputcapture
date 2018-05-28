@@ -3,26 +3,49 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <properties>
-        <junit.version>4.12</junit.version>
-        <assertj.version>3.8.0</assertj.version>
-        <mockito.version>2.8.47</mockito.version>
-
-        <pitest.coverage>100</pitest.coverage>
-        <pitest.mutation>100</pitest.mutation>
-        <jacoco-class-line-covered-ratio>1</jacoco-class-line-covered-ratio>
-        <jacoco-class-instruction-covered-ratio>1</jacoco-class-instruction-covered-ratio>
-    </properties>
     <parent>
         <groupId>net.kemitix</groupId>
         <artifactId>kemitix-parent</artifactId>
-        <version>3.2.4</version>
+        <version>5.1.0</version>
     </parent>
+
     <artifactId>output-capture</artifactId>
-    <version>0.4.0</version>
+    <version>1.0.0</version>
     <name>Output Capture</name>
     <description>Capture output written to System.out and System.err</description>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <junit.version>4.12</junit.version>
+        <assertj.version>3.9.1</assertj.version>
+        <mockito.version>2.17.0</mockito.version>
+
+        <print-stream-wrapper.version>0.4.0</print-stream-wrapper.version>
+        <conditional.version>0.4.0</conditional.version>
+        <lombok.version>1.16.20</lombok.version>
+        <tiles-maven-plugin.version>2.11</tiles-maven-plugin.version>
+        <kemitix-tiles.version>0.8.1</kemitix-tiles.version>
+        <kemitix-checkstyle.version>4.1.1</kemitix-checkstyle.version>
+        <pitest.skip>true</pitest.skip>
+    </properties>
+
     <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>net.kemitix</groupId>
+            <artifactId>print-stream-wrapper</artifactId>
+            <version>${print-stream-wrapper.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.kemitix</groupId>
+            <artifactId>conditional</artifactId>
+            <version>${conditional.version}</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -42,5 +65,23 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.repaint.maven</groupId>
+                <artifactId>tiles-maven-plugin</artifactId>
+                <version>${tiles-maven-plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <tiles>
+                        <tile>net.kemitix.tiles:all:${kemitix-tiles.version}</tile>
+                        <!--<tile>net.kemitix.tiles:pmd-strict:${kemitix-tiles.version}</tile>-->
+                        <tile>net.kemitix.checkstyle:tile:${kemitix-checkstyle.version}</tile>
+                    </tiles>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
