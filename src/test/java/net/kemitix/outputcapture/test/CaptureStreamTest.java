@@ -1,6 +1,8 @@
 package net.kemitix.outputcapture.test;
 
-import net.kemitix.outputcapture.*;
+import net.kemitix.outputcapture.CaptureOutput;
+import net.kemitix.outputcapture.CapturedOutputLine;
+import net.kemitix.outputcapture.ThrowingCallable;
 import org.junit.Test;
 
 import java.util.List;
@@ -33,6 +35,32 @@ public class CaptureStreamTest {
         //when
         final List<String> lines =
                 CaptureOutput.of(writeOutput())
+                        .stream()
+                        .filter(CapturedOutputLine::isErr)
+                        .map(CapturedOutputLine::asString)
+                        .collect(Collectors.toList());
+        //then
+        assertThat(lines).containsExactly(line1Err, line2Err);
+    }
+
+    @Test
+    public void canStreamOutWhenCapturingAsync() {
+        //when
+        final List<String> lines =
+                CaptureOutput.ofThread(writeOutput(), 100L)
+                        .stream()
+                        .filter(CapturedOutputLine::isOut)
+                        .map(CapturedOutputLine::asString)
+                        .collect(Collectors.toList());
+        //then
+        assertThat(lines).containsExactly(line1Out, line2Out);
+    }
+
+    @Test
+    public void canStreamErrWhenCapturingAsync() {
+        //when
+        final List<String> lines =
+                CaptureOutput.ofThread(writeOutput(), 100L)
                         .stream()
                         .filter(CapturedOutputLine::isErr)
                         .map(CapturedOutputLine::asString)

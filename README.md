@@ -83,14 +83,41 @@ assertThat(capturedOutput.getStdOut()).containsExactly(line3);
 
 CapturedOutput provides a `stream()` method which returns `Stream<CapturedOutputLine>`. e.g.
 
+#### Synchronous
+
 ```java
 final List<String> stdOut =
-                CaptureOutput.of(writeOutput())
-                        .stream()
-                        .filter(CapturedOutputLine::isOut)
-                        .map(CapturedOutputLine::asString)
-                        .collect(Collectors.toList());
+        CaptureOutput.of(() -> {
+                        System.out.println(line1Out);
+                        System.err.println(line1Err);
+                        System.out.println(line2Out);
+                        System.err.println(line2Err);
+        })
+                .stream()
+                .filter(CapturedOutputLine::isOut)
+                .map(CapturedOutputLine::asString)
+                .collect(Collectors.toList());
+assertThat(stdOut).containsExactly(line1Out, line2Out);
 ```
+
+#### Asynchronous
+
+```java
+final List<String> stdErr =
+        CaptureOutput.ofThread(() -> {
+                       System.out.println(line1Out);
+                       System.err.println(line1Err);
+                       System.out.println(line2Out);
+                       System.err.println(line2Err);
+        }, timeoutMilliseconds)
+                .stream()
+                .filter(CapturedOutputLine::isErr)
+                .map(CapturedOutputLine::asString)
+                .collect(Collectors.toList());
+assertThat(stdErr).containsExactly(line1Err, line2Err);
+```
+
+With asyncronous, the `stream()` method will bock until the thread completes, or the timeout elapses before returning.
 
 ## Important
 

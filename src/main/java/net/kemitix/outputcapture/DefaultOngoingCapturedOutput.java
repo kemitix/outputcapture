@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * The captured output being written to System.out and System.err.
@@ -96,5 +97,18 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     @Override
     public boolean executorIsShutdown() {
         return executor.isShutdown();
+    }
+
+    /**
+     * Fetch all the captured lines as a stream.
+     *
+     * <p>This implementation waits until the ongoing capture completes before returning the stream.</p>
+     *
+     * @return a Stream of CapturedOutputLines
+     */
+    @Override
+    public Stream<CapturedOutputLine> stream() {
+        getCompletedLatch().await();
+        return super.stream();
     }
 }

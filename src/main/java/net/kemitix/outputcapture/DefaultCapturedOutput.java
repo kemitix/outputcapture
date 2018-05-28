@@ -64,7 +64,6 @@ class DefaultCapturedOutput implements StreamableCapturedOutput, RoutableCapture
         return capturedErr;
     }
 
-
     @Override
     public Stream<CapturedOutputLine> stream() {
         return capturedLines.stream();
