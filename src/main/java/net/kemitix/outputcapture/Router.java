@@ -26,7 +26,7 @@ package net.kemitix.outputcapture;
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-interface Router {
+interface Router extends WritableChannels {
 
     /**
      * Returns true if the router is intercepting the stream, rather than passing it on the the next capture or output.
@@ -43,4 +43,12 @@ interface Router {
      * @return true if the byte should be written to the stream
      */
     boolean accepts(Byte aByte);
+
+    /**
+     * Fetch all the captured lines.
+     *
+     * @return the Captured Lines
+     */
+    CapturedLines getCapturedLines();
+
 }

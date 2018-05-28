@@ -25,7 +25,7 @@ public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
     @Test
     public void captureSystemOut() {
         //when
-        final CapturedOutput captured = CaptureOutput.of(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
+        final CapturedOutput captured = CaptureOutput.of(() -> writeOutput(System.out, line1, line2));
         //then
         assertThat(captured.getStdOut()).containsExactly(line1, line2);
     }
@@ -33,7 +33,7 @@ public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
     @Test
     public void captureSystemErr() {
         //when
-        final CapturedOutput captured = CaptureOutput.of(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
+        final CapturedOutput captured = CaptureOutput.of(() -> writeOutput(System.err, line1, line2));
         //then
         assertThat(captured.getStdErr()).containsExactly(line1, line2);
     }
@@ -45,7 +45,7 @@ public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.out);
         //when
-        CaptureOutput.of(() -> replacement.set(System.out), MAX_TIMEOUT);
+        CaptureOutput.of(() -> replacement.set(System.out));
         //then
         assertThat(replacement).isNotSameAs(original);
     }
@@ -57,7 +57,7 @@ public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.err);
         //when
-        CaptureOutput.of(() -> replacement.set(System.err), MAX_TIMEOUT);
+        CaptureOutput.of(() -> replacement.set(System.err));
         //then
         assertThat(replacement).isNotSameAs(original);
     }
@@ -69,7 +69,7 @@ public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
         original.set(System.out);
         //when
         CaptureOutput.of(() -> {
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(System.out).isSameAs(original.get());
     }
@@ -80,7 +80,7 @@ public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.err);
         //when
-        CaptureOutput.of(this::doNothing, MAX_TIMEOUT);
+        CaptureOutput.of(this::doNothing);
         //then
         assertThat(System.err).isSameAs(original.get());
     }
@@ -127,9 +127,9 @@ public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
         final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
-            final CapturedOutput copyOf = CaptureOutput.of(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
+            final CapturedOutput copyOf = CaptureOutput.of(() -> writeOutput(System.out, line1, line2));
             ref.set(copyOf);
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
         assertThat(capturedOutput.getStdOut()).isEmpty();
@@ -141,9 +141,9 @@ public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
         final AtomicReference<CapturedOutput> ref = new AtomicReference<>();
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
-            final CapturedOutput copyOf = CaptureOutput.of(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
+            final CapturedOutput copyOf = CaptureOutput.of(() -> writeOutput(System.err, line1, line2));
             ref.set(copyOf);
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
         assertThat(capturedOutput.getStdErr()).isEmpty();
@@ -156,7 +156,7 @@ public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
         //then
         assertThatThrownBy(() -> CaptureOutput.of(() -> {
             throw cause;
-        }, MAX_TIMEOUT))
+        }))
                 .isInstanceOf(OutputCaptureException.class)
                 .hasCause(cause);
     }
@@ -168,7 +168,7 @@ public class SynchronousFilteredRedirectTest extends AbstractCaptureTest {
             final SafeLatch finished,
             final ExecutorService catchMe
     ) {
-        final CapturedOutput capturedOutput = CaptureOutput.of(() -> asyncWithInterrupt(ready, done), MAX_TIMEOUT);
+        final CapturedOutput capturedOutput = CaptureOutput.of(() -> asyncWithInterrupt(ready, done));
         reference.set(capturedOutput);
         releaseLatch(finished);
         catchMe.shutdown();

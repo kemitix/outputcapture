@@ -55,7 +55,8 @@ interface Captors {
      * @return A redirecting and synchronous CaptureOutput
      */
     static SynchronousOutputCapturer syncRedirectAll() {
-        return new SynchronousOutputCapturer(PromiscuousRedirectRouter::new);
+        return new SynchronousOutputCapturer(
+                routerParameters -> new PromiscuousRedirectRouter(routerParameters.getCapturedLines()));
     }
 
     /**
@@ -65,7 +66,7 @@ interface Captors {
      * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
      * @return A redirecting and asynchronous CaptureOutput tied to a single thread
      */
-    static AsynchronousOutputCapturer asyncRedirectThread(Long maxAwaitMilliseconds) {
+    static AsynchronousOutputCapturer asyncRedirectThread(final Long maxAwaitMilliseconds) {
         return new AsynchronousOutputCapturer(ThreadFilteredRedirectRouter::new, maxAwaitMilliseconds,
                 Executors.newSingleThreadExecutor());
     }
@@ -76,7 +77,7 @@ interface Captors {
      * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
      * @return A copying and asynchronous CaptureOutput tied to a single thread
      */
-    static AsynchronousOutputCapturer asyncCopyThread(Long maxAwaitMilliseconds) {
+    static AsynchronousOutputCapturer asyncCopyThread(final Long maxAwaitMilliseconds) {
         return new AsynchronousOutputCapturer(ThreadFilteredCopyRouter::new, maxAwaitMilliseconds,
                 Executors.newSingleThreadExecutor());
     }
@@ -87,8 +88,10 @@ interface Captors {
      * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
      * @return A redirecting and asynchronous CaptureOutput
      */
-    static AsynchronousOutputCapturer asyncRedirectAll(Long maxAwaitMilliseconds) {
-        return new AsynchronousOutputCapturer(PromiscuousRedirectRouter::new, maxAwaitMilliseconds,
+    static AsynchronousOutputCapturer asyncRedirectAll(final Long maxAwaitMilliseconds) {
+        return new AsynchronousOutputCapturer(
+                routerParameters -> new PromiscuousRedirectRouter(routerParameters.getCapturedLines()),
+                maxAwaitMilliseconds,
                 Executors.newSingleThreadExecutor());
     }
 
@@ -98,8 +101,10 @@ interface Captors {
      * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
      * @return A copying and asynchronous CaptureOutput
      */
-    static AsynchronousOutputCapturer asyncCopyAll(Long maxAwaitMilliseconds) {
-        return new AsynchronousOutputCapturer(PromiscuousCopyRouter::new, maxAwaitMilliseconds,
+    static AsynchronousOutputCapturer asyncCopyAll(final Long maxAwaitMilliseconds) {
+        return new AsynchronousOutputCapturer(
+                routerParameters -> new PromiscuousCopyRouter(routerParameters.getCapturedLines()),
+                maxAwaitMilliseconds,
                 Executors.newSingleThreadExecutor());
     }
 }

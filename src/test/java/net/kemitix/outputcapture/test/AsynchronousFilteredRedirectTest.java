@@ -149,7 +149,7 @@ public class AsynchronousFilteredRedirectTest extends AbstractCaptureTest {
             }, MAX_TIMEOUT);
             awaitLatch(ongoing.getCompletedLatch());
             ref.set(ongoing);
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(ref.get().executorIsShutdown()).isTrue();
         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
@@ -167,7 +167,7 @@ public class AsynchronousFilteredRedirectTest extends AbstractCaptureTest {
             }, MAX_TIMEOUT);
             awaitLatch(ongoing.getCompletedLatch());
             ref.set(ongoing);
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(ref.get().executorIsShutdown()).isTrue();
         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);

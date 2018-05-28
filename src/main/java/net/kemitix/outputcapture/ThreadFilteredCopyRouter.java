@@ -29,12 +29,17 @@ import lombok.RequiredArgsConstructor;
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
 @RequiredArgsConstructor
-class ThreadFilteredCopyRouter implements CopyRouter, ThreadFilteredRouter {
+class ThreadFilteredCopyRouter implements CopyRouter, ThreadFilteredRouter, CapturingRouter {
 
     private final RouterParameters routerParameters;
 
     @Override
     public Thread getFilteringThread() {
         return routerParameters.getFilteringThread();
+    }
+
+    @Override
+    public CapturedLines getCapturedLines() {
+        return routerParameters.getCapturedLines();
     }
 }

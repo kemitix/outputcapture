@@ -22,7 +22,7 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
     @Test
     public void captureSystemOut() {
         //when
-        final CapturedOutput captured = CaptureOutput.copyOf(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
+        final CapturedOutput captured = CaptureOutput.copyOf(() -> writeOutput(System.out, line1, line2));
         //then
         assertThat(captured.getStdOut()).containsExactly(line1, line2);
     }
@@ -30,7 +30,7 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
     @Test
     public void captureSystemErr() {
         //when
-        final CapturedOutput captured = CaptureOutput.copyOf(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
+        final CapturedOutput captured = CaptureOutput.copyOf(() -> writeOutput(System.err, line1, line2));
         //then
         assertThat(captured.getStdErr()).containsExactly(line1, line2);
     }
@@ -42,7 +42,7 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.out);
         //when
-        CaptureOutput.copyOf(() -> replacement.set(System.out), MAX_TIMEOUT);
+        CaptureOutput.copyOf(() -> replacement.set(System.out));
         //then
         assertThat(replacement).isNotSameAs(original);
     }
@@ -54,7 +54,7 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> replacement = new AtomicReference<>();
         original.set(System.err);
         //when
-        CaptureOutput.copyOf(() -> replacement.set(System.err), MAX_TIMEOUT);
+        CaptureOutput.copyOf(() -> replacement.set(System.err));
         //then
         assertThat(replacement).isNotSameAs(original);
     }
@@ -65,7 +65,7 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.out);
         //when
-        CaptureOutput.copyOf(this::doNothing, MAX_TIMEOUT);
+        CaptureOutput.copyOf(this::doNothing);
         //then
         assertThat(System.out).isSameAs(original.get());
     }
@@ -76,7 +76,7 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
         final AtomicReference<PrintStream> original = new AtomicReference<>();
         original.set(System.err);
         //when
-        CaptureOutput.copyOf(this::doNothing, MAX_TIMEOUT);
+        CaptureOutput.copyOf(this::doNothing);
         //then
         assertThat(System.err).isSameAs(original.get());
     }
@@ -88,7 +88,7 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
         //then
         assertThatThrownBy(() -> CaptureOutput.copyOf(() -> {
             throw cause;
-        }, MAX_TIMEOUT))
+        }))
                 .isInstanceOf(OutputCaptureException.class)
                 .hasCause(cause);
     }
@@ -101,7 +101,7 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
         final CapturedOutput capturedOutput = CaptureOutput.copyOf(() -> {
             latchPair.releaseAndWait();
             System.out.println(line2);
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(capturedOutput.getStdOut()).containsExactly(line2);
     }
@@ -114,7 +114,7 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
         final CapturedOutput capturedOutput = CaptureOutput.copyOf(() -> {
             latchPair.releaseAndWait();
             System.err.println(line2);
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(capturedOutput.getStdErr()).containsExactly(line2);
     }
@@ -126,9 +126,9 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
             final CapturedOutput copyOf =
-                    CaptureOutput.copyOf(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
+                    CaptureOutput.copyOf(() -> writeOutput(System.out, line1, line2));
             ref.set(copyOf);
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(ref.get().getStdOut()).containsExactly(line1, line2);
         assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
@@ -141,9 +141,9 @@ public class SynchronousFilteredCopyTest extends AbstractCaptureTest {
         //when
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
             final CapturedOutput copyOf =
-                    CaptureOutput.copyOf(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
+                    CaptureOutput.copyOf(() -> writeOutput(System.err, line1, line2));
             ref.set(copyOf);
-        }, MAX_TIMEOUT);
+        });
         //then
         assertThat(ref.get().getStdErr()).containsExactly(line1, line2);
         assertThat(capturedOutput.getStdErr()).containsExactly(line1, line2);

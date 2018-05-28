@@ -29,9 +29,9 @@ package net.kemitix.outputcapture;
  *      <tr><th>method</th><th>a/sync</th><th>filtering</th><th>redirect/copy</th></tr>
  *   </thead>
  *   <tbody>
- *     <tr><td>{@link #of(ThrowingCallable, Long) of}</td><td>sync</td><td>thread</td><td>redirect</td></tr>
- *     <tr><td>{@link #copyOf(ThrowingCallable, Long) copyOf}</td><td>sync</td><td>thread</td><td>copy</td></tr>
- *     <tr><td>{@link #ofAll(ThrowingCallable, Long) ofAll}</td><td>sync</td><td>all</td><td>redirect</td></tr>
+ *     <tr><td>{@link #of(ThrowingCallable) of}</td><td>sync</td><td>thread</td><td>redirect</td></tr>
+ *     <tr><td>{@link #copyOf(ThrowingCallable) copyOf}</td><td>sync</td><td>thread</td><td>copy</td></tr>
+ *     <tr><td>{@link #ofAll(ThrowingCallable) ofAll}</td><td>sync</td><td>all</td><td>redirect</td></tr>
  *     <tr><td>(none)</td><td>sync</td><td>all</td><td>copy</td></tr>
  *     <tr>
  *         <td>{@link #ofThread(ThrowingCallable, Long) ofThread}</td><td>async</td><td>thread</td><td>redirect</td>
@@ -58,24 +58,20 @@ public interface CaptureOutput {
      * Capture the output of the callable.
      *
      * @param callable the callable to capture the output of
-     * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
-     *
      * @return the instance CapturedOutput
      */
-    static CapturedOutput of(ThrowingCallable callable, final Long maxAwaitMilliseconds) {
-        return Captors.syncRedirectThread().capture(callable, maxAwaitMilliseconds);
+    static CapturedOutput of(ThrowingCallable callable) {
+        return Captors.syncRedirectThread().capture(callable);
     }
 
     /**
      * Capture the output of the callable and copies to normal output.
      *
      * @param callable the callable to capture the output of
-     * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
-     *
      * @return the instance CapturedOutput
      */
-    static CapturedOutput copyOf(ThrowingCallable callable, final Long maxAwaitMilliseconds) {
-        return Captors.syncCopy().capture(callable, maxAwaitMilliseconds);
+    static CapturedOutput copyOf(ThrowingCallable callable) {
+        return Captors.syncCopy().capture(callable);
     }
 
     /**
@@ -84,12 +80,10 @@ public interface CaptureOutput {
      * <p>This method will also capture any other output from other threads during the time the callable is running.</p>
      *
      * @param callable the callable to capture the output of
-     * @param maxAwaitMilliseconds the maximum number of milliseconds to await for the capture to complete
-     *
      * @return the instance CapturedOutput
      */
-    static CapturedOutput ofAll(final ThrowingCallable callable, final Long maxAwaitMilliseconds) {
-        return Captors.syncRedirectAll().capture(callable, maxAwaitMilliseconds);
+    static CapturedOutput ofAll(final ThrowingCallable callable) {
+        return Captors.syncRedirectAll().capture(callable);
     }
 
     /**

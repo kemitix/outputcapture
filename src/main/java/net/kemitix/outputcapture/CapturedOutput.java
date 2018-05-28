@@ -58,4 +58,12 @@ public interface CapturedOutput {
      * @return an OutputStream
      */
     ByteArrayOutputStream err();
+
+    /**
+     * Fetch all the captured lines as a stream.
+     *
+     * @return a Stream of CapturedOutputLines
+     */
+    Stream<CapturedOutputLine> stream();
+
 }

@@ -21,25 +21,25 @@
 
 package net.kemitix.outputcapture;
 
-import lombok.RequiredArgsConstructor;
-
 /**
- * A Router that filters to the filtering thread and redirects the output.
+ * Represents a pair of channels, for standard out and error, that can be written to, a byte at a time.
  *
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
-@RequiredArgsConstructor
-class ThreadFilteredRedirectRouter implements RedirectRouter, ThreadFilteredRouter, CapturingRouter {
+interface WritableChannels {
 
-    private final RouterParameters routerParameters;
+    /**
+     * Write the byte to the standard output channel.
+     *
+     * @param aByte the byte to write
+     */
+    void writeOut(Byte aByte);
 
-    @Override
-    public Thread getFilteringThread() {
-        return routerParameters.getFilteringThread();
-    }
+    /**
+     * Write the byte to the standard error channel.
+     *
+     * @param aByte the byte to write
+     */
+    void writeErr(Byte aByte);
 
-    @Override
-    public CapturedLines getCapturedLines() {
-        return routerParameters.getCapturedLines();
-    }
 }

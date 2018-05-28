@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * The captured output being written to System.out and System.err.
@@ -54,6 +55,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      * @param thrownException The reference to any exception thrown
      * @param router          The router to direct the output
      * @param executor        The executor service
+     * @param capturedLines   The captured lines
      */
     DefaultOngoingCapturedOutput(
             final ByteArrayOutputStream capturedOut,
@@ -61,8 +63,10 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
             final SafeLatch completedLatch,
             final AtomicReference<Exception> thrownException,
             final Router router,
-            final ExecutorService executor) {
-        super(capturedOut, capturedErr, router);
+            final ExecutorService executor,
+            final CapturedLines capturedLines
+    ) {
+        super(capturedOut, capturedErr, router, capturedLines);
         this.completedLatch = completedLatch;
         this.thrownException = thrownException;
         this.executor = executor;
@@ -70,7 +74,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
 
     @Override
     public CapturedOutput getCapturedOutputAndFlush() {
-        val capturedOutput = new DefaultCapturedOutput(copyOf(out()), copyOf(err()), getRouter());
+        val capturedOutput = new DefaultCapturedOutput(copyOf(out()), copyOf(err()), getRouter(), getCapturedLines());
         flush();
         return capturedOutput;
     }
@@ -93,5 +97,18 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
     @Override
     public boolean executorIsShutdown() {
         return executor.isShutdown();
+    }
+
+    /**
+     * Fetch all the captured lines as a stream.
+     *
+     * <p>This implementation waits until the ongoing capture completes before returning the stream.</p>
+     *
+     * @return a Stream of CapturedOutputLines
+     */
+    @Override
+    public Stream<CapturedOutputLine> stream() {
+        getCompletedLatch().await();
+        return super.stream();
     }
 }

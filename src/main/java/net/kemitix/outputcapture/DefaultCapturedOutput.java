@@ -42,6 +42,8 @@ class DefaultCapturedOutput implements StreamableCapturedOutput, RoutableCapture
     @Getter
     private final Router router;
 
+    private final CapturedLines capturedLines;
+
     @Override
     public Stream<String> getStdOut() {
         return asStream(capturedOut);
@@ -62,4 +64,12 @@ class DefaultCapturedOutput implements StreamableCapturedOutput, RoutableCapture
         return capturedErr;
     }
 
+    @Override
+    public Stream<CapturedOutputLine> stream() {
+        return capturedLines.stream();
+    }
+
+    protected CapturedLines getCapturedLines() {
+        return capturedLines;
+    }
 }

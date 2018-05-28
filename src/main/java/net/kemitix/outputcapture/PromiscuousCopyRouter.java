@@ -21,6 +21,7 @@
 
 package net.kemitix.outputcapture;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -29,8 +30,8 @@ import lombok.RequiredArgsConstructor;
  * @author Paul Campbell (pcampbell@kemitix.net)
  */
 @RequiredArgsConstructor
-class PromiscuousCopyRouter implements PromiscuousRouter, CopyRouter {
+class PromiscuousCopyRouter implements PromiscuousRouter, CopyRouter, CapturingRouter {
 
-    private final RouterParameters routerParameters;
-
+    @Getter
+    private final CapturedLines capturedLines;
 }
