@@ -24,7 +24,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         //when
         final OngoingCapturedOutput ongoing =
                 CaptureOutput.copyOfThread(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(ongoing.getStdOut()).containsExactly(line1, line2);
@@ -35,7 +35,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         //when
         final OngoingCapturedOutput ongoing =
                 CaptureOutput.copyOfThread(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(ongoing.getStdErr()).containsExactly(line1, line2);
@@ -49,7 +49,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         original.set(System.out);
         //when
         final OngoingCapturedOutput ongoing = CaptureOutput.copyOfThread(() -> replacement.set(System.out), MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(replacement).isNotSameAs(original);
@@ -63,7 +63,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         original.set(System.err);
         //when
         final OngoingCapturedOutput ongoing = CaptureOutput.copyOfThread(() -> replacement.set(System.err), MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(replacement).isNotSameAs(original);
@@ -76,7 +76,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         original.set(System.out);
         //when
         final OngoingCapturedOutput ongoing = CaptureOutput.copyOfThread(this::doNothing, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(System.out).isSameAs(original.get());
@@ -89,7 +89,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         original.set(System.err);
         //when
         final OngoingCapturedOutput ongoing = CaptureOutput.copyOfThread(this::doNothing, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(System.err).isSameAs(original.get());
@@ -103,7 +103,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         final OngoingCapturedOutput ongoing = CaptureOutput.copyOfThread(() -> {
             throw cause;
         }, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(ongoing.thrownException()).contains(cause);
@@ -118,7 +118,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
             latchPair.releaseAndWait();
             System.out.println(line2);
         }, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(ongoing.getStdOut()).containsExactly(line2);
@@ -133,7 +133,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
             latchPair.releaseAndWait();
             System.err.println(line2);
         }, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(ongoing.getStdErr()).containsExactly(line2);
@@ -147,7 +147,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
             final OngoingCapturedOutput ongoing =
                     CaptureOutput.copyOfThread(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
-            awaitLatch(ongoing.getCompletedLatch());
+            ongoing.join();
             ref.set(ongoing);
         });
         //then
@@ -164,7 +164,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
             final OngoingCapturedOutput ongoing =
                     CaptureOutput.copyOfThread(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
-            awaitLatch(ongoing.getCompletedLatch());
+            ongoing.join();
             ref.set(ongoing);
         });
         //then
@@ -189,7 +189,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         //when
         final CapturedOutput initialOutput = ongoing.getCapturedOutputAndFlush();
         releaseLatch(done);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(initialOutput.getStdOut()).containsExactly(line1);
@@ -214,7 +214,7 @@ public class AsynchronousFilteredCopyTest extends AbstractCaptureTest {
         //when
         final CapturedOutput initialOutput = ongoing.getCapturedOutputAndFlush();
         releaseLatch(done);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(initialOutput.getStdErr()).containsExactly(line1);

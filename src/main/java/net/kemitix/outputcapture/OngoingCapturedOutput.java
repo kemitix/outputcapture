@@ -53,16 +53,14 @@ public interface OngoingCapturedOutput extends RoutableCapturedOutput {
     Optional<Throwable> thrownException();
 
     /**
-     * The latch that will be released once the thread has finished and the output has stopped capturing.
-     *
-     * @return The latch
-     */
-    SafeLatch getCompletedLatch();
-
-    /**
      * Checks if the ExecutorService has been shutdown yet.
      *
      * @return true if the ExecutorService has been shutdown.
      */
     boolean executorIsShutdown();
+
+    /**
+     * Blocks until the async thread completed.
+     */
+    void join();
 }

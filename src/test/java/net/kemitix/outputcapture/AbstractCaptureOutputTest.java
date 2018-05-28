@@ -49,7 +49,6 @@ public class AbstractCaptureOutputTest {
     private class MyAsyncCapture {
 
         private SimpleLatch finished = new SimpleLatch();
-        private SafeLatch completed;
         private OngoingCapturedOutput capture;
 
         MyAsyncCapture() {
@@ -59,12 +58,11 @@ public class AbstractCaptureOutputTest {
                 finished.await();
             });
             started.await();
-            completed = capture.getCompletedLatch();
         }
 
         void remove() {
             finished.countDown();
-            completed.await();
+            capture.join();
             assertThat(capture.executorIsShutdown()).isTrue();
         }
 

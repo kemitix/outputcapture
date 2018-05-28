@@ -99,6 +99,11 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
         return executor.isShutdown();
     }
 
+    @Override
+    public void join() {
+        getCompletedLatch().await();
+    }
+
     /**
      * Fetch all the captured lines as a stream.
      *
@@ -108,7 +113,7 @@ class DefaultOngoingCapturedOutput extends DefaultCapturedOutput implements Ongo
      */
     @Override
     public Stream<CapturedOutputLine> stream() {
-        getCompletedLatch().await();
+        join();
         return super.stream();
     }
 }

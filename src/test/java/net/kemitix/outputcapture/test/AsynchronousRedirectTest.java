@@ -28,7 +28,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
             latchPair.releaseAndWait();
             writeOutput(System.out, line2);
         }, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(ongoing.getStdOut()).containsExactly(line1, line2);
@@ -43,7 +43,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
             latchPair.releaseAndWait();
             writeOutput(System.err, line2);
         }, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(ongoing.getStdErr()).containsExactly(line1, line2);
@@ -59,7 +59,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
         final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(() -> replacement.set(System.out), MAX_TIMEOUT);
         //then
         assertThat(replacement).isNotSameAs(original);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
@@ -73,7 +73,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
         final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(() -> replacement.set(System.err), MAX_TIMEOUT);
         //then
         assertThat(replacement).isNotSameAs(original);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         assertThat(ongoing.executorIsShutdown()).isTrue();
     }
 
@@ -84,7 +84,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
         original.set(System.out);
         //when
         final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(this::doNothing, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(System.out).isSameAs(original.get());
@@ -97,7 +97,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
         original.set(System.err);
         //when
         final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(this::doNothing, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(System.err).isSameAs(original.get());
@@ -111,7 +111,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
         final OngoingCapturedOutput ongoing = CaptureOutput.whileDoing(() -> {
             throw cause;
         }, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(ongoing.thrownException()).contains(cause);
     }
@@ -125,7 +125,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
             latchPair.releaseAndWait();
             System.out.println(line2);
         }, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(ongoing.getStdOut()).containsExactly(line1, line2);
@@ -140,7 +140,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
             latchPair.releaseAndWait();
             System.err.println(line2);
         }, MAX_TIMEOUT);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(ongoing.getStdErr()).containsExactly(line1, line2);
@@ -154,7 +154,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
             final OngoingCapturedOutput ongoing =
                     CaptureOutput.whileDoing(() -> writeOutput(System.out, line1, line2), MAX_TIMEOUT);
-            awaitLatch(ongoing.getCompletedLatch());
+            ongoing.join();
             ref.set(ongoing);
         });
         //then
@@ -171,7 +171,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
         final CapturedOutput capturedOutput = CaptureOutput.ofAll(() -> {
             final OngoingCapturedOutput ongoing =
                     CaptureOutput.whileDoing(() -> writeOutput(System.err, line1, line2), MAX_TIMEOUT);
-            awaitLatch(ongoing.getCompletedLatch());
+            ongoing.join();
             ref.set(ongoing);
         });
         //then
@@ -196,7 +196,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
         final CapturedOutput initialOutput = ongoing.getCapturedOutputAndFlush();
         System.out.println(line2);
         releaseLatch(done);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(initialOutput.getStdOut()).containsExactly(line1);
@@ -221,7 +221,7 @@ public class AsynchronousRedirectTest extends AbstractCaptureTest {
         final CapturedOutput initialOutput = ongoing.getCapturedOutputAndFlush();
         System.err.println(line2);
         releaseLatch(done);
-        awaitLatch(ongoing.getCompletedLatch());
+        ongoing.join();
         //then
         assertThat(ongoing.executorIsShutdown()).isTrue();
         assertThat(initialOutput.getStdErr()).containsExactly(line1);

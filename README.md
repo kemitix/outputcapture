@@ -6,77 +6,51 @@ Capture output written to `System.out` and `System.err`.
 
 ### Synchronous
 
-* `CapturedOutput of(ThrowingCallable)`
-* `CapturedOutput copyOf(ThrowingCallable)`
+* `CaptureOutput.of(ThrowingCallable)`
+* `CaptureOutput.copyOf(ThrowingCallable)`
+* `CaptureOutput.ofAll(ThrowingCallable)`
 
-With this usage, the `runnable` is executed and completes before the
+With this usage, the callable is executed and completes before the
 `capturedOutput` is returned.
 
 The `of` variant prevents output withing the callable from being written
 to the original `System.out` and `System.err`, while `copyOf` does not.
 
 ```java
-CaptureOutput captureOutput = new CaptureOutput();
 ThrowingCallable callable = () -> {
                                    System.out.println(line1);
                                    System.out.println(line2);
                                    System.err.println(line3);
                                   };
-CapturedOutput capturedOutput = captureOutput.of(runnable);
+CapturedOutput capturedOutput = CaptureOutput.of(callable);
 assertThat(capturedOutput.getStdOut()).containsExactly(line1, line2);
 assertThat(capturedOutput.getStdErr()).containsExactly(line3);
 ```
 
 ### Asynchronous
 
-* `OngoingCapturedOutput ofThread(ThrowingCallable)`
-* `OngoingCapturedOutput copyOfThread(ThrowingCallable)`
+* `OngoingCapturedOutput.ofThread(ThrowingCallable, maxAwaitMilliseconds)`
+* `OngoingCapturedOutput.copyOfThread(ThrowingCallable, maxAwaitMilliseconds)`
+* `OngoingCapturedOutput.whileDoing(ThrowingCallable, maxAwaitMilliseconds)`
+* `OngoingCapturedOutput.copyWhileDoing(ThrowingCallable, maxAwaitMilliseconds)`
 
-With this usage, the `runnable` is started and the `ongoingCapturedOutput` is
+With this usage, the callable is started and an`ongoingCapturedOutput` is
 returned immediately.
 
 ```java
-CaptureOutput captureOutput = new CaptureOutput();
+//given
+final String line1 = "line 1";
+final String line2 = "line 2";
 ThrowingCallable runnable = () -> {
-                                   System.out.println(line1);
-
-                                   //time passes
-
-                                   System.out.println(line2);
-
-                                   //more time passes
-
-                                   System.out.println(line3);
-
-                                   //still more time passes
-
-                                   System.out.println(line4);
-                                  };
-OngoingCapturedOutput ongoingCapturedOutput = captureOutput.ofThread(runnable);
-
-assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line1);
-
-//time passes
-
+    System.out.println(line1);
+    System.out.println(line2);
+};
+//when
+final OngoingCapturedOutput ongoingCapturedOutput = CaptureOutput.ofThread(runnable, 100L);
+//then
+// do other things
+ongoingCapturedOutput.join();
 assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line1, line2);
-
-ongoingCapturedOutput.flush();
-
-//more time passes
-
-assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line3);
-
-CapturedOutput capturedOutput = ongoingCapturedOutput.getCapturedOutputAndFlush();
-assertThat(capturedOutput.getStdOut()).containsExactly(line3);
-
-//still more time passes
-
-assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line4);
-assertThat(capturedOutput.getStdOut()).containsExactly(line3);
-
-ongoingCapturedOutput.await(1000L, TimeUnit.MILLISECONDS);
-assertThat(ongoingCapturedOutput.getStdOut()).containsExactly(line4);
-assertThat(capturedOutput.getStdOut()).containsExactly(line3);
 ```
 
 ### Stream API
