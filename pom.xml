@@ -21,7 +21,7 @@
         <mockito.version>2.21.0</mockito.version>
 
         <print-stream-wrapper.version>0.4.0</print-stream-wrapper.version>
-        <conditional.version>0.4.0</conditional.version>
+        <conditional.version>0.6.0</conditional.version>
         <lombok.version>1.16.20</lombok.version>
         <tiles-maven-plugin.version>2.11</tiles-maven-plugin.version>
         <kemitix-tiles.version>0.8.1</kemitix-tiles.version>
