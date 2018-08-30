@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>output-capture</artifactId>
-    <version>1.0.0</version>
+    <version>DEV-SNAPSHOT</version>
     <name>Output Capture</name>
     <description>Capture output written to System.out and System.err</description>
 
