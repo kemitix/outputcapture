@@ -14,7 +14,7 @@ public class StreamCopyFunctionTest {
     public void requireSourceStream() {
         assertThatNullPointerException()
                 .isThrownBy(() -> new StreamCopyFunction().apply(null))
-                .withMessage("source");
+                .withMessageStartingWith("source is marked @NonNull");
     }
 
     @Test
