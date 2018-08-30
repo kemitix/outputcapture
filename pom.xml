@@ -22,7 +22,7 @@
 
         <print-stream-wrapper.version>0.4.0</print-stream-wrapper.version>
         <conditional.version>0.7.0</conditional.version>
-        <lombok.version>1.16.20</lombok.version>
+        <lombok.version>1.18.2</lombok.version>
         <tiles-maven-plugin.version>2.12</tiles-maven-plugin.version>
         <kemitix-tiles.version>0.8.1</kemitix-tiles.version>
         <kemitix-checkstyle.version>4.1.1</kemitix-checkstyle.version>
