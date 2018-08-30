@@ -1,6 +1,6 @@
 final String publicRepo = 'https://github.com/kemitix/'
 final String mvn = "mvn --batch-mode --update-snapshots --errors"
-final dependenciesSupportJDK = 10
+final dependenciesSupportJDK = 9
 
 pipeline {
     agent any
