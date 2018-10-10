@@ -1,6 +1,5 @@
 final String publicRepo = 'https://github.com/kemitix/'
 final String mvn = "mvn --batch-mode --update-snapshots --errors"
-final dependenciesSupportJDK = 9
 
 pipeline {
     agent any
@@ -9,22 +8,16 @@ pipeline {
             steps {
                 withMaven(maven: 'maven', jdk: 'JDK 1.8') {
                     sh "${mvn} clean compile checkstyle:checkstyle pmd:pmd test"
-                    // PMD to Jenkins
-                    pmd canComputeNew: false, defaultEncoding: '', healthy: '', pattern: '', unHealthy: ''
-                }
-            }
-        }
-        stage('Report Coverage') {
-            steps {
-                withMaven(maven: 'maven', jdk: 'JDK 1.8') {
+                    // Code Coverage to Codacy
+                    sh "${mvn} jacoco:report com.gavinmogan:codacy-maven-plugin:coverage " +
+                            "-DcoverageReportFile=target/site/jacoco/jacoco.xml " +
+                            "-DprojectToken=`$JENKINS_HOME/codacy/token` " +
+                            "-DapiToken=`$JENKINS_HOME/codacy/apitoken` " +
+                            "-Dcommit=`git rev-parse HEAD`"
                     // Code Coverage to Jenkins
                     jacoco exclusionPattern: '**/*{Test|IT|Main|Application|Immutable}.class'
-                }
-            }
-        }
-        stage('Report Checkstyle') {
-            steps {
-                withMaven(maven: 'maven', jdk: 'JDK 1.8') {
+                    // PMD to Jenkins
+                    pmd canComputeNew: false, defaultEncoding: '', healthy: '', pattern: '', unHealthy: ''
                     // Checkstyle to Jenkins
                     step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
                           pattern: '**/target/checkstyle-result.xml',
@@ -64,19 +57,10 @@ pipeline {
                 }
             }
         }
-        stage('Build Java 9') {
-            when { expression { dependenciesSupportJDK >= 9 } }
+        stage('Build Java 11') {
             steps {
-                withMaven(maven: 'maven', jdk: 'JDK 9') {
+                withMaven(maven: 'maven', jdk: 'JDK 11') {
                     sh "${mvn} clean verify -Djava.version=9"
-                }
-            }
-        }
-        stage('Build Java 10') {
-            when { expression { dependenciesSupportJDK >= 10 } }
-            steps {
-                withMaven(maven: 'maven', jdk: 'JDK 10') {
-                    sh "${mvn} clean verify -Djava.version=10"
                 }
             }
         }
