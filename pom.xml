@@ -6,7 +6,7 @@
     <parent>
         <groupId>net.kemitix</groupId>
         <artifactId>kemitix-parent</artifactId>
-        <version>5.1.1</version>
+        <version>5.2.0</version>
     </parent>
 
     <artifactId>output-capture</artifactId>
@@ -24,7 +24,7 @@
         <conditional.version>0.7.0</conditional.version>
         <lombok.version>1.18.2</lombok.version>
         <tiles-maven-plugin.version>2.12</tiles-maven-plugin.version>
-        <kemitix-tiles.version>0.8.1</kemitix-tiles.version>
+        <kemitix-maven-tiles.version>1.3.1</kemitix-maven-tiles.version>
         <kemitix-checkstyle.version>4.1.1</kemitix-checkstyle.version>
         <pitest.skip>true</pitest.skip>
     </properties>
@@ -75,8 +75,8 @@
                 <extensions>true</extensions>
                 <configuration>
                     <tiles>
-                        <tile>net.kemitix.tiles:all:${kemitix-tiles.version}</tile>
-                        <!--<tile>net.kemitix.tiles:pmd-strict:${kemitix-tiles.version}</tile>-->
+                        <tile>net.kemitix.tiles:all:${kemitix-maven-tiles.version}</tile>
+                        <!--<tile>net.kemitix.tiles:pmd-strict:${kemitix-maven-tiles.version}</tile>-->
                         <tile>net.kemitix.checkstyle:tile:${kemitix-checkstyle.version}</tile>
                     </tiles>
                 </configuration>
