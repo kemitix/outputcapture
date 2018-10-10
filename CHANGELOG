@@ -8,6 +8,7 @@ CHANGELOG
 * Bump kemitix-parent from 5.1.1 to 5.2.0
 * Bump kemitix-maven-tiles from 0.8.1 to 1.3.1
 * [jenkins] verify java 11 compatibility
+* Bump mockito-core from 2.22.0 to 2.23.0 (#36)
 
 0.4.0
 -----
