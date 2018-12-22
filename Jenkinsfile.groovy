@@ -8,12 +8,6 @@ pipeline {
             steps {
                 withMaven(maven: 'maven', jdk: 'JDK 1.8') {
                     sh "${mvn} clean compile checkstyle:checkstyle pmd:pmd test"
-                    // Code Coverage to Codacy
-                    sh "${mvn} jacoco:report com.gavinmogan:codacy-maven-plugin:coverage " +
-                            "-DcoverageReportFile=target/site/jacoco/jacoco.xml " +
-                            "-DprojectToken=`$JENKINS_HOME/codacy/token` " +
-                            "-DapiToken=`$JENKINS_HOME/codacy/apitoken` " +
-                            "-Dcommit=`git rev-parse HEAD`"
                     // Code Coverage to Jenkins
                     jacoco exclusionPattern: '**/*{Test|IT|Main|Application|Immutable}.class'
                     // PMD to Jenkins
@@ -30,16 +24,6 @@ pipeline {
             steps {
                 withMaven(maven: 'maven', jdk: 'JDK 1.8') {
                     sh "${mvn} -DskipTests install"
-                }
-            }
-        }
-        stage('SonarQube (published)') {
-            when { expression { isPublished(publicRepo) } }
-            steps {
-                withSonarQubeEnv('sonarqube') {
-                    withMaven(maven: 'maven', jdk: 'JDK 1.8') {
-                        sh "${mvn} org.sonarsource.scanner.maven:sonar-maven-plugin:3.4.0.905:sonar"
-                    }
                 }
             }
         }
@@ -60,7 +44,14 @@ pipeline {
         stage('Build Java 11') {
             steps {
                 withMaven(maven: 'maven', jdk: 'JDK 11') {
-                    sh "${mvn} clean verify -Djava.version=9"
+                    sh "${mvn} clean verify -Djava.version=11"
+                }
+            }
+        }
+        stage('Build Java 12') {
+            steps {
+                withMaven(maven: 'maven', jdk: 'JDK 12') {
+                    sh "${mvn} clean verify -Djava.version=12"
                 }
             }
         }
