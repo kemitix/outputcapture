@@ -5,7 +5,9 @@
   [[https://oss.sonatype.org/content/repositories/releases/net/kemitix/outputcapture][file:https://img.shields.io/nexus/r/https/oss.sonatype.org/net.kemitix/outputcapture.svg?style=for-the-badge]]
   [[https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.kemitix%22%20AND%20a%3A%22outputcapture%22][file:https://img.shields.io/maven-central/v/net.kemitix/outputcapture.svg?style=for-the-badge]]
 
-  [[http://i.jpeek.org/net.kemitix/outputcapture/index.html][file:http://i.jpeek.org/net.kemitix/outputcapture/badge.svg]]
+** EOL After JDK11
+
+This library will not be maintained or supported on any JDK after JDK 11.
 
 ** Usage
 
